@@ -1,0 +1,26 @@
+{
+  "name": "roadmap-runner",
+  "version": "0.1.0",
+  "description": "Run long repository roadmaps through fresh sequential Codex workers without a model-backed coordinator.",
+  "author": {
+    "name": "bpstr",
+    "url": "https://github.com/bpstr"
+  },
+  "homepage": "https://github.com/bpstr/roadmap-runner",
+  "repository": "https://github.com/bpstr/roadmap-runner",
+  "license": "MIT",
+  "keywords": ["codex", "roadmap", "automation", "agents"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Roadmap Runner",
+    "shortDescription": "Run roadmaps with a token-free shell loop",
+    "longDescription": "Execute roadmap checklists through fresh sequential Codex workers while a deterministic shell supervisor handles waiting, retries, locks, and logs.",
+    "developerName": "bpstr",
+    "category": "Productivity",
+    "capabilities": ["Write"],
+    "websiteURL": "https://github.com/bpstr/roadmap-runner",
+    "defaultPrompt": [
+      "Use Roadmap Runner to implement this roadmap locally in sequential batches."
+    ]
+  }
+}

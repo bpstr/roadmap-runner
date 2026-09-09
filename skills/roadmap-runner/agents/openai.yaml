@@ -1,0 +1,4 @@
+interface:
+  display_name: "Roadmap Runner"
+  short_description: "Run roadmaps with a token-free shell loop"
+  default_prompt: "Use $roadmap-runner to implement this roadmap with the local shell supervisor and fresh sequential Codex workers."
