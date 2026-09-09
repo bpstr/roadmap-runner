@@ -1,0 +1,12 @@
+{
+  "name": "roadmap-runner",
+  "version": "0.1.0",
+  "description": "Resumable Markdown roadmap execution with no LLM coordinator.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Roadmap Runner",
+    "shortDescription": "Fresh Codex workers. Durable checkboxes. No supervisor agent.",
+    "developerName": "Jani Fent",
+    "category": "Productivity"
+  }
+}

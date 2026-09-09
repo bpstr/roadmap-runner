@@ -1,0 +1,8 @@
+{
+  "name": "roadmap-runner",
+  "version": "0.1.0",
+  "description": "Run large Markdown roadmaps through a deterministic shell loop of Codex Sol workers.",
+  "author": {"name": "Jani Fent"},
+  "repository": "https://github.com/bpstr/roadmap-runner",
+  "license": "MIT"
+}

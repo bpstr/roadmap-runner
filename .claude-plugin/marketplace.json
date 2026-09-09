@@ -1,0 +1,10 @@
+{
+  "name": "roadmap-runner",
+  "owner": {"name": "Jani Fent"},
+  "plugins": [{
+    "name": "roadmap-runner",
+    "source": "./",
+    "description": "Sequential Codex Sol roadmap execution without a supervisor agent.",
+    "version": "0.1.0"
+  }]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "completed_ids", "summary", "handoff", "checks"],
+  "properties": {
+    "status": {"type": "string", "enum": ["progress", "blocked", "needs_split"]},
+    "completed_ids": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"},
+    "handoff": {"type": "string"},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "outcome", "detail"],
+        "properties": {
+          "command": {"type": "string"},
+          "outcome": {"type": "string", "enum": ["passed", "failed", "not_run"]},
+          "detail": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "roadmap-runner",
+  "version": "0.1.0",
+  "description": "Run large Markdown roadmaps in small, fresh Codex Sol batches without an LLM coordinator.",
+  "author": {"name": "Jani Fent"},
+  "repository": "https://github.com/bpstr/roadmap-runner",
+  "license": "MIT",
+  "keywords": ["roadmap", "codex", "automation", "claude-code"]
+}
