@@ -1,0 +1,10 @@
+{
+  "name": "roadmap-runner",
+  "owner": {"name": "bpstr"},
+  "plugins": [{
+    "name": "roadmap-runner",
+    "source": "./",
+    "version": "0.2.0",
+    "description": "Fresh Codex workers. One-word results. No model coordinator."
+  }]
+}

@@ -1,16 +1,38 @@
 ---
 name: roadmap-runner
-description: Execute a long repository roadmap through fresh sequential Codex workers, using a token-free shell supervisor and restart-safe progress in the source file. Use when asked to run or continue roadmap implementation.
+description: Run or resume a Markdown roadmap through fresh sequential Codex workers and a Bash-only loop. Use when the user explicitly asks to run or continue roadmap implementation, not for planning or reviewing one.
 ---
 
 # Roadmap Runner
 
-Read [references/procedure.md](references/procedure.md) before starting a roadmap.
+You are the launcher, not a coordinator. Do not implement tasks, parse the roadmap,
+or stay in a polling conversation.
 
-For unattended local execution, run `scripts/run-roadmap.sh` with the roadmap's absolute path from the repository workspace.
+Resolve the requested roadmap and workspace to absolute paths. Locate
+`scripts/run-roadmap.sh` relative to THIS installed skill, not the project folder.
+Launch exactly once:
 
-The script starts fresh `gpt-5.6-sol` workers serially and consumes no coordinator-model tokens between runs. Existing roadmap checkboxes are the queue: each worker reconciles the checklist and current diff, completes at most one small batch, validates it, checks off proven work, and adds concise evidence with the shell run ID to the existing delivery record. Do not create a parallel execution-state block or ledger.
+```sh
+ROADMAP_WORKSPACE="/absolute/project" bash "/absolute/skill/scripts/run-roadmap.sh" start "/absolute/project/roadmap.md"
+```
 
-Treat a request to run or continue a roadmap as authorization for bounded local worker runs while preserving narrower approval, external-mutation, deployment, publication, destructive-operation, paid-inference, and product-decision gates.
+Return the launch receipt (shell PID, global state and log paths), then finish the
+turn. A launch is not completion. Do not tail worker output into the conversation,
+launch subagents, or repeatedly ask for status. Both Codex and Claude Code use the
+same installed/authenticated Codex CLI backend and default Sol model.
 
-Report the log directory and terminal status. Distinguish local completion from full roadmap completion.
+For an explicit resume of the last roadmap, use `start` without a file; the global
+state supplies its roadmap/workspace. For status, call `status` once. For stop,
+use `stop` (after this batch) or `stop now` (interrupt it). After a crash, inspect
+`status`; `recover` can release a stale lock only when no recorded owner/worker
+appears alive. Then `start` resumes. Never delete a lock to bypass a live worker.
+
+Workers understand the roadmap, implement one small batch, edit only existing
+checkbox states, and return one control word. There is no Markdown parser, task
+registry, extra roadmap markup, Python dependency or parallel mode.
+
+Respect host approvals and execution restrictions, including permission to write
+under the global Codex home. Do not bypass a denied spawn or sandbox. If this host
+cannot run a detached local shell, give the equivalent foreground `run` command.
+Do not claim app-exit survival or automatic reboot restart; neither is guaranteed.
+User-provided environment settings may override limits/model; do not invent them.

@@ -1,0 +1,8 @@
+{
+  "name": "roadmap-runner",
+  "version": "0.2.0",
+  "description": "Run roadmap checkboxes through fresh Codex workers and a Bash-only loop.",
+  "author": {"name": "bpstr"},
+  "repository": "https://github.com/bpstr/roadmap-runner",
+  "license": "MIT"
+}

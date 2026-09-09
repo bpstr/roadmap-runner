@@ -1,6 +1,6 @@
 {
   "name": "roadmap-runner",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run long repository roadmaps through fresh sequential Codex workers without a model-backed coordinator.",
   "author": {
     "name": "bpstr",
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Roadmap Runner",
     "shortDescription": "Run roadmaps with a token-free shell loop",
-    "longDescription": "Execute roadmap checklists through fresh sequential Codex workers while a deterministic shell supervisor handles waiting, retries, locks, and logs.",
+    "longDescription": "Execute roadmap checklists through fresh sequential Codex workers while a Bash loop handles waiting, one-word results and a single global process record.",
     "developerName": "bpstr",
     "category": "Productivity",
     "capabilities": ["Write"],
