@@ -2,14 +2,23 @@
 # Bash 3.2+ and standard Unix tools. The worker, never this shell, reads Markdown.
 set -eu -o pipefail
 umask 077
+VERSION=0.2.1
 
 fail() { echo "roadmap-runner: $*" >&2; exit 1; }
 usage() {
-  echo "Usage: $0 [run|start] [/absolute/roadmap.md] | status | stop [now] | recover" >&2
+  echo "Usage: $0 [run|start] [/absolute/roadmap.md] | version | status | stop [now] | recover" >&2
   exit 64
 }
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 script="$script_dir/$(basename "${BASH_SOURCE[0]}")"
+# Version inspection must work for stale-install diagnosis without starting Codex
+# or creating state/locks. It identifies this exact installed/cached script.
+case ${1:-} in
+  version|--version)
+    [[ $# == 1 ]] || usage
+    printf 'roadmap-runner %s\nscript=%s\n' "$VERSION" "$script"
+    exit 0 ;;
+esac
 code_home=${CODEX_HOME:-"$HOME/.codex"}
 mkdir -p "$code_home"
 code_home=$(cd "$code_home" && pwd -P)
@@ -31,6 +40,7 @@ esac
 case "$action" in
   status)
     [[ $# == 0 ]] || usage
+    printf 'installed_version=%s\ninstalled_script=%s\n' "$VERSION" "$script"
     if [[ -f "$state" ]]; then cat "$state"; else echo 'status=idle'; fi
     if [[ -d "$lock" ]]; then echo 'locked=yes'; else echo 'locked=no'; fi
     exit 0 ;;
@@ -73,7 +83,7 @@ workspace=$(cd "$workspace_input" && pwd -P)
 [[ "$roadmap" == /* && -f "$roadmap" && ! -L "$roadmap" ]] || fail 'Provide an absolute, non-symlink roadmap file.'
 roadmap=$(cd "$(dirname "$roadmap")" && pwd -P)/$(basename "$roadmap")
 [[ "$roadmap" == "$workspace/"* || $workspace == / ]] || fail 'Roadmap must be inside the workspace.'
-for value in "$roadmap" "$workspace" "$code_home"; do
+for value in "$roadmap" "$workspace" "$code_home" "$script"; do
   [[ "$value" != *$'\n'* && "$value" != *$'\r'* ]] || fail 'Paths must not contain line breaks.'
 done
 codex_bin=${ROADMAP_CODEX_BIN:-codex}
@@ -96,6 +106,7 @@ status=starting
 save_state() {
   printf 'roadmap=%s\nworkspace=%s\npid=%s\nworker=%s\nbatch=%s\nstatus=%s\nmodel=%s\n' \
     "$roadmap" "$workspace" "$$" "$worker" "$batch" "$status" "$model" > "$lock/state.tmp"
+  printf 'version=%s\nscript=%s\n' "$VERSION" "$script" >> "$lock/state.tmp"
   mv -f "$lock/state.tmp" "$state"
 }
 if [[ $action == __run ]]; then
@@ -114,7 +125,7 @@ if [[ $action == start ]]; then
   # Keep the starter alive until the child owns the record; no stale-lock gap.
   for _ in {1..100}; do
     if [[ $(field pid) == "$pid" ]]; then
-      echo "Started shell PID $pid. State: $state. Log: $log"
+      echo "Started Roadmap Runner $VERSION, shell PID $pid. State: $state. Log: $log"
       exit 0
     fi
     alive "$pid" || fail "Child did not start; inspect $log and the lock."
@@ -152,7 +163,12 @@ trap 'status=stopped; exit 129' HUP
 
 # Constant instructions and file references, never expanded roadmap contents.
 cat "$script_dir/../references/procedure.md" > "$lock/prompt"
-printf '\nRoadmap: %s\nWorkspace: %s\nRunner log: %s\n' "$roadmap" "$workspace" "$log" >> "$lock/prompt"
+printf '\nRoadmap: %s\nWorkspace: %s\nRunner log: %s\nRunner version: %s\n' "$roadmap" "$workspace" "$log" "$VERSION" >> "$lock/prompt"
+printf 'Worker permissions: workspace-write; approval=never; shell network disabled.\n' >> "$lock/prompt"
+# Boundaries make it possible to inspect the relevant tail, not every prior run.
+printf '\n=== Roadmap Runner %s | %s ===\nScript: %s\nRoadmap: %s\nWorkspace: %s\nPermissions: workspace-write; approval=never; shell network disabled.\n' \
+  "$VERSION" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$script" "$roadmap" "$workspace" >> "$log"
+echo "Roadmap Runner $VERSION ($script)"
 echo "Roadmap: $roadmap"
 echo "State: $state"
 echo "Log: $log"
@@ -202,7 +218,9 @@ while (( batch < max_runs )); do
       retries=$((retries + 1))
       if (( retries >= max_retries )); then status=failed; exit 70; fi ;;
     complete|local) echo "$result"; exit 0 ;;
-    blocked) echo "$result"; exit 75 ;;
+    blocked)
+      echo "Blocked: prerequisite or permission change required; no automatic retry. See $log" >&2
+      echo "$result"; exit 75 ;;
     failed) echo "$result"; exit 70 ;;
     *) status=failed; fail "Invalid worker result; see $log" ;;
   esac

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "roadmap-runner",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Run long repository roadmaps through fresh sequential Codex workers without a model-backed coordinator.",
   "author": {
     "name": "bpstr",

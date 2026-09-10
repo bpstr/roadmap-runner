@@ -150,5 +150,70 @@ setup; run status; expect 0; grep -qx status=idle "$dir/output"
 [[ ! -e "$ROADMAP_MOCK_STATE" ]]
 pass 'Status never starts a model'
 
+
+setup; CODEX_HOME="$dir/unused-home" ROADMAP_CODEX_BIN=/not/installed run version; expect 0
+grep -qx 'roadmap-runner 0.2.1' "$dir/output"
+grep -Fxq "script=$runner" "$dir/output"
+[[ ! -e "$dir/unused-home" && ! -e "$ROADMAP_MOCK_STATE" ]]
+run --version; expect 0
+pass 'Version identifies the installed script without Codex or state writes'
+
+setup; run version extra; expect 64
+[[ ! -e "$ROADMAP_MOCK_STATE" && ! -e "$CODEX_HOME/roadmap-runner.state" ]]
+pass 'Version rejects unexpected arguments without launching'
+
+setup; MOCK_MODE=db-blocked; ROADMAP_MAX_FAILURES=50; run "$roadmap"; expect 75
+state_is blocked; [[ $(cat "$ROADMAP_MOCK_STATE") == 1 ]]
+cmp "$dir/before" "$roadmap"
+[[ -s "$ROADMAP_WORKSPACE/partial.sql" && ! -d "$CODEX_HOME/roadmap-runner.lock" ]]
+grep -Fq 'no automatic retry' "$dir/output"
+grep -Fq 'shmget: Operation not permitted' "$CODEX_HOME/roadmap-runner.log"
+grep -qx 'version=0.2.1' "$CODEX_HOME/roadmap-runner.state"
+grep -Fxq "script=$runner" "$CODEX_HOME/roadmap-runner.state"
+pass 'DB prerequisite denial stops after one worker with exit 75; partial work preserved'
+
+setup; MOCK_MODE=db-blocked; run "$roadmap"; expect 75
+cp "$ROADMAP_WORKSPACE/partial.sql" "$dir/saved-partial.sql"
+MOCK_MODE=db-resume; unset ROADMAP_WORKSPACE
+MOCK_DB_READY=1 run run; expect 0; state_is complete
+[[ $(cat "$ROADMAP_MOCK_STATE") == 2 ]]
+cmp "$dir/saved-partial.sql" "$dir/project/partial.sql"
+sed 's/\[ \]/[x]/g' "$dir/before" > "$dir/expected"
+cmp "$dir/expected" "$roadmap"
+pass 'Explicit resume after simulated prerequisite repair validates and keeps partial code'
+
+setup; printf '\n- [ ] Third item\n' >> "$roadmap"; MOCK_MODE=db-independent
+run "$roadmap"; expect 75; state_is blocked
+[[ $(cat "$ROADMAP_MOCK_STATE") == 2 ]]
+grep -qx -- '- \[ \] First item' "$roadmap"
+grep -qx -- '- \[x\] Second item' "$roadmap"
+grep -qx -- '- \[x\] Third item' "$roadmap"
+[[ $(grep -c 'DB_CAPABILITY_PROBE' "$CODEX_HOME/roadmap-runner.log") == 1 ]]
+pass 'Independent work completes while validation-dependent checkbox stays open'
+
+setup; MOCK_MODE=db-cli-fail; run "$roadmap"; expect 70; state_is failed
+[[ $(cat "$ROADMAP_MOCK_STATE") == 1 ]]; cmp "$dir/before" "$roadmap"
+pass 'Shell does not classify arbitrary stderr; CLI failures still stop without retries'
+
+setup; MOCK_MODE=legacy-result; run "$roadmap"; expect 1; state_is failed
+[[ $(cat "$ROADMAP_MOCK_STATE") == 1 ]]; cmp "$dir/before" "$roadmap"
+pass 'Legacy six-line retryable results are not silently accepted'
+
+setup; printf 'status=blocked\nversion=0.2.0\nscript=/old/cache/run-roadmap.sh\n' > "$CODEX_HOME/roadmap-runner.state"
+cp "$CODEX_HOME/roadmap-runner.state" "$dir/saved-state"
+run status; expect 0
+grep -qx 'installed_version=0.2.1' "$dir/output"
+grep -qx 'version=0.2.0' "$dir/output"
+grep -Fxq "installed_script=$runner" "$dir/output"
+cmp "$dir/saved-state" "$CODEX_HOME/roadmap-runner.state"
+[[ ! -e "$ROADMAP_MOCK_STATE" ]]
+pass 'Status distinguishes the inspected installation from the last recorded run'
+
+setup
+for manifest in plugin.json .codex-plugin/plugin.json .claude-plugin/plugin.json .claude-plugin/marketplace.json; do
+  grep -q '\"version\": \"0.2.1\"' "$repo/$manifest"
+done
+pass 'All plugin manifests match the shell version'
+
 bash -n "$runner" "$repo/tests/mock-codex.sh" "$0"
 echo "All $n offline cases passed. No live model calls."

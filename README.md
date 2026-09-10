@@ -7,7 +7,7 @@ bounded batches, without a long-lived model coordinator. Bash starts a worker,
 waits for its one-word result, then starts the next. The worker understands the
 roadmap; the shell never reads, parses, counts, or rewrites its Markdown.
 
-Version **0.2.0**. Bash 3.2+, standard Unix tools, and an installed/authenticated
+Version **0.2.1**. Bash 3.2+, standard Unix tools, and an installed/authenticated
 Codex CLI. Intended for local Git checkouts on macOS/Linux. No Python, jq, database,
 MCP server, task registry, generated IDs, parallel workers or extra worktrees.
 
@@ -45,6 +45,7 @@ From the target project, with the script in an installed plugin or repository cl
 ```sh
 RUNNER=/absolute/path/to/roadmap-runner/skills/roadmap-runner/scripts/run-roadmap.sh
 
+bash "$RUNNER" version                           # version and installed script path
 bash "$RUNNER" /absolute/project/roadmap.md        # foreground; original invocation
 bash "$RUNNER" start /absolute/project/roadmap.md  # launch and return
 bash "$RUNNER" status                            # read the global process record
@@ -90,6 +91,28 @@ the shell deliberately does not audit completion, enforce checkbox-only diffs, i
 dependencies or count checked boxes. Those responsibilities belong to the worker
 and normal code review. No-op or false completion cannot be detected by this design.
 
+## Validation environment blockers
+
+A denied database/shared-memory/socket operation is not fixed by a fresh model.
+The worker must preserve partial code, leave its validation-dependent checkbox
+unchecked, and return `blocked` (exit 75) when no independent local work remains.
+`retry` is only for work that can progress with existing permissions. A failed SQL
+assertion is different from an unavailable test environment. The shell does not
+parse error text or guess which one occurred; classification remains worker-owned.
+
+Workers now check relevant validation prerequisites before substantial edits and
+report the specific missing capability in the log. They must not skip the test,
+claim `local`/`complete`, or silently broaden permissions to escape a local blocker.
+This fix does not grant PostgreSQL System V IPC access through an OS sandbox.
+
+`version`/`--version` reports the exact installed script without starting Codex.
+`status` distinguishes `installed_version`/`installed_script` from the last run's
+saved `version`/`script`. Launch receipts and run log boundaries identify the version.
+An `RR-...` run with per-project `.codex/roadmap-runs/` logs was started by the legacy
+runner, even if a newer checkout now exists. Update the actual cached plugin and
+start a fresh task; an already running process does not hot-reload an update.
+See [sandbox and upgrade troubleshooting](docs/troubleshooting.md) for recovery.
+
 ## One global process record
 
 The only persistent process-state file is:
@@ -99,7 +122,7 @@ The only persistent process-state file is:
 ```
 
 It contains the roadmap path, workspace, supervisor PID, worker process-group ID,
-batch number, status and model. `CODEX_HOME` overrides `~/.codex`. The runner writes
+batch number, status, model, runner version and script path. `CODEX_HOME` overrides `~/.codex`. The runner writes
 it by atomic rename; it is data, never executable shell configuration. The worker
 does not edit it. There is no task queue or per-task state in this file.
 
