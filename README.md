@@ -20,6 +20,7 @@ lockfile, retry protocol, subagent pool, or Git-repository assumption.
 ## Requirements
 
 - Bash
+- Python 3
 - Codex CLI installed and authenticated
 - GNU `timeout`
   - Linux usually provides `timeout`
@@ -42,7 +43,7 @@ Example:
 ```sh
 cd /path/to/workspace
 
-bash /path/to/roadmap-runner/roadmap-runner.sh \\
+bash /path/to/roadmap-runner/roadmap-runner.sh \
   docs/roadmap.md
 ```
 
@@ -96,22 +97,31 @@ forever.
 
 ## Codex configuration
 
-The runner intentionally does **not** force an approval policy. In particular it
-does not set `approval_policy=never`, because that can prevent configured MCP
-tools from requesting the approvals they need.
-
-The worker uses:
+The runner uses full access with no approval prompts:
 
 ```text
 codex exec
---sandbox workspace-write
+--dangerously-bypass-approvals-and-sandbox
 --skip-git-repo-check
 --ephemeral
+--json
 --cd "$(pwd)"
 ```
 
-Your existing Codex/MCP configuration remains responsible for approvals and tool
-access.
+Codex can run commands outside the workspace without requesting approval.
+Your configured model and MCP servers remain available.
+
+Terminal output shows iteration status, assistant summaries, and errors. Command
+output and MCP payloads are omitted. On a nonzero exit, the runner also shows the
+last 40 lines of Codex stderr. Temporary stderr files are removed when the runner
+exits.
+
+Press Ctrl-C once to stop the loop and its active process tree. Processes get
+three seconds to stop before remaining captured processes are killed. The loop
+exits with code 130 and does not start another iteration. Processes that already
+detached and were reparented are outside this cleanup boundary.
+
+Keep `roadmap-runner.sh` and `roadmap-run.py` together when copying the runner.
 
 Optional overrides:
 
@@ -160,3 +170,14 @@ fresh Codex
         ↓
 Status: COMPLETE
 ```
+
+## Tests
+
+Run the process checks without calling a model:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+```
+
+The tests use a mock Codex executable and cover completion, failure, timeout
+continuation, quiet output, and Ctrl-C cleanup through a pseudoterminal.

@@ -101,7 +101,8 @@ EOF
 
 CODEX_ARGS=(
   exec
-  --sandbox workspace-write
+  --dangerously-bypass-approvals-and-sandbox
+  --json
   --skip-git-repo-check
   --ephemeral
   --cd "$WORKDIR"
@@ -114,6 +115,29 @@ fi
 if [[ -n "${ROADMAP_EFFORT:-}" ]]; then
   CODEX_ARGS+=(-c "model_reasoning_effort=\"$ROADMAP_EFFORT\"")
 fi
+
+command -v python3 >/dev/null 2>&1 || {
+  echo "roadmap-runner: Python 3 is required." >&2
+  exit 1
+}
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/roadmap-runner.XXXXXX")" || exit 1
+RUNNER_PID=""
+trap 'rm -rf -- "$RUN_TMP"' EXIT
+stop_loop() {
+  local code="$1"
+  trap '' INT TERM
+  echo
+  echo "Stopping Roadmap Runner..."
+  if [[ -n "$RUNNER_PID" ]]; then
+    kill -TERM "$RUNNER_PID" 2>/dev/null || true
+    wait "$RUNNER_PID" 2>/dev/null || true
+  fi
+  exit "$code"
+}
+trap 'stop_loop 130' INT
+trap 'stop_loop 143' TERM
 
 iteration=0
 
@@ -133,9 +157,16 @@ while true; do
   iteration=$((iteration + 1))
   echo "===== iteration $iteration | $(date '+%Y-%m-%d %H:%M:%S') ====="
 
-  "$TIMEOUT_BIN" --signal=TERM --kill-after=2m "$TIME_LIMIT"     "$CODEX_BIN" "${CODEX_ARGS[@]}" "$PROMPT"
-
+  python3 "$SCRIPT_DIR/roadmap-run.py" "$RUN_TMP/stderr" \
+    "$TIMEOUT_BIN" --signal=TERM --kill-after=2m "$TIME_LIMIT" \
+    "$CODEX_BIN" "${CODEX_ARGS[@]}" "$PROMPT" &
+  RUNNER_PID=$!
+  wait "$RUNNER_PID"
   code=$?
+  RUNNER_PID=""
+  if [[ $code -ne 0 && -s "$RUN_TMP/stderr" ]]; then
+    tail -n 40 "$RUN_TMP/stderr" >&2
+  fi
 
   case "$code" in
     0)
