@@ -16,9 +16,13 @@ assert args[:5] == ['exec', '--dangerously-bypass-approvals-and-sandbox', '--jso
 assert args[args.index('--cd') + 1] == os.getcwd(), args
 assert args[args.index('--model') + 1] == 'test-model', args
 assert 'model_reasoning_effort="high"' in args, args
-assert 'Resume the handoff' in args[-1]
+assert 'Resume the current handoff' in args[-1]
 assert 'Revisit a deferred gate only' in args[-1]
 assert 'no remaining gate or prerequisite can materially' in args[-1]
+assert 'Size and difficulty require decomposition, not deferral' in args[-1]
+assert 'original parent ID' in args[-1]
+assert 'Checked-item status log' in args[-1]
+assert 'Carry forward valid prior evidence' in args[-1]
 assert '- [ ]' in args[-1] and '- [x]' in args[-1]
 assert 'Set Status: BLOCKED' in args[-1]
 print(json.dumps({'type':'item.completed','item':{'type':'command_execution','aggregated_output':'HIDDEN_PAYLOAD'}}), flush=True)

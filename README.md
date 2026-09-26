@@ -68,8 +68,17 @@ The shell stops when it sees `Status: COMPLETE`.
 
 Use Markdown checkboxes for the roadmap's acceptance gates. Each iteration names
 one unchecked gate and advances it through implementation and verification. A
-checked prerequisite does not close its parent gate. The worker maintains a compact
-Current handoff near the top so the next session resumes the unfinished gate.
+checked prerequisite does not close its parent gate. Large gates are divided into
+ordered, independently verifiable child checkboxes; size is not a reason to skip.
+Runs may add follow-up checkboxes only to satisfy original requirements, with the
+parent ID, acceptance criterion, result and verification recorded. Unrelated work
+stays outside the actionable checklist.
+
+The roadmap retains a checked-item status log with each checked ID, its current
+implementation/verification/deployment status, evidence and review date. New checks,
+status changes and reopenings get dated entries; unchanged valid evidence is reused.
+The worker maintains a compact Current handoff near the top so the next session
+resumes the unfinished gate or its next child.
 
 A blocked gate stays unchecked with its reason and unblock condition recorded.
 The worker continues another ready gate and revisits deferred work when its
