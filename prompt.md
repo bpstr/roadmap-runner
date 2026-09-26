@@ -51,15 +51,10 @@ Implement and verify:
   pass. Distinguish prepared tests, actual integration and deployed behavior.
 - Use existing authorization for tests and side effects. An unchecked deployment
   or live-provider gate does not itself authorize publication or spending.
-- Do not use implementation subagents or delegate roadmap work to other agents.
-  Approval auto-review used by the runner is not a work delegation mechanism.
-- Use Git only inside the applicable repositories.
+- Do not use subagents. Use Git only inside the applicable repositories.
 
 Update the roadmap and stop this invocation:
 
-- The roadmap is the durable progress-tracking and handoff artifact. You may edit
-  it as needed to accurately preserve progress, decomposition, evidence, blockers
-  and the next action for a completely fresh session.
 - Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
   acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
 - Maintain a compact Checked-item status log in the roadmap for every existing
@@ -83,9 +78,6 @@ Update the roadmap and stop this invocation:
   verification work. One blocked gate, a failed check, a hard task or one
   no-progress attempt is not enough: diagnose and repair, or move to a genuinely
   ready gate with the deferral recorded. Avoid repeatedly running unchanged checks.
-- Treat Status: BLOCKED as a last-resort global dead-end, not a normal per-task
-  outcome. Do not set it while ANY other remaining gate or prerequisite can make
-  material progress with current authorization and resources.
 - Set Status: BLOCKED only when no remaining gate or prerequisite can materially
   advance within existing authorization and available resources. Record every
   remaining gate blocking dependency and the exact external unblock action.
