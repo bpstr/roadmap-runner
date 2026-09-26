@@ -16,8 +16,16 @@ assert args[:5] == ['exec', '--dangerously-bypass-approvals-and-sandbox', '--jso
 assert args[args.index('--cd') + 1] == os.getcwd(), args
 assert args[args.index('--model') + 1] == 'test-model', args
 assert 'model_reasoning_effort="high"' in args, args
+assert 'Resume the handoff' in args[-1]
+assert 'Revisit a deferred gate only' in args[-1]
+assert 'no remaining gate or prerequisite can materially' in args[-1]
+assert '- [ ]' in args[-1] and '- [x]' in args[-1]
+assert 'Set Status: BLOCKED' in args[-1]
 print(json.dumps({'type':'item.completed','item':{'type':'command_execution','aggregated_output':'HIDDEN_PAYLOAD'}}), flush=True)
 mode = os.environ['TEST_MODE']
+if mode == 'blocked':
+ pathlib.Path('nested/roadmap with spaces.md').write_text('Status: BLOCKED\\n')
+ sys.exit(0)
 if mode == 'interrupt':
  signal.signal(signal.SIGTERM, signal.SIG_IGN)
  child = subprocess.Popen([sys.executable, '-c', 'import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); time.sleep(60)'], start_new_session=True)
@@ -50,22 +58,32 @@ class RunnerTests(unittest.TestCase):
         self.command = ['bash', str(ROOT / 'roadmap-runner.sh'), 'nested/roadmap with spaces.md']
 
     def test_outcomes(self):
-        for mode in ('success', 'failure', 'timeout'):
+        for mode in ('success', 'failure', 'timeout', 'blocked'):
             with self.subTest(mode=mode):
                 (self.base / 'nested/roadmap with spaces.md').write_text('Status: IN_PROGRESS\n')
                 result = subprocess.run(self.command, cwd=self.base,
                                         env=dict(self.env, TEST_MODE=mode), capture_output=True, text=True, timeout=10)
-                self.assertEqual(result.returncode, 2 if mode == 'failure' else 0, result.stderr)
+                self.assertEqual(result.returncode, 2 if mode == 'failure' else 3 if mode == 'blocked' else 0, result.stderr)
                 self.assertNotIn('HIDDEN_PAYLOAD', result.stdout + result.stderr)
                 if mode == 'failure':
                     self.assertIn('EXPECTED_ERROR', result.stderr)
                     self.assertIn('EXPECTED_STDERR', result.stderr)
+                    self.assertNotIn('iteration 2', result.stdout)
+                elif mode == 'blocked':
+                    self.assertIn('Roadmap blocked', result.stderr)
                     self.assertNotIn('iteration 2', result.stdout)
                 else:
                     self.assertIn('SUMMARY', result.stdout)
                 if mode == 'timeout':
                     self.assertIn('iteration 2', result.stdout)
                 self.assertEqual(list(self.base.glob('roadmap-runner.*')), [])
+
+    def test_already_blocked(self):
+        (self.base / 'nested/roadmap with spaces.md').write_text('Status: BLOCKED\n')
+        result = subprocess.run(self.command, cwd=self.base, env=self.env,
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 3)
+        self.assertNotIn('===== iteration', result.stdout)
 
     def test_terminal_ctrl_c(self):
         pid, master = pty.fork()

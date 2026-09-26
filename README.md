@@ -66,6 +66,26 @@ Status: COMPLETE
 
 The shell stops when it sees `Status: COMPLETE`.
 
+Use Markdown checkboxes for the roadmap's acceptance gates. Each iteration names
+one unchecked gate and advances it through implementation and verification. A
+checked prerequisite does not close its parent gate. The worker maintains a compact
+Current handoff near the top so the next session resumes the unfinished gate.
+
+A blocked gate stays unchecked with its reason and unblock condition recorded.
+The worker continues another ready gate and revisits deferred work when its
+condition changes. Difficulty alone is not a reason to defer a gate.
+
+Only when no remaining gate or prerequisite can advance within existing
+authorization and available resources does the worker set:
+
+```md
+Status: BLOCKED
+```
+
+The runner stops with exit code 3. Resolve the recorded blocker and change the
+status to `IN_PROGRESS` before restarting. One blocked item or failed check does
+not stop the whole roadmap.
+
 ## Fresh sessions
 
 Every iteration starts a new ephemeral `codex exec` invocation. Sessions are not
