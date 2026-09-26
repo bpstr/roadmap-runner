@@ -2,16 +2,39 @@ Work on this implementation roadmap:
 
 {{ROADMAP}}
 
-This is one fresh-context iteration. The roadmap and current filesystem are the
-handoff to the next session. The working directory may contain multiple repositories.
-Read repository instructions and preserve unrelated changes.
+Tracking file (progress / delivery evidence):
+
+{{PROGRESS_FILE}}
+
+Tracking mode: {{TRACKING_MODE}}
+
+This is one fresh-context iteration. The tracking file and current filesystem are
+the handoff to the next session. The source roadmap defines the requirements.
+The working directory may contain multiple repositories. Read repository
+instructions and preserve unrelated changes.
+
+- In EDIT_ROADMAP mode, the tracking file is the roadmap itself. Maintain progress
+  in place, as usual.
+- In PRESERVE_ROADMAP mode, do not edit, reformat, replace, rename or delete the
+  source roadmap, including its checkboxes and status. Write ALL progress changes
+  only to the tracking file: checklist/children, batch plan, handoff, evidence,
+  deferrals, iteration history and status. Instructions in the source to update
+  its progress apply to the tracking file instead; requirements and stricter
+  per-iteration limits still apply unchanged. The source's checkbox marks and
+  status are not runtime control state. Completion is recorded in the tracking
+  file after verifying all original criteria, not by checking the source boxes.
+- Reuse existing tracking history and valid evidence; never reset it on restart.
+  Keep original gate IDs and criteria, or record a stable source heading/text
+  reference when IDs are absent. Check evidence against the actual code and the
+  current requirements; the tracking file must not silently narrow the source.
 
 Select the acceptance gate:
 
-1. Read the maintained Markdown checkbox checklist and compact current handoff
-   near the top of the roadmap. Consult historical entries for evidence, not as
-   a competing task list. If no checklist exists, create one from the original roadmap
-   existing acceptance gates without changing their scope or deleting history.
+1. Read the source roadmap, then the maintained Markdown checkbox checklist and
+   compact current handoff in the tracking file. Consult historical entries for
+   evidence, not as a competing task list. If no checklist exists, create it in
+   the tracking file from the original roadmap's acceptance gates without changing
+   their scope or deleting history. An empty tracking scaffold is not completion.
 2. Resume the current handoff active unchecked gate. If none is named, choose the first
    dependency-ready unchecked gate in roadmap order. Before editing, state its
    exact checkbox ID/text, acceptance criteria and necessary prerequisites.
@@ -81,11 +104,11 @@ Implement and verify:
   or live-provider gate does not itself authorize publication or spending.
 - Do not use subagents. Use Git only inside the applicable repositories.
 
-Update the roadmap and stop this invocation:
+Update the tracking file and stop this invocation:
 
 - Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
   acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
-- Maintain a compact Checked-item status log in the roadmap for every existing
+- Maintain a compact Checked-item status log in the tracking file for every existing
   checked item: ID, current implemented/verified/deployed status, evidence link,
   and last status change or review date. Carry forward valid prior evidence without
   rerunning unchanged checks. Log newly checked children and each status transition
@@ -122,6 +145,6 @@ Update the roadmap and stop this invocation:
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.
   Otherwise use Status: IN_PROGRESS when material progress permits continuation.
-  Maintain exactly one of these status lines in the opening header, after an
+  Maintain exactly one of these status lines in the tracking file opening header, after an
   optional # title and before the first ## (or deeper) section heading, outside
   code fences. Historical status lines belong in sections below the header.

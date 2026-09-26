@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { prepareTracking, renderPrompt } from "../lib/tracking.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
   capacityRetrySettings,
@@ -29,6 +30,7 @@ Usage:
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
+  --progress-file <path> Track progress separately; keep the source roadmap unchanged
   --timeout <duration>   Per-run timeout. Default: 2h
   --model <model>        Optional client model override
   --effort <level>       Optional reasoning effort override (Codex)
@@ -38,6 +40,7 @@ Options:
 
 Environment:
   ROADMAP_CLIENT
+  ROADMAP_PROGRESS_FILE
   ROADMAP_TIMEOUT
   ROADMAP_MODEL
   ROADMAP_EFFORT
@@ -111,12 +114,14 @@ async function main() {
     console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
   }
 
-  const prompt = PROMPT_TEMPLATE.replaceAll("{{ROADMAP}}", roadmap);
+  const tracking = prepareTracking(roadmap, options.progressFile);
+  const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file);
 
   console.log(`Roadmap Runner ${PACKAGE.version}`);
   console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
+  if (options.progressFile) console.log(`Progress:  ${tracking.file} (source roadmap preserved)`);
   console.log(`Timeout:   ${options.timeout} per run`);
   console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
   console.log("Press Ctrl-C to stop.");
@@ -127,7 +132,8 @@ async function main() {
   let retryDelay = options.capacity.delayMs;
 
   while (true) {
-    const contents = fs.readFileSync(roadmap, "utf8");
+    tracking.assertUnchanged();
+    const contents = fs.readFileSync(tracking.file, "utf8");
     const status = roadmapStatus(contents);
 
     if (status === "complete") {
@@ -154,6 +160,7 @@ async function main() {
       timeoutMs,
     });
 
+    tracking.assertUnchanged();
     if (result.interrupted) process.exit(130);
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
 

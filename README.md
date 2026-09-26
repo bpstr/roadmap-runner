@@ -154,7 +154,8 @@ Unexpected client failures stop the runner rather than retrying forever.
 
 ## Roadmap progress tracking
 
-Roadmap modification is intentional.
+By default, roadmap modification is intentional. Use `--progress-file` to keep
+the source roadmap unchanged and track delivery separately (see below).
 
 The roadmap is both the implementation specification and the durable state shared between fresh sessions. The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
 
@@ -200,6 +201,52 @@ verifies orchestration, not a live model's compliance with the prompt.
 
 Resolve the recorded external blocker, return the roadmap to `Status: IN_PROGRESS`, and start the same command again.
 
+## Preserve the original roadmap
+
+Opt into a separate progress or delivery-evidence file:
+
+```sh
+roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md
+# Equivalent environment setting:
+ROADMAP_PROGRESS_FILE=docs/delivery-evidence.md roadmap-runner docs/roadmap.md
+```
+
+Paths are resolved from the current workspace, not from the roadmap directory.
+The CLI option overrides the environment setting. With neither set, the existing
+in-place roadmap workflow is unchanged.
+
+In this mode the roadmap is the read-only requirements source. The worker reads
+both files, but puts its checklist, child tasks, batch plan, handoff, verification
+evidence, deferrals, iteration history and status only in the progress file.
+Original gate IDs/criteria and stricter run limits remain authoritative; source
+instructions to update progress are redirected to this separate file.
+
+A missing progress file (and its parent directories) is created with an
+`IN_PROGRESS` scaffold. The worker derives its checklist from the source; the
+scaffold is not proof of completion. An existing evidence file is reused without
+being truncated or reset. Restart with the same two paths to resume.
+
+Only the progress file's opening-header status controls continuation:
+`COMPLETE` exits successfully and `BLOCKED` exits with code 3. The roadmap's
+own status/checkboxes are ignored as runtime state and may stay unchanged even
+when delivery is finished. The same header format rules apply. To unblock work,
+update the progress file, not the source roadmap.
+
+The runner rejects a progress path that resolves to the source itself, including
+symlink/hard-link aliases. It checks the source's byte hash before each iteration
+and after each worker returns, including failed or timed-out runs. A detected
+change, deletion or unreadable source stops the runner without starting another
+worker or silently restoring files. Inspect the change yourself; another tool
+or a human may have made it.
+
+This is an instruction plus an iteration-boundary integrity check, **not an OS
+write sandbox**: approval-free clients retain their filesystem permissions, and
+transient edits between checks cannot be prevented. Source hashes are captured
+for the current runner invocation only. Use one evidence file per roadmap; when
+requirements change between invocations, reconcile existing evidence and return
+its status to `IN_PROGRESS`, or choose a new progress file. An existing `COMPLETE`
+remains an agent assertion, not an automatic check against revised requirements.
+
 ## Fresh contexts
 
 Sessions are never resumed.
@@ -225,6 +272,7 @@ The worker prompt explicitly disables implementation subagents. Long throughput 
 roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
+--progress-file <path> separate progress/evidence file; preserve the source
 --timeout <duration>   default: 2h
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
@@ -237,6 +285,7 @@ Environment equivalents:
 
 ```text
 ROADMAP_CLIENT
+ROADMAP_PROGRESS_FILE
 ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
@@ -315,6 +364,16 @@ example-output/one.txt
 example-output/two.txt
 example-output/three.txt
 ```
+
+The same example can exercise preserved-source mode in the disposable workspace:
+
+```sh
+roadmap-runner roadmap.md --progress-file delivery-evidence.md
+```
+
+A compliant run still takes three worker iterations, but the original three
+checkboxes stay unchanged and completion is recorded in `delivery-evidence.md`.
+The separate-file integration test checks source bytes as well as iteration count.
 
 The automated test does **not** call a live model. It runs the real Roadmap Runner
 process against `test/fixtures/mock-codex.js`, which completes exactly one checkbox
