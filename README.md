@@ -227,6 +227,53 @@ No Python, GNU `timeout`, jq, daemon, database, task registry, or plugin install
 
 The secondary client adapters assume the same native CLI authentication approach as Campfire.
 
+## Example roadmap
+
+The repository includes a deliberately tiny three-step roadmap:
+
+```text
+examples/three-iteration-roadmap.md
+```
+
+Its special test rule is:
+
+> each fresh runner invocation must process exactly one unchecked checkbox.
+
+The roadmap starts with exactly three unchecked tasks, so a correct run must produce
+exactly three worker iterations before reaching `Status: COMPLETE`.
+
+For a live smoke test, copy it into a disposable workspace before running it:
+
+```sh
+tmp="$(mktemp -d)"
+cp examples/three-iteration-roadmap.md "$tmp/roadmap.md"
+cd "$tmp"
+
+roadmap-runner roadmap.md
+```
+
+A successful live run should show exactly:
+
+```text
+iteration 1 -> EX-1
+iteration 2 -> EX-2
+iteration 3 -> EX-3
+Status: COMPLETE
+```
+
+and create:
+
+```text
+example-output/one.txt
+example-output/two.txt
+example-output/three.txt
+```
+
+The automated test does **not** call a live model. It runs the real Roadmap Runner
+process against `test/fixtures/mock-codex.js`, which completes exactly one checkbox
+per invocation. The integration test asserts that the runner launches exactly three
+iterations and only stops after the third checkbox is complete.
+
 ## Development
 
 ```sh
