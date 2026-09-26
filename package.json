@@ -7,7 +7,7 @@
     "roadmap-runner": "./bin/roadmap-runner.js"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --check bin/roadmap-runner.js"
   },
   "engines": {
     "node": ">=18"
@@ -29,6 +29,9 @@
   },
   "license": "MIT",
   "files": [
-    "bin"
+    "bin",
+    "prompt.md",
+    "README.md",
+    "LICENSE"
   ]
 }
