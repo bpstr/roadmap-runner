@@ -1,38 +1,45 @@
 #!/usr/bin/env node
 
-import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
+import {
+  commandExists,
+  parseArgs,
+  parseDuration,
+  roadmapStatus,
+  runClient,
+} from "../lib/runner.js";
 
-const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PACKAGE = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "package.json"), "utf8"));
-const VERSION = PACKAGE.version;
-const PROMPT_TEMPLATE = fs.readFileSync(path.join(PACKAGE_ROOT, "prompt.md"), "utf8");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+const PROMPT_TEMPLATE = fs.readFileSync(path.join(ROOT, "prompt.md"), "utf8");
 
-function printHelp() {
-  console.log(`Roadmap Runner ${VERSION}
+function help() {
+  console.log(`Roadmap Runner ${PACKAGE.version}
 
 Usage:
   roadmap-runner <roadmap-file> [options]
 
-Run from the workspace Codex should operate in. The current directory is always
-the Codex working directory. The roadmap may be relative to it or absolute.
-
 Options:
-  --timeout <duration>   Per-Codex-run limit. Default: 2h
-  --model <model>        Override the configured Codex model
-  --effort <level>       Override model reasoning effort
-  --codex <path>         Codex executable. Default: codex
+  --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
+  --timeout <duration>   Per-run timeout. Default: 2h
+  --model <model>        Optional client model override
+  --effort <level>       Optional reasoning effort override (Codex)
+  --client-bin <path>    Override the selected client executable
   --help                 Show help
   --version              Show version
 
 Environment:
+  ROADMAP_CLIENT
   ROADMAP_TIMEOUT
   ROADMAP_MODEL
   ROADMAP_EFFORT
-  ROADMAP_CODEX
+  ROADMAP_CLIENT_BIN
+
+The current directory is always the workspace.
 `);
 }
 
@@ -41,230 +48,77 @@ function fail(message, code = 1) {
   process.exit(code);
 }
 
-function parseArgs(argv) {
-  const options = {
-    timeout: process.env.ROADMAP_TIMEOUT || "2h",
-    model: process.env.ROADMAP_MODEL || "",
-    effort: process.env.ROADMAP_EFFORT || "",
-    codex: process.env.ROADMAP_CODEX || "codex",
-    roadmap: "",
-  };
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-
-    if (arg === "--help" || arg === "-h") {
-      printHelp();
-      process.exit(0);
-    }
-    if (arg === "--version" || arg === "-v") {
-      console.log(VERSION);
-      process.exit(0);
-    }
-
-    const takeValue = (name) => {
-      i += 1;
-      if (i >= argv.length) fail(`${name} requires a value`, 64);
-      return argv[i];
-    };
-
-    if (arg === "--timeout") {
-      options.timeout = takeValue("--timeout");
-    } else if (arg === "--model") {
-      options.model = takeValue("--model");
-    } else if (arg === "--effort") {
-      options.effort = takeValue("--effort");
-    } else if (arg === "--codex") {
-      options.codex = takeValue("--codex");
-    } else if (arg.startsWith("-")) {
-      fail(`unknown option: ${arg}`, 64);
-    } else if (!options.roadmap) {
-      options.roadmap = arg;
-    } else {
-      fail("only one roadmap file may be supplied", 64);
-    }
+async function main() {
+  const argv = process.argv.slice(2);
+  if (argv.includes("--help") || argv.includes("-h")) {
+    help();
+    return;
   }
-
-  if (!options.roadmap) {
-    printHelp();
-    process.exit(64);
-  }
-
-  return options;
-}
-
-function parseDuration(value) {
-  const match = /^([1-9][0-9]*)(ms|s|m|h)?$/i.exec(value);
-  if (!match) fail(`invalid timeout: ${value}`);
-  const amount = Number(match[1]);
-  const unit = (match[2] || "s").toLowerCase();
-  const scale = { ms: 1, s: 1000, m: 60_000, h: 3_600_000 }[unit];
-  const result = amount * scale;
-  if (!Number.isSafeInteger(result)) fail(`timeout is too large: ${value}`);
-  return result;
-}
-
-function roadmapStatus(file) {
-  let contents;
-  try {
-    contents = fs.readFileSync(file, "utf8");
-  } catch (error) {
-    fail(`cannot read roadmap: ${error.message}`);
-  }
-
-  if (/^Status:\s*BLOCKED\s*$/mi.test(contents)) return "blocked";
-  if (/^Status:\s*COMPLETE\s*$/mi.test(contents)) return "complete";
-  return "in-progress";
-}
-
-function workerPrompt(roadmap) {
-  return PROMPT_TEMPLATE.replaceAll("{{ROADMAP}}", roadmap);
-}
-
-function codexArgs(options, workdir) {
-  const args = [
-    "exec",
-    "--approve-for-me",
-    "--skip-git-repo-check",
-    "--ephemeral",
-    "--cd",
-    workdir,
-  ];
-
-  if (options.model) args.push("--model", options.model);
-  if (options.effort) {
-    args.push("-c", `model_reasoning_effort="${options.effort}"`);
-  }
-
-  args.push(workerPrompt(options.roadmap));
-  return args;
-}
-
-function commandExists(command) {
-  if (path.isAbsolute(command) || command.includes(path.sep)) {
-    return fs.existsSync(command);
-  }
-
-  const probe = process.platform === "win32"
-    ? spawnSync("where", [command], { stdio: "ignore" })
-    : spawnSync("sh", ["-c", 'command -v "$1" >/dev/null 2>&1', "sh", command], { stdio: "ignore" });
-  return probe.status === 0;
-}
-
-function terminateTree(child, signal = "SIGTERM") {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
-
-  if (process.platform === "win32") {
-    const args = ["/PID", String(child.pid), "/T"];
-    if (signal === "SIGKILL") args.push("/F");
-    spawnSync("taskkill", args, { stdio: "ignore" });
+  if (argv.includes("--version") || argv.includes("-v")) {
+    console.log(PACKAGE.version);
     return;
   }
 
+  let options;
   try {
-    process.kill(-child.pid, signal);
-  } catch {
-    try {
-      child.kill(signal);
-    } catch {
-      // Process already exited.
-    }
+    options = parseArgs(argv);
+  } catch (error) {
+    fail(error.message, error.exitCode || 1);
   }
-}
 
-async function runCodex(options, workdir, timeoutMs) {
-  return await new Promise((resolve) => {
-    const child = spawn(options.codex, codexArgs(options, workdir), {
-      cwd: workdir,
-      stdio: "inherit",
-      detached: process.platform !== "win32",
-      env: process.env,
-    });
+  if (!options.roadmap) {
+    help();
+    process.exit(64);
+  }
 
-    let timedOut = false;
-    let interrupted = false;
-    let hardKillTimer = null;
-
-    const clearHardKill = () => {
-      if (hardKillTimer) clearTimeout(hardKillTimer);
-    };
-
-    const scheduleHardKill = (delayMs) => {
-      clearHardKill();
-      hardKillTimer = setTimeout(() => terminateTree(child, "SIGKILL"), delayMs);
-      hardKillTimer.unref();
-    };
-
-    const onInterrupt = () => {
-      interrupted = true;
-      console.log("\nStopping Roadmap Runner...");
-      terminateTree(child, "SIGTERM");
-      scheduleHardKill(3000);
-    };
-
-    process.once("SIGINT", onInterrupt);
-    process.once("SIGTERM", onInterrupt);
-
-    const timeoutTimer = setTimeout(() => {
-      timedOut = true;
-      terminateTree(child, "SIGTERM");
-      scheduleHardKill(120_000);
-    }, timeoutMs);
-
-    const cleanup = () => {
-      clearTimeout(timeoutTimer);
-      clearHardKill();
-      process.removeListener("SIGINT", onInterrupt);
-      process.removeListener("SIGTERM", onInterrupt);
-    };
-
-    child.once("error", (error) => {
-      cleanup();
-      resolve({ code: 1, error, timedOut: false, interrupted });
-    });
-
-    child.once("exit", (code, signal) => {
-      cleanup();
-      resolve({
-        code: code ?? (signal ? 1 : 0),
-        signal,
-        timedOut,
-        interrupted,
-      });
-    });
-  });
-}
-
-async function main() {
-  const options = parseArgs(process.argv.slice(2));
   const workdir = process.cwd();
-
-  options.roadmap = path.isAbsolute(options.roadmap)
+  const roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
     : path.resolve(workdir, options.roadmap);
 
-  if (!fs.existsSync(options.roadmap) || !fs.statSync(options.roadmap).isFile()) {
-    fail(`roadmap not found: ${options.roadmap}`);
+  if (!fs.existsSync(roadmap) || !fs.statSync(roadmap).isFile()) {
+    fail(`roadmap not found: ${roadmap}`);
   }
 
-  if (!commandExists(options.codex)) {
-    fail(`Codex executable not found: ${options.codex}`);
+  let timeoutMs;
+  try {
+    timeoutMs = parseDuration(options.timeout);
+  } catch (error) {
+    fail(error.message, 64);
   }
 
-  const timeoutMs = parseDuration(options.timeout);
+  const probe = buildClientInvocation({
+    client: options.client,
+    executable: options.executable,
+    prompt: "",
+    workdir,
+    model: options.model,
+    effort: options.effort,
+  });
 
-  console.log(`Roadmap Runner ${VERSION}`);
+  if (!commandExists(probe.command)) {
+    fail(`${options.client} executable not found: ${probe.command}`);
+  }
+
+  if (!probe.approvalFree) {
+    console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
+  }
+
+  const prompt = PROMPT_TEMPLATE.replaceAll("{{ROADMAP}}", roadmap);
+
+  console.log(`Roadmap Runner ${PACKAGE.version}`);
+  console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
-  console.log(`Roadmap:   ${options.roadmap}`);
-  console.log(`Timeout:   ${options.timeout} per Codex run`);
-  console.log("Approvals: automatic review (--approve-for-me)");
+  console.log(`Roadmap:   ${roadmap}`);
+  console.log(`Timeout:   ${options.timeout} per run`);
   console.log("Press Ctrl-C to stop.");
   console.log();
 
   let iteration = 0;
 
   while (true) {
-    const status = roadmapStatus(options.roadmap);
+    const contents = fs.readFileSync(roadmap, "utf8");
+    const status = roadmapStatus(contents);
 
     if (status === "complete") {
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
@@ -272,20 +126,25 @@ async function main() {
     }
 
     if (status === "blocked") {
-      console.error("Roadmap globally blocked; resolve the recorded external blockers before restarting.");
+      console.error("Roadmap globally blocked; resolve the recorded blocker before restarting.");
       process.exit(3);
     }
 
     iteration += 1;
     console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
 
-    const result = await runCodex(options, workdir, timeoutMs);
+    const result = await runClient({
+      client: options.client,
+      executable: options.executable,
+      prompt,
+      workdir,
+      model: options.model,
+      effort: options.effort,
+      timeoutMs,
+    });
 
     if (result.interrupted) process.exit(130);
-
-    if (result.error) {
-      fail(`failed to start Codex: ${result.error.message}`);
-    }
+    if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
 
     if (result.timedOut) {
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
@@ -294,7 +153,7 @@ async function main() {
     }
 
     if (result.code !== 0) {
-      fail(`Codex exited with code ${result.code}; stopping.`, result.code || 1);
+      fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);
     }
 
     console.log(`Iteration ${iteration} completed.`);
