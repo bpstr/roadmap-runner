@@ -40,10 +40,10 @@ The roadmap can be relative to that directory or an absolute path.
 Example:
 
 ```sh
-cd /Users/bpstr/Github/assign
+cd /path/to/workspace
 
-bash ~/Github/roadmap-runner/roadmap-runner.sh \
-  architecture/roadmap/realtime-websocket-presence.md
+bash /path/to/roadmap-runner/roadmap-runner.sh \\
+  docs/roadmap.md
 ```
 
 The workspace may contain multiple Git repositories. Roadmap Runner does not try
