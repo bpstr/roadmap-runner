@@ -70,6 +70,22 @@ Supported adapters currently mirror the unattended invocation patterns already u
 
 Kimi is exposed because Campfire already has a working adapter, but its current adapter does not provide an explicit permission-bypass flag. The runner warns about that at startup.
 
+## Batch size
+
+The worker targets roughly 30 minutes of implementation per session, followed by
+verification and the roadmap handoff. Discovery and verification time are separate
+from that target; the per-run hard timeout still applies.
+
+A checkbox is a progress unit, not a session boundary. Runs group several related
+ready children under the same parent and continue within that group after a small
+child finishes. Checks run after the coding batch, with only failed or invalidated
+checks repeated after repairs. Runs can finish earlier when the parent closes or
+no related work is actionable. Explicit stricter roadmap run limits still apply.
+
+The dated handoff records approximate discovery, implementation and verification
+durations so repeated bootstrap overhead can be assessed. The target is prompt
+guidance; the runner does not impose a 30-minute forced termination.
+
 ## Continuous execution
 
 One outer process can run for many hours:

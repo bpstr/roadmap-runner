@@ -32,12 +32,20 @@ Select the acceptance gate:
 
 Implement and verify:
 
-- Complete one coherent acceptance gate or an explicit child task toward it,
-  including necessary cross-repository changes and integration checks. If a gate
-  is too large for one invocation, break it into ordered, independently verifiable
-  child checkboxes with stable IDs under the same parent. Select the next ready
-  child and finish it. Size and difficulty require decomposition, not deferral.
-  Stop after the selected coherent gate or child batch is complete.
+- Target roughly 30 minutes of implementation per invocation, excluding initial
+  discovery and final verification. This is a planning target, not a hard deadline
+  or a minimum to fill with unnecessary work. Plan several related ready child
+  tasks under one parent gate that share code, context and verification.
+- A checkbox is a progress unit, not a session boundary. After finishing a child,
+  continue the next related ready child in the same session until the planned
+  batch is complete or roughly 30 implementation minutes have elapsed. Finish
+  the current coherent coding unit, then validate and hand off; do not stop just
+  because one small checkbox is done or begin an unrelated major gate to fill time.
+- If a gate is too large, break it into ordered, independently verifiable child
+  checkboxes with stable IDs under the same parent. Complete a coherent group
+  per run. Size and difficulty require decomposition, not deferral. Stop earlier
+  if the parent gate closes, no related authorized work can advance, or a stricter
+  explicit roadmap run limit applies. Leave unfinished children for the handoff.
 - A local prerequisite or prepared component test does not close an end-to-end
   gate. Keep the parent unchecked until its full stated criteria pass; record
   prerequisite progress with child checkboxes under that parent. Child completion
@@ -48,8 +56,10 @@ Implement and verify:
   and verification. Keep scope, permissions and completion standards unchanged.
   Record unrelated opportunities separately as out of scope; do not add them to
   the actionable checklist or treat them as completion dependencies.
-- Finish the coding batch before validation. Reuse passing evidence for unchanged
-  code and environments; rerun only failed or invalidated checks after repairs.
+- Finish the selected coding batch before validation; do not run the same checks
+  after each child. Validate the completed batch once, collect related failures,
+  finish the repair batch, and rerun only failed or invalidated checks. Reuse
+  passing evidence for unchanged code and environments.
 - Inspect executed, passed, failed and skipped counts. A skipped check is not a
   pass. Distinguish prepared tests, actual integration and deployed behavior.
 - Use existing authorization for tests and side effects. An unchecked deployment
@@ -72,6 +82,10 @@ Update the roadmap and stop this invocation:
   results (including skips), deferred gates with unblock conditions, and the
   exact next ready checkbox. Preserve historical records below it. Continue the
   unfinished active gate unless its documented blocker makes another gate ready.
+- Record approximate discovery, implementation and verification durations plus
+  child tasks completed in the dated iteration record. Use observed timings or
+  label estimates; do not invent measurements. This makes bootstrap overhead
+  and batch size assessable across runs.
 - Summarize concrete changes and checks; explain any scope change. If no gate
   closed, identify the material prerequisite advanced and how it reduces the
   remaining work. Repeated rediscovery, extra notes or adjacent tests alone
