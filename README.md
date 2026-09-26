@@ -82,6 +82,15 @@ child finishes. Checks run after the coding batch, with only failed or invalidat
 checks repeated after repairs. Runs can finish earlier when the parent closes or
 no related work is actionable. Explicit stricter roadmap run limits still apply.
 
+Before coding, the worker records a Batch plan with the outcome, parent gate,
+related child IDs, shared setup, checks and exit criteria. Completing a child or
+adding a smaller follow-up does not redefine that outcome. Integration batches
+compose the required canonical harness first and reuse it across source families.
+
+Startup output and each worker prompt include the loaded prompt hash. This lets
+logs distinguish older cached instructions from current ones. The handoff includes
+the batch outcome and an explicit exit reason, particularly when ending early.
+
 The dated handoff records approximate discovery, implementation and verification
 durations so repeated bootstrap overhead can be assessed. The target is prompt
 guidance; the runner does not impose a 30-minute forced termination.

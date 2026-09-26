@@ -30,12 +30,27 @@ Select the acceptance gate:
    fresh contexts do not repeat discovery or silently forget the original gate.
    Resume it when ready; do not replace its criteria with smaller adjacent tests.
 
+5. Before coding, write a Batch plan in the current handoff: one concrete outcome,
+   original parent gate, related child IDs, shared harness/setup, combined checks
+   and explicit session exit criteria. Size this plan for roughly 30 minutes of
+   implementation. Newly discovered children remain steps toward this outcome;
+   completing one child cannot redefine the selected batch as finished.
+6. For integration work, compose the required canonical harness first, including
+   real middleware, transport and source families required by the selected proof.
+   Reuse it across related cases in the same session. If an essential boundary
+   remains prepared, carry that gap as unfinished batch work and address it before
+   final validation when feasible. A narrower prepared test is prerequisite
+   evidence, not a reason to defer the missing integration boundary indefinitely.
+
 Implement and verify:
 
 - Target roughly 30 minutes of implementation per invocation, excluding initial
   discovery and final verification. This is a planning target, not a hard deadline
   or a minimum to fill with unnecessary work. Plan several related ready child
   tasks under one parent gate that share code, context and verification.
+- Keep the declared batch outcome stable. Revise it only for an evidenced change
+  in requirements/dependencies or a real blocker, and record the reason. Completing
+  a new nested checkbox or one source-family case is not a session exit criterion.
 - A checkbox is a progress unit, not a session boundary. After finishing a child,
   continue the next related ready child in the same session until the planned
   batch is complete or roughly 30 implementation minutes have elapsed. Finish
@@ -85,7 +100,11 @@ Update the roadmap and stop this invocation:
 - Record approximate discovery, implementation and verification durations plus
   child tasks completed in the dated iteration record. Use observed timings or
   label estimates; do not invent measurements. This makes bootstrap overhead
-  and batch size assessable across runs.
+  and batch size assessable across runs. Include the loaded prompt revision and
+  declared batch outcome. State the session exit reason: outcome achieved,
+  implementation target reached, concrete blocker, or explicit roadmap limit.
+  If exiting before the target with an unfinished outcome, explain why the related
+  next child cannot be completed now; a passing narrow test alone is insufficient.
 - Summarize concrete changes and checks; explain any scope change. If no gate
   closed, identify the material prerequisite advanced and how it reduces the
   remaining work. Repeated rediscovery, extra notes or adjacent tests alone

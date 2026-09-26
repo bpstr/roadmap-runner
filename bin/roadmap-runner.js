@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -18,6 +19,7 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 const PROMPT_TEMPLATE = fs.readFileSync(path.join(ROOT, "prompt.md"), "utf8");
+const PROMPT_REVISION = createHash("sha256").update(PROMPT_TEMPLATE).digest("hex").slice(0, 12);
 
 function help() {
   console.log(`Roadmap Runner ${PACKAGE.version}
@@ -116,6 +118,7 @@ async function main() {
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
   console.log(`Timeout:   ${options.timeout} per run`);
+  console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
   console.log("Press Ctrl-C to stop.");
   console.log();
 
@@ -140,10 +143,11 @@ async function main() {
     iteration += 1;
     console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
 
+    const iterationPrompt = `${prompt}\n\nRunner context:\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     const result = await runClient({
       client: options.client,
       executable: options.executable,
-      prompt,
+      prompt: iterationPrompt,
       workdir,
       model: options.model,
       effort: options.effort,

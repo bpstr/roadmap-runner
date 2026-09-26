@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,8 +12,9 @@ const cli = path.join(root, "bin", "roadmap-runner.js");
 const fixture = path.join(root, "test", "fixtures", "mock-codex.js");
 const example = path.join(root, "examples", "three-iteration-roadmap.md");
 
-test("example roadmap completes in exactly three iterations", () => {
+test("example roadmap completes in exactly three iterations", (t) => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "roadmap-runner-example-"));
+  t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
   const roadmap = path.join(temp, "roadmap.md");
   fs.copyFileSync(example, roadmap);
 
@@ -32,6 +34,11 @@ test("example roadmap completes in exactly three iterations", () => {
   });
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
+  const revision = createHash("sha256").update(fs.readFileSync(path.join(root, "prompt.md"))).digest("hex").slice(0, 12);
+  assert.ok(result.stdout.includes(`Prompt:    ${revision}`));
+  for (const iteration of [1, 2, 3]) {
+    assert.ok(result.stdout.includes(`Context ${revision} iteration ${iteration}`));
+  }
 
   const iterationStarts = result.stdout.match(/^===== iteration /gm) || [];
   assert.equal(iterationStarts.length, 3, result.stdout);

@@ -4,6 +4,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 const prompt = process.argv.at(-1) || "";
+const revision = prompt.match(/Loaded prompt revision: ([a-f0-9]{12})/);
+const iteration = prompt.match(/^Iteration: ([1-9][0-9]*)$/m);
+if (!revision || !iteration || !/^Session started \(UTC\): /m.test(prompt)) {
+  console.error("mock-codex: runner context missing");
+  process.exit(2);
+}
+console.log(JSON.stringify({ type: "item.completed", item: {
+  type: "agent_message", text: `Context ${revision[1]} iteration ${iteration[1]}`,
+} }));
 const match = prompt.match(/Work on this implementation roadmap:\s*\n\s*([^\n]+)/);
 if (!match) {
   console.error("mock-codex: roadmap path not found in prompt");
