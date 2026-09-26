@@ -6,7 +6,10 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-const VERSION = "0.3.0";
+const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PACKAGE = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "package.json"), "utf8"));
+const VERSION = PACKAGE.version;
+const PROMPT_TEMPLATE = fs.readFileSync(path.join(PACKAGE_ROOT, "prompt.md"), "utf8");
 
 function printHelp() {
   console.log(`Roadmap Runner ${VERSION}
@@ -14,8 +17,8 @@ function printHelp() {
 Usage:
   roadmap-runner <roadmap-file> [options]
 
-Run from the workspace Codex should operate in. process.cwd() is always the
-Codex working directory. The roadmap may be relative to it or absolute.
+Run from the workspace Codex should operate in. The current directory is always
+the Codex working directory. The roadmap may be relative to it or absolute.
 
 Options:
   --timeout <duration>   Per-Codex-run limit. Default: 2h
@@ -90,7 +93,7 @@ function parseArgs(argv) {
   return options;
 }
 
-function durationMs(value) {
+function parseDuration(value) {
   const match = /^([1-9][0-9]*)(ms|s|m|h)?$/i.exec(value);
   if (!match) fail(`invalid timeout: ${value}`);
   const amount = Number(match[1]);
@@ -114,102 +117,9 @@ function roadmapStatus(file) {
   return "in-progress";
 }
 
-const PROMPT = (roadmap) => `Work on this implementation roadmap:
-
-${roadmap}
-
-This is one fresh-context iteration. The roadmap and current filesystem are the
-handoff to the next session. The working directory may contain multiple repositories.
-Read repository instructions and preserve unrelated changes.
-
-Select the acceptance gate:
-
-1. Read the maintained Markdown checkbox checklist and compact current handoff
-   near the top of the roadmap. Consult historical entries for evidence, not as
-   a competing task list. If no checklist exists, create one from the original roadmap
-   existing acceptance gates without changing their scope or deleting history.
-2. Resume the current handoff active unchecked gate. If none is named, choose the first
-   dependency-ready unchecked gate in roadmap order. Before editing, state its
-   exact checkbox ID/text, acceptance criteria and necessary prerequisites.
-3. Compare the last two iteration records. Resolve the missing active-gate
-   dependency when it is authorized and feasible; size or difficulty alone is
-   not a blocker. If it needs unavailable access, an external service, user
-   judgment or another unmet dependency, leave its checkbox open and record the
-   evidence, unblock condition and next ready checkbox. Continue other useful
-   authorized work in this invocation if coding has not started, or hand it off
-   for the next iteration after finishing the current coherent batch.
-4. Revisit a deferred gate only when its unblock condition changes or a planned
-   bounded retry is due. Keep a compact deferred-gates list in the handoff so
-   fresh contexts do not repeat discovery or silently forget the original gate.
-   Resume it when ready; do not replace its criteria with smaller adjacent tests.
-
-Implement and verify:
-
-- Complete one coherent acceptance gate or an explicit child task toward it,
-  including necessary cross-repository changes and integration checks. If a gate
-  is too large for one invocation, break it into ordered, independently verifiable
-  child checkboxes with stable IDs under the same parent. Select the next ready
-  child and finish it. Size and difficulty require decomposition, not deferral.
-  Stop after the selected coherent gate or child batch is complete.
-- A local prerequisite or prepared component test does not close an end-to-end
-  gate. Keep the parent unchecked until its full stated criteria pass; record
-  prerequisite progress with child checkboxes under that parent. Child completion
-  is measurable progress, not a replacement for the full parent acceptance gate.
-- Add follow-up checkboxes for discoveries, repairs and missing verification only
-  when necessary to satisfy an original requirement. Each must identify its
-  original parent ID, the exact acceptance criterion it serves, a concrete result
-  and verification. Keep scope, permissions and completion standards unchanged.
-  Record unrelated opportunities separately as out of scope; do not add them to
-  the actionable checklist or treat them as completion dependencies.
-- Finish the coding batch before validation. Reuse passing evidence for unchanged
-  code and environments; rerun only failed or invalidated checks after repairs.
-- Inspect executed, passed, failed and skipped counts. A skipped check is not a
-  pass. Distinguish prepared tests, actual integration and deployed behavior.
-- Use existing authorization for tests and side effects. An unchecked deployment
-  or live-provider gate does not itself authorize publication or spending.
-- Do not use subagents. Use Git only inside the applicable repositories.
-
-Update the roadmap and stop this invocation:
-
-- The roadmap is the durable progress-tracking and handoff artifact. You may edit
-  it as needed to accurately preserve progress, decomposition, evidence, blockers
-  and the next action for a completely fresh session.
-- Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
-  acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
-- Maintain a compact Checked-item status log in the roadmap for every existing
-  checked item: ID, current implemented/verified/deployed status, evidence link,
-  and last status change or review date. Carry forward valid prior evidence without
-  rerunning unchanged checks. Log newly checked children and each status transition
-  in the dated iteration record. If new evidence invalidates a checked item,
-  reopen it with the reason and retain its previous completion/failure history.
-  A checked local prerequisite does not imply its parent or deployment is complete.
-- Replace a compact Current handoff near the top with: active checkbox, criteria
-  closed this iteration, remaining criteria, blocker/dependency, verification
-  results (including skips), deferred gates with unblock conditions, and the
-  exact next ready checkbox. Preserve historical records below it. Continue the
-  unfinished active gate unless its documented blocker makes another gate ready.
-- Summarize concrete changes and checks; explain any scope change. If no gate
-  closed, identify the material prerequisite advanced and how it reduces the
-  remaining work. Repeated rediscovery, extra notes or adjacent tests alone
-  are not progress toward the active gate.
-- Before declaring the entire roadmap blocked, inspect ALL remaining unchecked
-  gates and their dependencies for useful authorized implementation, repair or
-  verification work. One blocked gate, a failed check, a hard task or one
-  no-progress attempt is not enough: diagnose and repair, or move to a genuinely
-  ready gate with the deferral recorded. Avoid repeatedly running unchanged checks.
-- Treat Status: BLOCKED as a last-resort global dead-end, not a normal per-task
-  outcome. Do not set it while ANY other remaining gate or prerequisite can make
-  material progress with current authorization and resources.
-- Set Status: BLOCKED only when no remaining gate or prerequisite can materially
-  advance within existing authorization and available resources. Record every
-  remaining gate blocking dependency and the exact external unblock action.
-  Otherwise keep Status: IN_PROGRESS and hand off the next actionable checkbox.
-- Set Status: COMPLETE only when every original gate and its required in-scope
-  follow-up/child checkboxes are implemented and verified. New children must neither
-  broaden original scope nor hide unfinished original acceptance criteria.
-  Otherwise use Status: IN_PROGRESS when material progress permits continuation.
-  Maintain exactly one of these status lines near the top of the roadmap.
-`;
+function workerPrompt(roadmap) {
+  return PROMPT_TEMPLATE.replaceAll("{{ROADMAP}}", roadmap);
+}
 
 function codexArgs(options, workdir) {
   const args = [
@@ -226,14 +136,18 @@ function codexArgs(options, workdir) {
     args.push("-c", `model_reasoning_effort="${options.effort}"`);
   }
 
-  args.push(PROMPT(options.roadmap));
+  args.push(workerPrompt(options.roadmap));
   return args;
 }
 
 function commandExists(command) {
+  if (path.isAbsolute(command) || command.includes(path.sep)) {
+    return fs.existsSync(command);
+  }
+
   const probe = process.platform === "win32"
     ? spawnSync("where", [command], { stdio: "ignore" })
-    : spawnSync("sh", ["-c", `command -v "$1" >/dev/null 2>&1`, "sh", command], { stdio: "ignore" });
+    : spawnSync("sh", ["-c", 'command -v "$1" >/dev/null 2>&1', "sh", command], { stdio: "ignore" });
   return probe.status === 0;
 }
 
@@ -241,9 +155,9 @@ function terminateTree(child, signal = "SIGTERM") {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
 
   if (process.platform === "win32") {
-    spawnSync("taskkill", ["/PID", String(child.pid), "/T", signal === "SIGKILL" ? "/F" : ""].filter(Boolean), {
-      stdio: "ignore",
-    });
+    const args = ["/PID", String(child.pid), "/T"];
+    if (signal === "SIGKILL") args.push("/F");
+    spawnSync("taskkill", args, { stdio: "ignore" });
     return;
   }
 
@@ -253,12 +167,12 @@ function terminateTree(child, signal = "SIGTERM") {
     try {
       child.kill(signal);
     } catch {
-      // Already gone.
+      // Process already exited.
     }
   }
 }
 
-async function runCodex(options, workdir, timeout) {
+async function runCodex(options, workdir, timeoutMs) {
   return await new Promise((resolve) => {
     const child = spawn(options.codex, codexArgs(options, workdir), {
       cwd: workdir,
@@ -269,38 +183,48 @@ async function runCodex(options, workdir, timeout) {
 
     let timedOut = false;
     let interrupted = false;
+    let hardKillTimer = null;
 
-    const hardKill = () => {
-      terminateTree(child, "SIGKILL");
+    const clearHardKill = () => {
+      if (hardKillTimer) clearTimeout(hardKillTimer);
+    };
+
+    const scheduleHardKill = (delayMs) => {
+      clearHardKill();
+      hardKillTimer = setTimeout(() => terminateTree(child, "SIGKILL"), delayMs);
+      hardKillTimer.unref();
     };
 
     const onInterrupt = () => {
       interrupted = true;
       console.log("\nStopping Roadmap Runner...");
       terminateTree(child, "SIGTERM");
-      setTimeout(hardKill, 3000).unref();
+      scheduleHardKill(3000);
     };
 
     process.once("SIGINT", onInterrupt);
     process.once("SIGTERM", onInterrupt);
 
-    const timer = setTimeout(() => {
+    const timeoutTimer = setTimeout(() => {
       timedOut = true;
       terminateTree(child, "SIGTERM");
-      setTimeout(hardKill, 120_000).unref();
-    }, timeout);
+      scheduleHardKill(120_000);
+    }, timeoutMs);
 
-    child.once("error", (error) => {
-      clearTimeout(timer);
+    const cleanup = () => {
+      clearTimeout(timeoutTimer);
+      clearHardKill();
       process.removeListener("SIGINT", onInterrupt);
       process.removeListener("SIGTERM", onInterrupt);
+    };
+
+    child.once("error", (error) => {
+      cleanup();
       resolve({ code: 1, error, timedOut: false, interrupted });
     });
 
     child.once("exit", (code, signal) => {
-      clearTimeout(timer);
-      process.removeListener("SIGINT", onInterrupt);
-      process.removeListener("SIGTERM", onInterrupt);
+      cleanup();
       resolve({
         code: code ?? (signal ? 1 : 0),
         signal,
@@ -314,6 +238,7 @@ async function runCodex(options, workdir, timeout) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const workdir = process.cwd();
+
   options.roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
     : path.resolve(workdir, options.roadmap);
@@ -326,12 +251,12 @@ async function main() {
     fail(`Codex executable not found: ${options.codex}`);
   }
 
-  const timeout = durationMs(options.timeout);
+  const timeoutMs = parseDuration(options.timeout);
 
   console.log(`Roadmap Runner ${VERSION}`);
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${options.roadmap}`);
-  console.log(`Timeout:   ${options.timeout} per run`);
+  console.log(`Timeout:   ${options.timeout} per Codex run`);
   console.log("Approvals: automatic review (--approve-for-me)");
   console.log("Press Ctrl-C to stop.");
   console.log();
@@ -340,10 +265,12 @@ async function main() {
 
   while (true) {
     const status = roadmapStatus(options.roadmap);
+
     if (status === "complete") {
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
       process.exit(0);
     }
+
     if (status === "blocked") {
       console.error("Roadmap globally blocked; resolve the recorded external blockers before restarting.");
       process.exit(3);
@@ -352,7 +279,7 @@ async function main() {
     iteration += 1;
     console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
 
-    const result = await runCodex(options, workdir, timeout);
+    const result = await runCodex(options, workdir, timeoutMs);
 
     if (result.interrupted) process.exit(130);
 
