@@ -15,6 +15,9 @@ Select the acceptance gate:
 2. Resume the current handoff active unchecked gate. If none is named, choose the first
    dependency-ready unchecked gate in roadmap order. Before editing, state its
    exact checkbox ID/text, acceptance criteria and necessary prerequisites.
+   Obey any stricter per-iteration rule written in the roadmap itself. For example,
+   if the roadmap says each run may process only one checkbox, do not complete,
+   check, or otherwise process a second checkbox in the same invocation.
 3. Compare the last two iteration records. Resolve the missing active-gate
    dependency when it is authorized and feasible; size or difficulty alone is
    not a blocker. If it needs unavailable access, an external service, user
