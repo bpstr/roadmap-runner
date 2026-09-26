@@ -1,212 +1,248 @@
 # Roadmap Runner
 
-A deliberately small loop for working through a Markdown implementation roadmap
-with fresh Codex sessions.
+Run a long Markdown implementation roadmap through fresh coding-agent CLI sessions until it is complete.
 
-Each run:
+The goal is to start one command, let it keep working for **8–10 hours or longer** on a large roadmap without human approval prompts, and have it stop automatically when the roadmap is finished.
 
-1. reads the roadmap and current workspace,
-2. chooses one coherent unfinished batch,
-3. implements and verifies it,
-4. updates the roadmap,
-5. exits.
+Each implementation batch gets a fresh CLI session. The roadmap and filesystem are the durable handoff between runs, so context does not grow forever.
 
-The shell then starts a completely fresh Codex session. Context is reconstructed
-from the filesystem instead of growing one long-running agent conversation.
+## Install
 
-There is no coordinator, task database, plugin, daemon, detached supervisor,
-lockfile, retry protocol, subagent pool, or Git-repository assumption.
+From GitHub:
 
-## Requirements
+```sh
+npm install -g github:bpstr/roadmap-runner
+```
 
-- Bash
-- Python 3
-- Codex CLI installed and authenticated
-- GNU `timeout`
-  - Linux usually provides `timeout`
-  - macOS: `brew install coreutils` provides `gtimeout`
+Update later:
+
+```sh
+npm install -g github:bpstr/roadmap-runner@main
+```
+
+This installs:
+
+```sh
+roadmap-runner
+```
+
+There is only one Node CLI implementation and one versioned `prompt.md`, so installed copies can be refreshed with the same npm command.
 
 ## Usage
 
-Run from the workspace Codex should operate in:
+Run from the workspace you want the agent to operate in:
 
 ```sh
 cd /path/to/workspace
-bash /path/to/roadmap-runner/roadmap-runner.sh path/to/roadmap.md
+roadmap-runner docs/roadmap.md
 ```
 
-The current directory from `pwd` is always used as the Codex working directory.
-The roadmap can be relative to that directory or an absolute path.
+The current `pwd` is always the workspace. It may contain multiple Git repositories.
 
-Example:
+Default client:
 
 ```sh
-cd /path/to/workspace
-
-bash /path/to/roadmap-runner/roadmap-runner.sh \
-  docs/roadmap.md
+roadmap-runner docs/roadmap.md
+# same as:
+roadmap-runner docs/roadmap.md --client codex
 ```
 
-The workspace may contain multiple Git repositories. Roadmap Runner does not try
-to discover or select a repository root.
+Other adapters:
 
-## Completion
+```sh
+roadmap-runner docs/roadmap.md --client claude
+roadmap-runner docs/roadmap.md --client gemini
+roadmap-runner docs/roadmap.md --client grok
+roadmap-runner docs/roadmap.md --client muse
+roadmap-runner docs/roadmap.md --client kimi
+```
 
-The worker maintains one simple status line in the roadmap:
+Supported adapters currently mirror the unattended invocation patterns already used in `bpstr/campfire`.
+
+| Client | Invocation mode | Approval behavior |
+| --- | --- | --- |
+| Codex | `codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --ephemeral` | bypassed |
+| Claude | `claude -p --permission-mode bypassPermissions` | bypassed |
+| Gemini | `gemini -p ... --skip-trust --approval-mode=yolo` | bypassed |
+| Grok | `grok -p ... --yolo` | bypassed |
+| Muse | `muse exec --yolo` | bypassed |
+| Kimi | `kimi -p` | inherited from local Kimi config |
+
+Kimi is exposed because Campfire already has a working adapter, but its current adapter does not provide an explicit permission-bypass flag. The runner warns about that at startup.
+
+## Continuous execution
+
+One outer process can run for many hours:
+
+```text
+fresh client session
+        ↓
+read roadmap + filesystem
+        ↓
+resume current acceptance gate
+        ↓
+implement one coherent gate / child batch
+        ↓
+verify
+        ↓
+update roadmap + handoff
+        ↓
+exit session
+        ↓
+fresh client session
+        ↓
+...
+        ↓
+Status: COMPLETE
+        ↓
+runner exits
+```
+
+The default hard ceiling is **2 hours per individual client session**, not two hours for the whole roadmap:
+
+```sh
+roadmap-runner roadmap.md --timeout 2h
+```
+
+Examples:
+
+```sh
+roadmap-runner roadmap.md --timeout 45m
+roadmap-runner roadmap.md --timeout 3h
+```
+
+A timed-out worker is terminated and the next iteration starts with a fresh context from the current filesystem state.
+
+Unexpected client failures stop the runner rather than retrying forever.
+
+## Roadmap progress tracking
+
+Roadmap modification is intentional.
+
+The roadmap is both the implementation specification and the durable state shared between fresh sessions. The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
+
+- stable acceptance-gate checkboxes;
+- child checkboxes when a gate is too large for one invocation;
+- a compact Current handoff;
+- checked-item implementation / verification / deployment evidence;
+- deferred gates and unblock conditions;
+- dated iteration history;
+- one top-level status.
+
+Normal work keeps:
 
 ```md
 Status: IN_PROGRESS
 ```
 
-When the entire roadmap is implemented and verified:
+Completion requires:
 
 ```md
 Status: COMPLETE
 ```
 
-The shell stops when it sees `Status: COMPLETE`.
+A single blocked task does **not** stop the runner. The prompt requires the worker to inspect other remaining gates and continue anything useful that can still advance.
 
-Use Markdown checkboxes for the roadmap's acceptance gates. Each iteration names
-one unchecked gate and advances it through implementation and verification. A
-checked prerequisite does not close its parent gate. Large gates are divided into
-ordered, independently verifiable child checkboxes; size is not a reason to skip.
-Runs may add follow-up checkboxes only to satisfy original requirements, with the
-parent ID, acceptance criterion, result and verification recorded. Unrelated work
-stays outside the actionable checklist.
-
-The roadmap retains a checked-item status log with each checked ID, its current
-implementation/verification/deployment status, evidence and review date. New checks,
-status changes and reopenings get dated entries; unchanged valid evidence is reused.
-The worker maintains a compact Current handoff near the top so the next session
-resumes the unfinished gate or its next child.
-
-A blocked gate stays unchecked with its reason and unblock condition recorded.
-The worker continues another ready gate and revisits deferred work when its
-condition changes. Difficulty alone is not a reason to defer a gate.
-
-Only when no remaining gate or prerequisite can advance within existing
-authorization and available resources does the worker set:
+Only when no remaining gate or prerequisite can materially advance may it set:
 
 ```md
 Status: BLOCKED
 ```
 
-The runner stops with exit code 3. Resolve the recorded blocker and change the
-status to `IN_PROGRESS` before restarting. One blocked item or failed check does
-not stop the whole roadmap.
+The runner then exits with code `3`.
 
-## Fresh sessions
+Resolve the recorded external blocker, return the roadmap to `Status: IN_PROGRESS`, and start the same command again.
 
-Every iteration starts a new ephemeral `codex exec` invocation. Sessions are not
-resumed. The roadmap, code, tests, diffs, and other files are the persistent
-context between iterations.
+## Fresh contexts
 
-Workers are explicitly instructed to select one bounded coherent batch and stop
-after it. Subagents are prohibited so one iteration does not turn into a large
-multi-hour agent tree.
+Sessions are never resumed.
 
-## Runtime limit
-
-Each Codex invocation has a two-hour hard limit by default:
-
-```sh
-ROADMAP_TIMEOUT=2h bash roadmap-runner.sh roadmap.md
-```
-
-Change it if needed:
-
-```sh
-ROADMAP_TIMEOUT=45m bash roadmap-runner.sh roadmap.md
-ROADMAP_TIMEOUT=3h bash roadmap-runner.sh roadmap.md
-```
-
-A timeout ends that Codex invocation and starts a fresh session from the current
-filesystem state. Other non-zero Codex exits stop the runner instead of retrying
-forever.
-
-## Codex configuration
-
-The runner uses full access with no approval prompts:
+For Codex, Roadmap Runner uses the accepted invocation from the previous shell implementation:
 
 ```text
 codex exec
 --dangerously-bypass-approvals-and-sandbox
+--json
 --skip-git-repo-check
 --ephemeral
---json
---cd "$(pwd)"
+--cd <pwd>
 ```
 
-Codex can run commands outside the workspace without requesting approval.
-Your configured model and MCP servers remain available.
+The JSON stream is filtered so normal terminal output stays concise while errors remain visible.
 
-Terminal output shows iteration status, assistant summaries, and errors. Command
-output and MCP payloads are omitted. On a nonzero exit, the runner also shows the
-last 40 lines of Codex stderr. Temporary stderr files are removed when the runner
-exits.
+The worker prompt explicitly disables implementation subagents. Long throughput comes from repeated fresh sessions, not from one 8–10 hour nested agent call.
 
-Press Ctrl-C once to stop the loop and its active process tree. Processes get
-three seconds to stop before remaining captured processes are killed. The loop
-exits with code 130 and does not start another iteration. Processes that already
-detached and were reparented are outside this cleanup boundary.
-
-Keep `roadmap-runner.sh` and `roadmap-run.py` together when copying the runner.
-
-Optional overrides:
-
-```sh
-ROADMAP_MODEL=<model> \
-ROADMAP_EFFORT=high \
-bash roadmap-runner.sh roadmap.md
-```
-
-The Codex executable itself can also be overridden:
-
-```sh
-ROADMAP_CODEX=/path/to/codex bash roadmap-runner.sh roadmap.md
-```
-
-## Philosophy
-
-Roadmap Runner intentionally delegates semantic decisions to Codex.
-
-The shell only:
-
-- starts fresh workers,
-- imposes a runtime ceiling,
-- checks the completion marker,
-- stops on unexpected CLI errors.
-
-It does not parse roadmap tasks, generate task IDs, maintain hidden state, create
-commits, choose repositories, or coordinate agents.
-
-The intended loop is simply:
+## Options
 
 ```text
-roadmap + current filesystem
-        ↓
-fresh Codex
-        ↓
-one coherent implementation batch
-        ↓
-tests + roadmap update
-        ↓
-exit
-        ↓
-fresh Codex
-        ↓
-...
-        ↓
-Status: COMPLETE
+roadmap-runner <roadmap-file> [options]
+
+--client <name>        codex, claude, gemini, grok, kimi, muse
+--timeout <duration>   default: 2h
+--model <model>        optional model override
+--effort <level>       optional Codex reasoning effort override
+--client-bin <path>    override selected client executable
+--help
+--version
 ```
 
-## Tests
+Environment equivalents:
 
-Run the process checks without calling a model:
+```text
+ROADMAP_CLIENT
+ROADMAP_TIMEOUT
+ROADMAP_MODEL
+ROADMAP_EFFORT
+ROADMAP_CLIENT_BIN
+```
+
+For backward compatibility, `ROADMAP_CODEX` is also accepted as the executable override.
+
+## Examples
+
+Codex with a higher reasoning effort:
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+roadmap-runner architecture/roadmap.md --effort high
 ```
 
-The tests use a mock Codex executable and cover completion, failure, timeout
-continuation, quiet output, and Ctrl-C cleanup through a pseudoterminal.
+Claude:
+
+```sh
+roadmap-runner architecture/roadmap.md --client claude
+```
+
+Gemini with a model override:
+
+```sh
+roadmap-runner architecture/roadmap.md --client gemini --model <model>
+```
+
+## Requirements
+
+- Node.js 18+
+- at least one supported CLI installed and authenticated
+
+No Python, GNU `timeout`, jq, daemon, database, task registry, or plugin installation is required.
+
+The secondary client adapters assume the same native CLI authentication approach as Campfire.
+
+## Development
+
+```sh
+npm test
+npm install -g .
+roadmap-runner path/to/roadmap.md
+```
+
+The tests do not call live models. They validate duration/status handling and the exact adapter argument construction, including the accepted Codex unattended flags.
+
+## Design
+
+The runner deliberately does not maintain its own task database or hidden roadmap state. It does not create worktrees, commits, or pushes automatically, and it does not choose one Git repository as the workspace root.
+
+Provider-specific behavior lives in small adapters under `lib/clients.js`. The roadmap loop and prompt are shared, so future CLI support should require adding an adapter rather than duplicating the runner.
+
+## License
+
+MIT.
