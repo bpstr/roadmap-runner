@@ -1,19 +1,24 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.3.0",
-  "description": "Run long Markdown implementation roadmaps through fresh Codex sessions until completion.",
+  "version": "0.4.0",
+  "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {
     "roadmap-runner": "./bin/roadmap-runner.js"
   },
   "scripts": {
-    "test": "node --check bin/roadmap-runner.js"
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
   },
   "keywords": [
     "codex",
+    "claude",
+    "gemini",
+    "grok",
+    "kimi",
+    "muse",
     "roadmap",
     "agent",
     "automation",
@@ -30,6 +35,7 @@
   "license": "MIT",
   "files": [
     "bin",
+    "lib",
     "prompt.md",
     "README.md",
     "LICENSE"
