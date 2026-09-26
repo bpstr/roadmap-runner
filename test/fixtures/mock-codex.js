@@ -39,10 +39,26 @@ contents = contents.replace(
     : "- Active checkbox: none\n- Next ready checkbox: none\n",
 );
 
-contents = contents.replace(
-  "_No completed items yet._",
-  `- ${current.id} — implemented and verified by mock fixture.`,
-);
+if (contents.includes("_No completed items yet._")) {
+  contents = contents.replace(
+    "_No completed items yet._",
+    `- ${current.id} — implemented and verified by mock fixture.`,
+  );
+} else {
+  contents = contents.replace(
+    "## Iteration history",
+    `- ${current.id} — implemented and verified by mock fixture.\n\n## Iteration history`,
+  );
+}
+
+if (contents.includes("_No iterations yet._")) {
+  contents = contents.replace("_No iterations yet._", `- Completed ${current.id}.`);
+} else {
+  contents = contents.replace(
+    "## Completion",
+    `- Completed ${current.id}.\n\n## Completion`,
+  );
+}
 
 if (remaining.length === 0) {
   contents = contents.replace("Status: IN_PROGRESS", "Status: COMPLETE");
