@@ -114,7 +114,7 @@ Status: COMPLETE
 runner exits
 ```
 
-The default hard ceiling is **2 hours per individual client session**, not two hours for the whole roadmap:
+The default execution limit is **2 hours per individual client session**, not two hours for the whole roadmap:
 
 ```sh
 roadmap-runner roadmap.md --timeout 2h
@@ -128,6 +128,18 @@ roadmap-runner roadmap.md --timeout 3h
 ```
 
 A timed-out worker is terminated and the next iteration starts with a fresh context from the current filesystem state.
+
+On POSIX systems, timeout sends `SIGTERM` to the worker's process group, followed
+by `SIGKILL` after a two-minute shutdown grace period when needed. Ctrl-C uses a
+three-second grace period; a second interrupt forces termination immediately.
+The runner drains output and retains pending escalation even if the CLI exits
+before its child tools. It does not start the next iteration while that
+escalation is pending. Shutdown grace is additional to the execution limit.
+
+This covers descendants that remain in the worker's process group, not tools
+that deliberately create a separate session or remote operations already sent.
+Windows retains the existing `taskkill` fallback; the process-group regression
+tests are POSIX-only.
 
 Unexpected client failures stop the runner rather than retrying forever.
 
@@ -144,6 +156,12 @@ The roadmap is both the implementation specification and the durable state share
 - deferred gates and unblock conditions;
 - dated iteration history;
 - one top-level status.
+
+Put exactly one status line in the opening header, after an optional `#` title
+and before the first `##` (or deeper) section heading. Fenced examples and status
+lines in later sections are not control state. Duplicate or malformed header
+statuses stop with an error. A roadmap with no header status defaults to
+`IN_PROGRESS`, allowing the worker to initialize it.
 
 Normal work keeps:
 
@@ -166,6 +184,10 @@ Status: BLOCKED
 ```
 
 The runner then exits with code `3`.
+
+Completion remains an agent assertion: the runner reads the header status, not
+independent proof of every acceptance criterion. The three-iteration mock test
+verifies orchestration, not a live model's compliance with the prompt.
 
 Resolve the recorded external blocker, return the roadmap to `Status: IN_PROGRESS`, and start the same command again.
 

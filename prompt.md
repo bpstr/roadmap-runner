@@ -103,4 +103,6 @@ Update the roadmap and stop this invocation:
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.
   Otherwise use Status: IN_PROGRESS when material progress permits continuation.
-  Maintain exactly one of these status lines near the top of the roadmap.
+  Maintain exactly one of these status lines in the opening header, after an
+  optional # title and before the first ## (or deeper) section heading, outside
+  code fences. Historical status lines belong in sections below the header.
