@@ -6,6 +6,8 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
+  capacityRetrySettings,
+  waitForRetry,
   commandExists,
   parseArgs,
   parseDuration,
@@ -38,6 +40,9 @@ Environment:
   ROADMAP_MODEL
   ROADMAP_EFFORT
   ROADMAP_CLIENT_BIN
+  ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
+  ROADMAP_CAPACITY_DELAY      Initial delay in seconds; default 300
+  ROADMAP_CAPACITY_MAX_DELAY  Maximum delay in seconds; default 300
 
 The current directory is always the workspace.
 `);
@@ -61,7 +66,7 @@ async function main() {
 
   let options;
   try {
-    options = parseArgs(argv);
+    options = { ...parseArgs(argv), capacity: capacityRetrySettings() };
   } catch (error) {
     fail(error.message, error.exitCode || 1);
   }
@@ -115,6 +120,8 @@ async function main() {
   console.log();
 
   let iteration = 0;
+  let capacityFailures = 0;
+  let retryDelay = options.capacity.delayMs;
 
   while (true) {
     const contents = fs.readFileSync(roadmap, "utf8");
@@ -151,6 +158,20 @@ async function main() {
       console.log();
       continue;
     }
+
+    if (result.retryableCapacity) {
+      if (capacityFailures >= options.capacity.retries) {
+        fail("model capacity retry limit reached; partial work preserved.", 75);
+      }
+      capacityFailures += 1;
+      const waiting = waitForRetry(retryDelay);
+      console.log(`Model at capacity; retry ${capacityFailures}/${options.capacity.retries} in ${retryDelay / 1000}s (same model).`);
+      if (await waiting) process.exit(130);
+      retryDelay = Math.min(retryDelay * 2, options.capacity.maxDelayMs);
+      continue;
+    }
+    capacityFailures = 0;
+    retryDelay = options.capacity.delayMs;
 
     if (result.code !== 0) {
       fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);

@@ -293,3 +293,29 @@ Provider-specific behavior lives in small adapters under `lib/clients.js`. The r
 ## License
 
 MIT.
+
+## Temporary Codex capacity failures
+
+If Codex exits with code 1 and reports only the recognized "Selected model is at
+capacity" error, the runner waits five minutes and retries the same model. It
+allows ten retries after the initial failed attempt, then exits with code 75.
+Partial work and roadmap checkboxes are preserved; capacity does not mark the
+roadmap blocked or complete. Other errors stop without retrying. This recovery
+currently applies only to the Codex adapter.
+
+Ctrl-C stops the runner during the retry wait as well as during an active run.
+The two-hour per-run execution timeout remains separate from the retry wait.
+
+Settings use integer seconds and a consecutive-failure retry count:
+
+```sh
+ROADMAP_CAPACITY_RETRIES=10 \
+ROADMAP_CAPACITY_DELAY=300 \
+ROADMAP_CAPACITY_MAX_DELAY=300 \
+roadmap-runner docs/roadmap.md
+```
+
+Set the retry count to zero to disable this recovery. If the initial delay is
+smaller than the maximum, it doubles up to that maximum. Successful runs reset
+the capacity retry counter. OAuth startup warnings do not themselves trigger a
+retry or get repaired by this mechanism.
