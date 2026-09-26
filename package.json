@@ -1,0 +1,34 @@
+{
+  "name": "@bpstr/roadmap-runner",
+  "version": "0.3.0",
+  "description": "Run long Markdown implementation roadmaps through fresh Codex sessions until completion.",
+  "type": "module",
+  "bin": {
+    "roadmap-runner": "./bin/roadmap-runner.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "codex",
+    "roadmap",
+    "agent",
+    "automation",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bpstr/roadmap-runner.git"
+  },
+  "homepage": "https://github.com/bpstr/roadmap-runner#readme",
+  "bugs": {
+    "url": "https://github.com/bpstr/roadmap-runner/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "bin"
+  ]
+}
