@@ -184,10 +184,16 @@ async function main() {
     });
 
     tracking.assertUnchanged();
+    const elapsedMs = Math.round(performance.now() - started);
+    const after = fs.readFileSync(tracking.file, "utf8");
+    tracking.archive({ kind: "worker", iteration, metadata: {
+      startedAt, elapsedMs, promptRevision: PROMPT_REVISION, code: result.code,
+      signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted,
+    } });
+    tracking.assertBounded();
     supervisor?.record({
-      iteration, startedAt, elapsedMs: Math.round(performance.now() - started),
-      promptRevision: PROMPT_REVISION, result, output,
-      before: contents, after: fs.readFileSync(tracking.file, "utf8"),
+      iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, result, output,
+      before: contents, after,
     });
     if (result.interrupted) process.exit(130);
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
