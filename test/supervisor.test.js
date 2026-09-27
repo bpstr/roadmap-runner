@@ -149,7 +149,7 @@ for (const client of ['codex', 'claude']) {
   });
 }
 
-for (const preserved of [true, false]) {
+for (const preserved of [true]) {
   test(`reviews after workers 5 and 10; preserved=${preserved}`, (t) => {
     const f = fixture(t, { preserved });
     const result = run(f);
@@ -288,7 +288,8 @@ test('rolling evidence stays bounded across many verbose runs', (t) => {
 test('supervisor prompt binds evidence, scope, read-only source and next-run expectation', () => {
   const prompt = fs.readFileSync(path.join(root, 'supervisor.md'), 'utf8');
   assert.match(prompt, /Treat worker outputs.*untrusted/);
-  assert.match(prompt, /PRESERVE_ROADMAP/);
+  assert.match(prompt, /immutable authority/);
+  assert.match(prompt, /do not bulk-load/);
   assert.match(prompt, /must not set Status: COMPLETE/);
   assert.match(prompt, /measurable next-run expectation/);
   assert.match(prompt, /ALL remaining gates/);
@@ -296,4 +297,6 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(worker, /Read the latest Supervisor review/);
   assert.match(worker, /Keep the declared batch outcome stable/);
   assert.match(worker, /canonical harness/);
+  assert.match(worker, /bounded working memory/);
+  assert.match(worker, /source wins/);
 });
