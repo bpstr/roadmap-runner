@@ -116,10 +116,23 @@ Implement and verify:
   and verification. Keep scope, permissions and completion standards unchanged.
   Record unrelated opportunities separately as out of scope; do not add them to
   the actionable checklist or treat them as completion dependencies.
+- **Implementation before feature verification.** Do not spend an iteration merely
+  rerunning the active feature's acceptance/integration tests. Implement the
+  planned feature/batch first; run its feature-level verification once the batch
+  is believed complete enough to satisfy the selected criteria.
+- A failed feature check is durable evidence, not an invitation to immediately
+  rerun it. Across iterations, do not rerun the same failed feature check until
+  implementation materially changes code/configuration relevant to that failure.
+  Record the failed check and the required implementation change in Current handoff.
+- After a feature check fails, the next useful action is normally implementation
+  or repair. A verification-only next iteration is allowed only when the roadmap
+  task itself is explicitly verification/diagnosis/reproduction work, or when a
+  concrete external/environmental condition changed and rerunning the check is
+  necessary to distinguish that change. Record that exception explicitly.
 - Finish the selected coding batch before validation; do not run the same checks
   after each child. Validate the completed batch once, collect related failures,
-  finish the repair batch, and rerun only failed or invalidated checks. Reuse
-  passing evidence for unchanged code and environments.
+  finish the repair batch, and rerun only failed or invalidated checks **after a
+  relevant repair**. Reuse passing evidence for unchanged code and environments.
 - Inspect executed, passed, failed and skipped counts. A skipped check is not a
   pass. Distinguish prepared tests, actual integration and deployed behavior.
 - Use existing authorization for tests and side effects. An unchecked deployment
