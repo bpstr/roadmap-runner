@@ -22,7 +22,8 @@ fs.writeFileSync('count', String(count));
 fs.appendFileSync('models', JSON.stringify(process.argv) + '\\n');
 const mode = process.env.TEST_MODE;
 if (mode === 'recover' && count > 1) {
- fs.writeFileSync('roadmap.md', 'Status: COMPLETE\\n');
+ const tracking = process.argv.at(-1).split('Tracking file (progress / delivery evidence):')[1].trim().split('\\n')[0];
+ fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
  console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'RECOVERED'}}));
 } else {
  console.log(JSON.stringify({type:'error',message: mode === 'ordinary' ? 'Authentication failed' : 'Selected model is at capacity. Please try a different model.'}));

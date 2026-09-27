@@ -42,5 +42,9 @@
     "README.md",
     "LICENSE",
     "examples"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

@@ -80,7 +80,7 @@ if (supervisor) {
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
     if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
     else if (mode !== 'noop') fs.appendFileSync(tracking, '\\nWorker ' + n + ' evidence\\n');
-    if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 3000);
+    if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 5000);
     if (mode === 'worker-failure') process.exitCode = 7;
   }
 }
@@ -90,7 +90,7 @@ if (supervisor) {
   if (preserved) args.push('--progress-file', tracking);
   if (every !== undefined) args.push('--supervisor-every', String(every));
   if (timeout) args.push('--supervisor-timeout', timeout);
-  if (mode === 'worker-timeout') args.push('--timeout', '300ms');
+  if (mode === 'worker-timeout') args.push('--timeout', '1s');
   const env = { ...process.env, ROADMAP_SUPERVISOR_EVERY: '5', ROADMAP_SUPERVISOR_TIMEOUT: '10m',
     ROADMAP_CAPACITY_RETRIES: '1', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '1' };
   t.after(() => {
@@ -296,7 +296,7 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(prompt, /forbid another identical feature-level test/);
   assert.match(prompt, /ALL remaining gates/);
   const worker = fs.readFileSync(path.join(root, 'prompt.md'), 'utf8');
-  assert.match(worker, /Read the latest Supervisor review/);
+  assert.match(worker, /Read the Latest supervisor review/);
   assert.match(worker, /Keep the declared batch outcome stable/);
   assert.match(worker, /canonical harness/);
   assert.match(worker, /bounded working memory/);

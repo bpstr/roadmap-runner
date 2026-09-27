@@ -10,16 +10,16 @@ Each implementation batch gets a fresh CLI session. The source roadmap remains i
 
 ## Install
 
-From GitHub:
+Install the published [npm package](https://www.npmjs.com/package/@bpstr/roadmap-runner):
 
 ```sh
-npm install -g github:bpstr/roadmap-runner
+npm install -g @bpstr/roadmap-runner
 ```
 
 Update later:
 
 ```sh
-npm install -g github:bpstr/roadmap-runner@main
+npm install -g @bpstr/roadmap-runner@latest
 ```
 
 This installs:
@@ -29,6 +29,8 @@ roadmap-runner
 ```
 
 There is one Node CLI implementation with versioned worker (`prompt.md`) and supervisor (`supervisor.md`) prompts, so installed copies can be refreshed with the same npm command.
+
+The README cover is a small WebP tracked in `docs/assets/` so it stays with the repository. It is excluded from the npm package by the `files` allowlist. The banner uses an absolute GitHub URL so it also renders on npm, and registry installations download only the package tarball without the artwork or a Git checkout.
 
 ## Usage
 
