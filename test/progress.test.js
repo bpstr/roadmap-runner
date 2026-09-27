@@ -115,7 +115,7 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.ok(prompt.includes(`Work on this implementation roadmap:\n\n${roadmap}\n`));
   assert.ok(prompt.includes(`Tracking file (progress / delivery evidence):\n\n${file}\n`));
   assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
-  assert.match(prompt, /do not edit, reformat, replace, rename or delete the\n  source roadmap/);
+  assert.match(prompt, /Never edit, reformat, replace, rename or delete the\n  source roadmap/);
   assert.match(prompt, /Write ALL progress changes\n  only to the tracking file/);
   assert.match(prompt, /one concrete outcome/);
   assert.match(prompt, /canonical harness first/);
