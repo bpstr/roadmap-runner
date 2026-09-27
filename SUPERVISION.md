@@ -73,10 +73,11 @@ transport integration gate, the next target can become “compose the canonical
 transport harness and produce receipt A1.” It cannot redefine that gate as
 “component tests pass,” check it as done, or quietly drop the integration boundary.
 
-The tracking file receives a compact Supervisor review with health
+The tracking file receives one replace-in-place Latest supervisor review with health
 `HEALTHY / SLOW / STUCK / UNCERTAIN`, covered iteration numbers, diagnosis,
 previous intervention result and the next delivery target. Current handoff / Batch
-plan and dated history are updated for the next worker. The worker prompt asks
+plan are replaced for the next worker; superseded reviews and handoffs are retained
+by runner-owned archived snapshots rather than appended to hot context. The worker prompt asks
 it to consume that review and test its next-run expectation.
 
 One stuck gate is not a global block. The supervisor must consider other useful
@@ -85,9 +86,16 @@ or set COMPLETE; the runner rejects a supervisor-written COMPLETE in the current
 invocation. A unique Review ID must be persisted before the checkpoint succeeds.
 That ID verifies that a handoff was written, not that its reasoning is correct.
 
-## Output retention and privacy
+## Output retention, context bounds and privacy
 
-The runner keeps only the last N worker records. Each stdout/stderr excerpt keeps
+The active progress file is capped at 128 KiB. The immutable source roadmap is
+re-read on every review and remains the authority when a handoff or proposed
+workflow change drifts from the original scope. Full progress snapshots are archived
+under the workspace-local `.roadmap-runner/.../history/` directory at worker and
+supervisor boundaries; they are cold audit history and are not bulk-loaded into
+ordinary worker/supervisor context.
+
+The supervisor keeps only the last N worker records in its review window. Each stdout/stderr excerpt keeps
 at most 16 KiB of input bytes (head + tail); each tracking snapshot keeps 8 KiB.
 `omittedBytes` makes truncation explicit. Codex capture includes raw JSON events,
 not only the terminal's filtered agent messages. Other adapters are captured while
