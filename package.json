@@ -37,6 +37,8 @@
     "bin",
     "lib",
     "prompt.md",
+    "supervisor.md",
+    "SUPERVISION.md",
     "README.md",
     "LICENSE",
     "examples"

@@ -26,7 +26,7 @@ This installs:
 roadmap-runner
 ```
 
-There is only one Node CLI implementation and one versioned `prompt.md`, so installed copies can be refreshed with the same npm command.
+There is one Node CLI implementation with versioned worker (`prompt.md`) and supervisor (`supervisor.md`) prompts, so installed copies can be refreshed with the same npm command.
 
 ## Usage
 
@@ -152,6 +152,29 @@ tests are POSIX-only.
 
 Unexpected client failures stop the runner rather than retrying forever.
 
+## Supervisor checkpoints
+
+By default, a fresh supervisor reviews progress after every five successful or
+timed-out worker sessions, before another worker starts. Capacity-only retries
+are excluded; completed or globally blocked roadmaps stop without an extra review.
+
+```sh
+roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md \
+  --supervisor-every 5 --supervisor-timeout 10m
+# Disable this extra review session:
+roadmap-runner docs/roadmap.md --supervisor-every 0
+```
+
+The supervisor compares bounded run outputs and progress snapshots with actual
+delivery evidence. It diagnoses healthy, slow, stuck or uncertain progress and
+may adjust the next batch's target, order or prerequisite work—not original
+requirements or acceptance criteria. The next worker consumes the review from
+the tracking file. Source-preservation rules apply to both roles.
+
+See [periodic supervision](SUPERVISION.md) for cadence/restart semantics, the
+review contract, output retention/privacy and failure behavior. Reviews reuse
+the selected CLI/model and add inference work; log files are not redacted.
+
 ## Roadmap progress tracking
 
 By default, roadmap modification is intentional. Use `--progress-file` to keep
@@ -274,6 +297,8 @@ roadmap-runner <roadmap-file> [options]
 --client <name>        codex, claude, gemini, grok, kimi, muse
 --progress-file <path> separate progress/evidence file; preserve the source
 --timeout <duration>   default: 2h
+--supervisor-every <n>  review every n workers (1-20); default 5, 0 disables
+--supervisor-timeout <duration> review timeout; default 10m
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
 --client-bin <path>    override selected client executable
@@ -286,6 +311,8 @@ Environment equivalents:
 ```text
 ROADMAP_CLIENT
 ROADMAP_PROGRESS_FILE
+ROADMAP_SUPERVISOR_EVERY
+ROADMAP_SUPERVISOR_TIMEOUT
 ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT

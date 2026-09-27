@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt } from "../lib/tracking.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
@@ -32,6 +33,8 @@ Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
   --progress-file <path> Track progress separately; keep the source roadmap unchanged
   --timeout <duration>   Per-run timeout. Default: 2h
+  --supervisor-every <n> Review after n workers (1-20); default 5, 0 disables
+  --supervisor-timeout <duration> Review timeout; default 10m
   --model <model>        Optional client model override
   --effort <level>       Optional reasoning effort override (Codex)
   --client-bin <path>    Override the selected client executable
@@ -41,6 +44,8 @@ Options:
 Environment:
   ROADMAP_CLIENT
   ROADMAP_PROGRESS_FILE
+  ROADMAP_SUPERVISOR_EVERY
+  ROADMAP_SUPERVISOR_TIMEOUT
   ROADMAP_TIMEOUT
   ROADMAP_MODEL
   ROADMAP_EFFORT
@@ -72,6 +77,7 @@ async function main() {
   let options;
   try {
     options = { ...parseArgs(argv), capacity: capacityRetrySettings() };
+    options.supervision = supervisorSettings(options);
   } catch (error) {
     fail(error.message, error.exitCode || 1);
   }
@@ -116,6 +122,10 @@ async function main() {
 
   const tracking = prepareTracking(roadmap, options.progressFile);
   const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file);
+  const supervisor = options.supervision.every ? new Supervision({
+    ...options.supervision, roadmap, tracking,
+    template: fs.readFileSync(path.join(ROOT, "supervisor.md"), "utf8"),
+  }) : null;
 
   console.log(`Roadmap Runner ${PACKAGE.version}`);
   console.log(`Client:    ${options.client}`);
@@ -124,6 +134,7 @@ async function main() {
   if (options.progressFile) console.log(`Progress:  ${tracking.file} (source roadmap preserved)`);
   console.log(`Timeout:   ${options.timeout} per run`);
   console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
+  console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
 
@@ -146,10 +157,21 @@ async function main() {
       process.exit(3);
     }
 
+    // Terminal state wins: no extra review once the roadmap is complete/blocked.
+    if (supervisor?.due) {
+      console.log(`===== supervisor after iteration ${iteration} =====`);
+      console.log(`Run evidence: ${supervisor.evidenceFile}`);
+      await supervisor.review({ options, workdir, afterIteration: iteration });
+      continue; // Re-read the supervisor's handoff/status before another worker.
+    }
+
     iteration += 1;
     console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
 
-    const iterationPrompt = `${prompt}\n\nRunner context:\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
+    const startedAt = new Date().toISOString();
+    const started = performance.now();
+    const output = supervisor?.capture();
+    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     const result = await runClient({
       client: options.client,
       executable: options.executable,
@@ -158,9 +180,15 @@ async function main() {
       model: options.model,
       effort: options.effort,
       timeoutMs,
+      onOutput: output?.write,
     });
 
     tracking.assertUnchanged();
+    supervisor?.record({
+      iteration, startedAt, elapsedMs: Math.round(performance.now() - started),
+      promptRevision: PROMPT_REVISION, result, output,
+      before: contents, after: fs.readFileSync(tracking.file, "utf8"),
+    });
     if (result.interrupted) process.exit(130);
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
 
@@ -195,5 +223,5 @@ async function main() {
 
 main().catch((error) => {
   console.error("roadmap-runner:", error);
-  process.exit(1);
+  process.exit(error.exitCode || 1);
 });

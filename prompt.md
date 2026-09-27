@@ -28,6 +28,16 @@ instructions and preserve unrelated changes.
   reference when IDs are absent. Check evidence against the actual code and the
   current requirements; the tracking file must not silently narrow the source.
 
+Supervisor handoff:
+
+- Read the latest Supervisor review in the tracking file before choosing the next
+  batch. Apply its next delivery target when still supported by current evidence;
+  this is a scoped batch adjustment, never permission to weaken original criteria.
+  If new facts invalidate it, record the evidence and replacement before coding.
+- Test the review's measurable next-run expectation and report what changed. Do
+  not repeat unchanged discovery or failed checks merely to produce activity.
+  Preserve the review and its reason for retargeting in the tracking history.
+
 Select the acceptance gate:
 
 1. Read the source roadmap, then the maintained Markdown checkbox checklist and
