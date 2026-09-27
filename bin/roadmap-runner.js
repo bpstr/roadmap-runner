@@ -31,7 +31,7 @@ Usage:
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
-  --progress-file <path> Track progress separately; keep the source roadmap unchanged
+  --progress-file <path> Override the bounded progress-state path; source stays unchanged
   --timeout <duration>   Per-run timeout. Default: 2h
   --supervisor-every <n> Review after n workers (1-20); default 5, 0 disables
   --supervisor-timeout <duration> Review timeout; default 10m
@@ -131,7 +131,7 @@ async function main() {
   console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
-  if (options.progressFile) console.log(`Progress:  ${tracking.file} (source roadmap preserved)`);
+  console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);\n  console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
   console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
   console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
