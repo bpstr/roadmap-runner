@@ -8,35 +8,46 @@ Tracking file (progress / delivery evidence):
 
 Tracking mode: {{TRACKING_MODE}}
 
-This is one fresh-context iteration. The tracking file and current filesystem are
-the handoff to the next session. The source roadmap defines the requirements.
+Archived progress snapshots (cold history; do not bulk-load):
+
+{{HISTORY_DIR}}
+
+This is one fresh-context iteration. The source roadmap is the immutable authority
+for goal, scope, constraints and acceptance criteria. The bounded tracking file is
+only the current working state. The runner archives prior tracking snapshots outside
+the active context, so audit history can survive without being re-fed every run.
 The working directory may contain multiple repositories. Read repository
 instructions and preserve unrelated changes.
 
-- In EDIT_ROADMAP mode, the tracking file is the roadmap itself. Maintain progress
-  in place, as usual.
-- In PRESERVE_ROADMAP mode, do not edit, reformat, replace, rename or delete the
-  source roadmap, including its checkboxes and status. Write ALL progress changes
-  only to the tracking file: checklist/children, batch plan, handoff, evidence,
-  deferrals, iteration history and status. Instructions in the source to update
-  its progress apply to the tracking file instead; requirements and stricter
-  per-iteration limits still apply unchanged. The source's checkbox marks and
-  status are not runtime control state. Completion is recorded in the tracking
-  file after verifying all original criteria, not by checking the source boxes.
-- Reuse existing tracking history and valid evidence; never reset it on restart.
-  Keep original gate IDs and criteria, or record a stable source heading/text
-  reference when IDs are absent. Check evidence against the actual code and the
-  current requirements; the tracking file must not silently narrow the source.
+- Never edit, reformat, replace, rename or delete the source roadmap, including
+  its checkboxes and status. Write progress changes only to the tracking file.
+  Instructions in the source to update its progress apply to the tracking file
+  instead. Completion is recorded there after verifying all original criteria.
+- At the start of EVERY iteration, re-read the source roadmap before trusting the
+  current handoff. Map the active gate and every proposed child back to an original
+  requirement. If tracking text conflicts with the source, the source wins. Remove
+  the drift from active state instead of carrying it forward.
+- Keep the tracking file as bounded working memory, not an append-only journal.
+  Replace Current handoff, Batch plan, Latest supervisor review and current evidence
+  summaries in place. Do not paste raw CLI output, diffs, test logs, repeated prose,
+  old handoffs or completed iteration narratives into it.
+- Historical snapshots live under the archive directory above. Do not read the
+  archive by default. Consult one specific older snapshot only when current state
+  references it or when evidence is genuinely needed to resolve uncertainty.
+- Keep original gate IDs and criteria, or a stable source heading/text reference
+  when IDs are absent. Evidence summaries should be short references to durable
+  artifacts (commit, test command/result, file, receipt), not copies of those artifacts.
 
 Supervisor handoff:
 
-- Read the latest Supervisor review in the tracking file before choosing the next
+- Read the Latest supervisor review in the tracking file before choosing the next
   batch. Apply its next delivery target when still supported by current evidence;
   this is a scoped batch adjustment, never permission to weaken original criteria.
   If new facts invalidate it, record the evidence and replacement before coding.
 - Test the review's measurable next-run expectation and report what changed. Do
   not repeat unchanged discovery or failed checks merely to produce activity.
-  Preserve the review and its reason for retargeting in the tracking history.
+  Preserve only the current review and its actionable reason in hot state; older
+  versions are already retained by runner-owned archived snapshots.
 
 Select the acceptance gate:
 
@@ -51,9 +62,10 @@ Select the acceptance gate:
    Obey any stricter per-iteration rule written in the roadmap itself. For example,
    if the roadmap says each run may process only one checkbox, do not complete,
    check, or otherwise process a second checkbox in the same invocation.
-3. Compare the last two iteration records. Resolve the missing active-gate
-   dependency when it is authorized and feasible; size or difficulty alone is
-   not a blocker. If it needs unavailable access, an external service, user
+3. Compare the current handoff and latest supervisor review with the actual
+   repository state. Do not load prior iteration narratives merely to reconstruct
+   chronology. Resolve the missing active-gate dependency when it is authorized
+   and feasible; size or difficulty alone is not a blocker. If it needs unavailable access, an external service, user
    judgment or another unmet dependency, leave its checkbox open and record the
    evidence, unblock condition and next ready checkbox. Continue other useful
    authorized work in this invocation if coding has not started, or hand it off
@@ -118,26 +130,22 @@ Update the tracking file and stop this invocation:
 
 - Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
   acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
-- Maintain a compact Checked-item status log in the tracking file for every existing
-  checked item: ID, current implemented/verified/deployed status, evidence link,
-  and last status change or review date. Carry forward valid prior evidence without
-  rerunning unchanged checks. Log newly checked children and each status transition
-  in the dated iteration record. If new evidence invalidates a checked item,
-  reopen it with the reason and retain its previous completion/failure history.
-  A checked local prerequisite does not imply its parent or deployment is complete.
-- Replace a compact Current handoff near the top with: active checkbox, criteria
-  closed this iteration, remaining criteria, blocker/dependency, verification
-  results (including skips), deferred gates with unblock conditions, and the
-  exact next ready checkbox. Preserve historical records below it. Continue the
-  unfinished active gate unless its documented blocker makes another gate ready.
-- Record approximate discovery, implementation and verification durations plus
-  child tasks completed in the dated iteration record. Use observed timings or
-  label estimates; do not invent measurements. This makes bootstrap overhead
-  and batch size assessable across runs. Include the loaded prompt revision and
-  declared batch outcome. State the session exit reason: outcome achieved,
-  implementation target reached, concrete blocker, or explicit roadmap limit.
-  If exiting before the target with an unfinished outcome, explain why the related
-  next child cannot be completed now; a passing narrow test alone is insufficient.
+- Maintain compact Checked-item evidence only for acceptance gates whose current
+  state matters: ID, implemented/verified/deployed state, a short evidence reference,
+  and last relevant change. Do not accumulate one prose log entry per iteration.
+  If new evidence invalidates a checked item, reopen it with the current reason;
+  the runner-owned archive retains earlier snapshots.
+- Replace Current handoff near the top with: active checkbox, criteria closed this
+  iteration, remaining criteria, blocker/dependency, concise verification results
+  including skips, deferred gates with unblock conditions, and the exact next ready
+  checkbox. Delete superseded handoff prose rather than moving it into a history
+  section. Continue the unfinished active gate unless its documented blocker makes
+  another gate ready.
+- Keep timing and exit information concise in the current handoff: approximate
+  discovery/implementation/verification durations when useful, loaded prompt
+  revision, declared batch outcome and exit reason. Do not create a growing dated
+  iteration-history section; the runner archives each boundary snapshot separately.
+  If exiting early with an unfinished outcome, explain only the current reason.
 - Summarize concrete changes and checks; explain any scope change. If no gate
   closed, identify the material prerequisite advanced and how it reduces the
   remaining work. Repeated rediscovery, extra notes or adjacent tests alone
