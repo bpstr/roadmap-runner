@@ -52,20 +52,26 @@ test("a documentation example cannot skip the three real worker iterations", (t)
   const roadmap = path.join(dir, "roadmap.md");
   fs.copyFileSync(path.join(root, "examples/three-iteration-roadmap.md"), roadmap);
   fs.appendFileSync(roadmap, "\n## Status example\n\n```md\nStatus: COMPLETE\n```\n");
+  const before = fs.readFileSync(roadmap);
   const result = spawnSync(process.execPath, [cli, roadmap, "--client", "codex", "--client-bin",
     path.join(root, "test/fixtures/mock-codex.js")], {
     cwd: dir, encoding: "utf8", timeout: 10_000,
   });
   assert.equal(result.status, 0, result.stderr);
   assert.equal((result.stdout.match(/^===== iteration /gm) || []).length, 3, result.stdout);
-  assert.equal((fs.readFileSync(roadmap, "utf8").match(/- \[x\] EX-/g) || []).length, 3);
+  assert.deepEqual(fs.readFileSync(roadmap), before);
+  const progress = result.stdout.match(/^Progress:\s+(.+?) \(bounded active state;/m)?.[1];
+  assert.ok(progress, result.stdout);
+  assert.equal((fs.readFileSync(progress, "utf8").match(/- \[x\] EX-/g) || []).length, 3);
 });
 
-test("conflicting header statuses fail before starting a worker", (t) => {
+test("conflicting progress header statuses fail before starting a worker", (t) => {
   const dir = workspace(t);
   const roadmap = path.join(dir, "roadmap.md");
-  fs.writeFileSync(roadmap, "Status: IN_PROGRESS\nStatus: COMPLETE\n");
-  const result = spawnSync(process.execPath, [cli, roadmap, "--client", "codex", "--client-bin",
+  const progress = path.join(dir, "progress.md");
+  fs.writeFileSync(roadmap, "# Roadmap\n\n- [ ] Work\n");
+  fs.writeFileSync(progress, "Status: IN_PROGRESS\nStatus: COMPLETE\n");
+  const result = spawnSync(process.execPath, [cli, roadmap, "--progress-file", progress, "--client", "codex", "--client-bin",
     path.join(root, "test/fixtures/mock-codex.js")], {
     cwd: dir, encoding: "utf8", timeout: 10_000,
   });
