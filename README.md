@@ -78,9 +78,15 @@ from that target; the per-run hard timeout still applies.
 
 A checkbox is a progress unit, not a session boundary. Runs group several related
 ready children under the same parent and continue within that group after a small
-child finishes. Checks run after the coding batch, with only failed or invalidated
-checks repeated after repairs. Runs can finish earlier when the parent closes or
-no related work is actionable. Explicit stricter roadmap run limits still apply.
+child finishes. **Implementation comes before feature verification:** the worker
+must not burn fresh iterations rerunning the same acceptance/integration test while
+the relevant implementation is unchanged. A failed feature test becomes durable
+evidence; the next iteration normally implements or repairs the missing behavior,
+and the failed test may be rerun only after a relevant artifact changes. Explicit
+verification/diagnostic roadmap tasks and changed external/environmental conditions
+are narrow exceptions. Checks run after the coding batch, with failed checks repeated
+after repairs. Runs can finish earlier when the parent closes or no related work is
+actionable. Explicit stricter roadmap run limits still apply.
 
 Before coding, the worker records a Batch plan with the outcome, parent gate,
 related child IDs, shared setup, checks and exit criteria. Completing a child or
