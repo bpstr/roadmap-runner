@@ -46,8 +46,10 @@ Diagnose the window:
    its parent. An exit code of zero or a changed file hash is not delivery evidence.
 2. Look for repeated rediscovery, unchanged failed checks, the same unresolved
    dependency, early exits after narrow tests, endless child-task splitting, and
-   output claiming work not represented in the artifacts. Distinguish these from
-   useful incremental implementation and legitimate long integration work.
+   output claiming work not represented in the artifacts. Treat repeated execution
+   of the same feature/acceptance test without an intervening relevant implementation
+   change as stagnation, not progress. Distinguish these from useful incremental
+   implementation and legitimate long integration work.
 3. Separate execution problems (timeouts, capacity waits, missing access) from
    reasoning/planning loops. Explain uncertainty and evidence gaps. Do not call a
    gate stuck just because it is difficult or its checkbox remains unchecked.
@@ -59,7 +61,10 @@ Adjust delivery, not the goal:
 
 - Keep a healthy batch stable. For evidenced stagnation, change the next batch's
   concrete outcome, task ordering, decomposition, prerequisite repair or proof
-  strategy. Preserve original parent IDs and all unmet acceptance criteria.
+  strategy. If workers are looping on verification, explicitly target the missing
+  implementation/repair and forbid another identical feature-level test until a
+  relevant artifact changes. Preserve original parent IDs and all unmet acceptance
+  criteria.
 - Record the previous and new delivery target and why the change helps. Name a
   measurable next-run expectation, its verification artifact, and a fallback if
   it fails. Keep the current 30-minute implementation planning target and stricter
