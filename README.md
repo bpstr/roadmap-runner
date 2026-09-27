@@ -179,7 +179,9 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 The source roadmap is now **requirements-only and immutable by default**. This is
 intentional: a long run must not slowly rewrite its own goal while accumulating
-megabytes of delivery narration.
+megabytes of delivery narration. A source larger than **512 KiB** is rejected before
+launch as a likely polluted context file; restore or prepare a compact requirements-
+only roadmap instead of feeding historical delivery logs back into the model.
 
 Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 
@@ -219,7 +221,7 @@ state conflicts with source scope or acceptance criteria, the source wins.
 Put exactly one status line in the opening header, after an optional `#` title
 and before the first `##` (or deeper) section heading. Fenced examples and status
 lines in later sections are not control state. Duplicate or malformed header
-statuses stop with an error. A roadmap with no header status defaults to
+statuses stop with an error. A progress file with no header status defaults to
 `IN_PROGRESS`, allowing the worker to initialize it.
 
 Normal work keeps:
@@ -267,7 +269,8 @@ The CLI option overrides the environment setting. With neither set, the internal
 
 In all modes the roadmap is the read-only requirements source. The worker reads
 both files, but puts its checklist, child tasks, batch plan, handoff, verification
-evidence, deferrals, iteration history and status only in the progress file.
+evidence, deferrals and status only in the progress file. Iteration history is
+runner-owned cold history, not an append-only section in active model context.
 Original gate IDs/criteria and stricter run limits remain authoritative; source
 instructions to update progress are redirected to this separate file.
 
@@ -466,8 +469,8 @@ MIT.
 If Codex exits with code 1 and reports only the recognized "Selected model is at
 capacity" error, the runner waits five minutes and retries the same model. It
 allows ten retries after the initial failed attempt, then exits with code 75.
-Partial work and roadmap checkboxes are preserved; capacity does not mark the
-roadmap blocked or complete. Other errors stop without retrying. This recovery
+Partial work and progress checkboxes are preserved; capacity does not mark the
+delivery state blocked or complete. Other errors stop without retrying. This recovery
 currently applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.
