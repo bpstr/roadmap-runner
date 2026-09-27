@@ -17,6 +17,7 @@ test("example roadmap completes in exactly three iterations", (t) => {
   t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
   const roadmap = path.join(temp, "roadmap.md");
   fs.copyFileSync(example, roadmap);
+  const originalRoadmap = fs.readFileSync(roadmap);
 
   const result = spawnSync(process.execPath, [
     cli,
@@ -48,15 +49,20 @@ test("example roadmap completes in exactly three iterations", (t) => {
   assert.match(result.stdout, /Completed EX-3/);
   assert.match(result.stdout, /Roadmap complete after 3 iteration\(s\)\./);
 
-  const finalRoadmap = fs.readFileSync(roadmap, "utf8");
-  assert.match(finalRoadmap, /^Status: COMPLETE$/m);
-  assert.equal((finalRoadmap.match(/- \[x\] EX-/g) || []).length, 3);
-  assert.equal((finalRoadmap.match(/- \[ \] EX-/g) || []).length, 0);
+  assert.deepEqual(fs.readFileSync(roadmap), originalRoadmap);
+  const progressPath = result.stdout.match(/^Progress:\s+(.+?) \(bounded active state;/m)?.[1];
+  assert.ok(progressPath, result.stdout);
+  const finalProgress = fs.readFileSync(progressPath, "utf8");
+  assert.match(finalProgress, /^Status: COMPLETE$/m);
+  assert.equal((finalProgress.match(/- \[x\] EX-/g) || []).length, 3);
+  assert.equal((finalProgress.match(/- \[ \] EX-/g) || []).length, 0);
 
   assert.equal(fs.readFileSync(path.join(temp, "example-output", "one.txt"), "utf8"), "one\n");
   assert.equal(fs.readFileSync(path.join(temp, "example-output", "two.txt"), "utf8"), "two\n");
   assert.equal(fs.readFileSync(path.join(temp, "example-output", "three.txt"), "utf8"), "three\n");
 
-  const completedHistory = finalRoadmap.match(/- Completed EX-/g) || [];
-  assert.equal(completedHistory.length, 3);
+  assert.doesNotMatch(finalProgress, /## Iteration history/);
+  const historyPath = result.stdout.match(/^History:\s+(.+?) \(archived snapshots;/m)?.[1];
+  assert.ok(historyPath, result.stdout);
+  assert.equal(fs.readdirSync(historyPath).filter(name => name.endsWith(".md.gz")).length, 3);
 });
