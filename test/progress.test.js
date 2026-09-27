@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseArgs, roadmapStatus } from "../lib/runner.js";
-import { MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
+import { MAX_SOURCE_BYTES, MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "prompt.md"), "utf8");
@@ -124,6 +124,13 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /each run may process only one checkbox/);
   assert.match(prompt, /original gate IDs and criteria/);
   assert.doesNotMatch(prompt, /Update the roadmap and stop|status log in the roadmap|EDIT_ROADMAP/);
+});
+
+test("multi-megabyte source/history pollution is rejected before a worker sees it", (t) => {
+  const { dir, roadmap } = workspace(t);
+  fs.writeFileSync(roadmap, "# Roadmap\n\n" + "history noise\n".repeat(Math.ceil(MAX_SOURCE_BYTES / 10)));
+  assert.ok(fs.statSync(roadmap).size > MAX_SOURCE_BYTES);
+  assert.throws(() => prepareTracking(roadmap, "", dir), /compact requirements-only roadmap/);
 });
 
 test("active progress is capped while archived snapshots preserve prior state", (t) => {
