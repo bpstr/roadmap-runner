@@ -120,8 +120,8 @@ async function main() {
     console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
   }
 
-  const tracking = prepareTracking(roadmap, options.progressFile);
-  const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file);
+  const tracking = prepareTracking(roadmap, options.progressFile, workdir);
+  const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
   const supervisor = options.supervision.every ? new Supervision({
     ...options.supervision, roadmap, tracking,
     template: fs.readFileSync(path.join(ROOT, "supervisor.md"), "utf8"),
@@ -131,7 +131,8 @@ async function main() {
   console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
-  console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);\n  console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
+  console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);
+  console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
   console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
   console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
@@ -144,6 +145,7 @@ async function main() {
 
   while (true) {
     tracking.assertUnchanged();
+    tracking.assertBounded();
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = roadmapStatus(contents);
 
