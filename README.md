@@ -1,3 +1,5 @@
+![Roadmap Runner — Iterate, Track, Deliver](https://raw.githubusercontent.com/bpstr/roadmap-runner/main/docs/assets/roadmap-runner-cover.webp)
+
 # Roadmap Runner
 
 Run a long Markdown implementation roadmap through fresh coding-agent CLI sessions until it is complete.
