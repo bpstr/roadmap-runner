@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseArgs, roadmapStatus } from "../lib/runner.js";
-import { prepareTracking, renderPrompt } from "../lib/tracking.js";
+import { MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "prompt.md"), "utf8");
@@ -31,14 +31,20 @@ test("progress-file argument and environment are opt-in, with CLI precedence", (
   }
 });
 
-test("default mode still allows roadmap edits and creates no companion file", (t) => {
+test("default mode preserves the roadmap and creates bounded internal progress state", (t) => {
   const { dir, roadmap } = workspace(t);
-  const tracking = prepareTracking(roadmap);
-  fs.appendFileSync(roadmap, "\nNew handoff\n");
+  const before = fs.readFileSync(roadmap);
+  const tracking = prepareTracking(roadmap, "", dir);
+  assert.notEqual(tracking.file, roadmap);
+  assert.match(tracking.file, /[\\/].roadmap-runner[\\/].+[\\/]progress\.md$/);
+  assert.equal(roadmapStatus(fs.readFileSync(tracking.file, "utf8")), "in-progress");
+  assert.deepEqual(fs.readFileSync(roadmap), before);
   assert.doesNotThrow(() => tracking.assertUnchanged());
-  assert.equal(tracking.file, roadmap);
-  assert.deepEqual(fs.readdirSync(dir), ["roadmap.md"]);
-  assert.match(renderPrompt(template, roadmap, tracking.file), /Tracking mode: EDIT_ROADMAP/);
+  assert.doesNotThrow(() => tracking.assertBounded());
+  const prompt = renderPrompt(template, roadmap, tracking.file, tracking.historyDir);
+  assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
+  assert.match(prompt, /immutable authority/);
+  assert.match(prompt, /do not bulk-load/);
 });
 
 test("new nested evidence gets an incomplete scaffold without touching the source", (t) => {
@@ -117,7 +123,19 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /loaded prompt revision/);
   assert.match(prompt, /each run may process only one checkbox/);
   assert.match(prompt, /original gate IDs and criteria/);
-  assert.doesNotMatch(prompt, /Update the roadmap and stop|status log in the roadmap/);
+  assert.doesNotMatch(prompt, /Update the roadmap and stop|status log in the roadmap|EDIT_ROADMAP/);
+});
+
+test("active progress is capped while archived snapshots preserve prior state", (t) => {
+  const { dir, roadmap } = workspace(t);
+  const tracking = prepareTracking(roadmap, "", dir);
+  fs.writeFileSync(tracking.file, "# State\nStatus: IN_PROGRESS\n\n" + "x".repeat(4096));
+  const snapshot = tracking.archive({ kind: "worker", iteration: 1, metadata: { code: 0 } });
+  assert.ok(fs.existsSync(snapshot));
+  assert.match(fs.readFileSync(tracking.historyFile, "utf8"), /"iteration":1/);
+  assert.doesNotThrow(() => tracking.assertBounded());
+  fs.writeFileSync(tracking.file, "x".repeat(MAX_TRACKING_BYTES + 1));
+  assert.throws(() => tracking.assertBounded(), /active progress file exceeded/);
 });
 
 // This mock obeys the separate-file contract. Fault modes deliberately violate it
