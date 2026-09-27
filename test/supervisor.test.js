@@ -292,6 +292,8 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(prompt, /do not bulk-load/);
   assert.match(prompt, /must not set Status: COMPLETE/);
   assert.match(prompt, /measurable next-run expectation/);
+  assert.match(prompt, /without an intervening relevant implementation/);
+  assert.match(prompt, /forbid another identical feature-level test/);
   assert.match(prompt, /ALL remaining gates/);
   const worker = fs.readFileSync(path.join(root, 'prompt.md'), 'utf8');
   assert.match(worker, /Read the latest Supervisor review/);
@@ -299,4 +301,7 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(worker, /canonical harness/);
   assert.match(worker, /bounded working memory/);
   assert.match(worker, /source wins/);
+  assert.match(worker, /Implementation before feature verification/);
+  assert.match(worker, /do not rerun the same failed feature check until/);
+  assert.match(worker, /verification-only next iteration is allowed only/);
 });
