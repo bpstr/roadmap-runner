@@ -4,7 +4,7 @@ Run a long Markdown implementation roadmap through fresh coding-agent CLI sessio
 
 The goal is to start one command, let it keep working for **8–10 hours or longer** on a large roadmap without human approval prompts, and have it stop automatically when the roadmap is finished.
 
-Each implementation batch gets a fresh CLI session. The roadmap and filesystem are the durable handoff between runs, so context does not grow forever.
+Each implementation batch gets a fresh CLI session. The source roadmap remains immutable; a bounded progress file plus the filesystem form the hot handoff. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
 
 ## Install
 
@@ -177,18 +177,44 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 ## Roadmap progress tracking
 
-By default, roadmap modification is intentional. Use `--progress-file` to keep
-the source roadmap unchanged and track delivery separately (see below).
+The source roadmap is now **requirements-only and immutable by default**. This is
+intentional: a long run must not slowly rewrite its own goal while accumulating
+megabytes of delivery narration.
 
-The roadmap is both the implementation specification and the durable state shared between fresh sessions. The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
+Without `--progress-file`, Roadmap Runner creates workspace-local state under:
+
+```text
+.roadmap-runner/<roadmap-name>-<stable-path-id>/
+  progress.md
+  history.jsonl
+  history/*.md.gz
+```
+
+`progress.md` is bounded hot state. It contains the current checklist, handoff,
+concise evidence references, deferred gates and latest supervisor review. It is
+capped at **128 KiB**. If a worker makes it larger, the runner first archives the
+boundary snapshot and then stops instead of feeding the oversized file into another
+fresh context.
+
+`history/*.md.gz` preserves full boundary snapshots outside the default model
+context. `history.jsonl` is a runner-owned index. Workers and supervisors must not
+bulk-load history merely to reconstruct chronology; they retrieve a specific older
+snapshot only when current evidence requires it.
+
+The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
 
 - stable acceptance-gate checkboxes;
 - child checkboxes when a gate is too large for one invocation;
 - a compact Current handoff;
 - checked-item implementation / verification / deployment evidence;
 - deferred gates and unblock conditions;
-- dated iteration history;
+- concise current evidence references;
 - one top-level status.
+
+It explicitly forbids append-only iteration narratives, copied diffs, raw CLI/test
+logs, repeated old handoffs and superseded supervisor plans in the active progress
+file. At every iteration it re-reads the immutable source roadmap; when progress
+state conflicts with source scope or acceptance criteria, the source wins.
 
 Put exactly one status line in the opening header, after an optional `#` title
 and before the first `##` (or deeper) section heading. Fenced examples and status
@@ -224,9 +250,10 @@ verifies orchestration, not a live model's compliance with the prompt.
 
 Resolve the recorded external blocker, return the roadmap to `Status: IN_PROGRESS`, and start the same command again.
 
-## Preserve the original roadmap
+## Choose a custom progress path
 
-Opt into a separate progress or delivery-evidence file:
+Source preservation is the default. Use `--progress-file` only when you want the
+bounded active state at a specific path:
 
 ```sh
 roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md
@@ -235,10 +262,10 @@ ROADMAP_PROGRESS_FILE=docs/delivery-evidence.md roadmap-runner docs/roadmap.md
 ```
 
 Paths are resolved from the current workspace, not from the roadmap directory.
-The CLI option overrides the environment setting. With neither set, the existing
-in-place roadmap workflow is unchanged.
+The CLI option overrides the environment setting. With neither set, the internal
+`.roadmap-runner/.../progress.md` path is used.
 
-In this mode the roadmap is the read-only requirements source. The worker reads
+In all modes the roadmap is the read-only requirements source. The worker reads
 both files, but puts its checklist, child tasks, batch plan, handoff, verification
 evidence, deferrals, iteration history and status only in the progress file.
 Original gate IDs/criteria and stricter run limits remain authoritative; source
@@ -246,8 +273,9 @@ instructions to update progress are redirected to this separate file.
 
 A missing progress file (and its parent directories) is created with an
 `IN_PROGRESS` scaffold. The worker derives its checklist from the source; the
-scaffold is not proof of completion. An existing evidence file is reused without
-being truncated or reset. Restart with the same two paths to resume.
+scaffold is not proof of completion. An existing progress file is reused without
+being truncated or reset. Restart with the same roadmap/path to resume. The 128 KiB
+hot-state cap applies to custom progress files too.
 
 Only the progress file's opening-header status controls continuation:
 `COMPLETE` exits successfully and `BLOCKED` exits with code 3. The roadmap's
@@ -295,7 +323,7 @@ The worker prompt explicitly disables implementation subagents. Long throughput 
 roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
---progress-file <path> separate progress/evidence file; preserve the source
+--progress-file <path> override bounded progress-state path; source is always preserved
 --timeout <duration>   default: 2h
 --supervisor-every <n>  review every n workers (1-20); default 5, 0 disables
 --supervisor-timeout <duration> review timeout; default 10m
@@ -400,7 +428,8 @@ roadmap-runner roadmap.md --progress-file delivery-evidence.md
 
 A compliant run still takes three worker iterations, but the original three
 checkboxes stay unchanged and completion is recorded in `delivery-evidence.md`.
-The separate-file integration test checks source bytes as well as iteration count.
+Without the option, the same behavior uses the internal bounded progress path.
+The integration test checks source bytes as well as iteration count.
 
 The automated test does **not** call a live model. It runs the real Roadmap Runner
 process against `test/fixtures/mock-codex.js`, which completes exactly one checkbox
@@ -419,7 +448,12 @@ The tests do not call live models. They validate duration/status handling and th
 
 ## Design
 
-The runner deliberately does not maintain its own task database or hidden roadmap state. It does not create worktrees, commits, or pushes automatically, and it does not choose one Git repository as the workspace root.
+The runner deliberately does not maintain a task database. It does maintain small
+workspace-local orchestration state so requirements, hot progress and historical
+evidence have different lifecycles. The roadmap is the immutable goal; progress.md
+is bounded working memory; compressed boundary snapshots are cold audit history.
+It does not create worktrees, commits, or pushes automatically, and it does not
+choose one Git repository as the workspace root.
 
 Provider-specific behavior lives in small adapters under `lib/clients.js`. The roadmap loop and prompt are shared, so future CLI support should require adding an adapter rather than duplicating the runner.
 
