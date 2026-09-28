@@ -67,9 +67,15 @@ Adjust delivery, not the goal:
   criteria.
 - Record the previous and new delivery target and why the change helps. Name a
   measurable next-run expectation, its verification artifact, and a fallback if
-  it fails. Keep the current 30-minute implementation planning target and stricter
-  roadmap limits; no busywork to fill time and no narrow test substituted for the
-  required canonical integration harness.
+  it fails. For larger roadmaps, use the recommended **1-hour total worker-session
+  budget** to plan meaningful feature or milestone delivery, including discovery,
+  implementation, verification and handoff. The 30-minute implementation target
+  is a planning aid within that budget, not an automatic session boundary.
+  Respect the actual configured timeout and stricter roadmap limits; do not change
+  either. Finish productive work early when its outcome is delivered, and never
+  pad time with repeated tests or unrelated work. A shorter successful session is
+  not stagnation. No narrow test may replace the required canonical integration
+  harness, and unfinished features must remain explicitly incomplete.
 - Prefer useful authorized work on another ready gate to stopping the roadmap.
   Defer an externally blocked gate with its exact unblock action. Stuck locally
   does NOT mean globally BLOCKED. No scope expansion or weakened completion bar.
