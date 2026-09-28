@@ -105,6 +105,38 @@ The dated handoff records approximate discovery, implementation and verification
 durations so repeated bootstrap overhead can be assessed. The target is prompt
 guidance; the runner does not impose a 30-minute forced termination.
 
+### Recommended session limit for larger roadmaps
+
+For larger roadmaps, **1 hour per worker session** is the recommended starting
+point. The intent is to allow enough uninterrupted time to deliver a meaningful
+feature or coherent milestone, rather than repeatedly paying for discovery and
+handoff after tiny fragments of work. This is a practical tuning recommendation,
+not a measured universal optimum.
+
+```sh
+roadmap-runner docs/roadmap.md --timeout 1h
+# Equivalent environment setting:
+ROADMAP_TIMEOUT=1h roadmap-runner docs/roadmap.md
+```
+
+This is the **total worker-session budget**, including discovery, implementation,
+feature verification and the compact handoff—not one hour of coding plus those
+steps. The approximate 30-minute implementation target above is a planning aid
+within that budget, not a mandatory stopping point. Continue related work toward
+the declared outcome while leaving time for verification and handoff before the
+configured timeout. If the feature cannot fit, leave an honest partial handoff;
+do not weaken its acceptance criteria or label unverified work complete.
+
+One hour is an allowance, **not a minimum duration**. Finish earlier when the
+planned outcome is delivered, no related authorized work can advance, or a stricter
+roadmap rule applies. Do not pad the session with repeated tests, unrelated work,
+or verbose delivery logs. The one-checkbox smoke-test exception remains unchanged.
+
+The CLI default remains **2h** unless `--timeout` or `ROADMAP_TIMEOUT` is supplied;
+this recommendation does not silently change existing commands or detect roadmap
+size automatically. Timeout cleanup grace is additional. Supervisor cadence and
+its separate timeout are unchanged: every five workers is not an hourly review.
+
 ## Continuous execution
 
 One outer process can run for many hours:
