@@ -93,14 +93,26 @@ Implement and verify:
   discovery and final verification. This is a planning target, not a hard deadline
   or a minimum to fill with unnecessary work. Plan several related ready child
   tasks under one parent gate that share code, context and verification.
+- For larger roadmaps, the recommended total worker-session budget is **1 hour**:
+  discovery, implementation, feature verification and compact handoff all fit
+  inside it. Use that allowance to deliver a meaningful feature or coherent
+  milestone, not isolated fragments followed by another bootstrap. The approximate
+  30-minute implementation target is a planning aid, not a mandatory exit point.
+  Leave time for verification and handoff before the configured timeout; do not
+  assume an extra hour for those steps or wait for forced termination. This is
+  not a minimum duration and does not change the configured runner timeout.
+  Stricter roadmap limits and the actual configured timeout always take precedence.
+  Do not change those settings or add unrelated work just to fill the allowance.
 - Keep the declared batch outcome stable. Revise it only for an evidenced change
   in requirements/dependencies or a real blocker, and record the reason. Completing
   a new nested checkbox or one source-family case is not a session exit criterion.
 - A checkbox is a progress unit, not a session boundary. After finishing a child,
   continue the next related ready child in the same session until the planned
-  batch is complete or roughly 30 implementation minutes have elapsed. Finish
-  the current coherent coding unit, then validate and hand off; do not stop just
-  because one small checkbox is done or begin an unrelated major gate to fill time.
+  batch is complete or the remaining session budget must be reserved for
+  verification and handoff. Finish the current coherent coding unit within that
+  budget; do not stop just because one small checkbox is done or begin an unrelated
+  major gate to fill time. If the feature remains incomplete, record its exact
+  next implementation step and pending verification rather than claiming completion.
 - If a gate is too large, break it into ordered, independently verifiable child
   checkboxes with stable IDs under the same parent. Complete a coherent group
   per run. Size and difficulty require decomposition, not deferral. Stop earlier
