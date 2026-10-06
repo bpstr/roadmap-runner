@@ -155,9 +155,10 @@ async function main() {
       process.exit(0);
     }
 
-    if (status === "blocked" && !tracking.needsReconciliation) {
-      console.error("Roadmap globally blocked; resolve the recorded blocker before restarting.");
-      process.exit(3);
+    const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
+    if (blockedRecovery) {
+      console.warn("Roadmap reported BLOCKED; continuing in recovery mode instead of stopping.");
+      console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
     }
 
     // Reconcile a controller revision before trusting terminal state or old reviews.
@@ -175,7 +176,7 @@ async function main() {
     const started = performance.now();
     const output = supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
-    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
+    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     const result = await runClient({
       client: options.client,
       executable: options.executable,
