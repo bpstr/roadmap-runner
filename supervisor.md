@@ -83,9 +83,10 @@ Adjust delivery, not the goal:
   pad time with repeated tests or unrelated work. A shorter successful session is
   not stagnation. No narrow test may replace the required canonical integration
   harness, and unfinished features must remain explicitly incomplete.
-- Prefer useful authorized work on another ready gate to stopping the roadmap.
-  Defer an externally blocked gate with its exact unblock action. Stuck locally
-  does NOT mean globally BLOCKED. No scope expansion or weakened completion bar.
+- Prefer useful authorized work on another ready gate to repeating a stuck gate.
+  Defer an externally blocked gate with its exact unblock action and bounded retry
+  trigger, then explicitly select a different ready gate or prerequisite. Stuck
+  locally does NOT stop the runner. No scope expansion or weakened completion bar.
 - Reopen checked items only when concrete evidence invalidates them, preserving
   earlier evidence/history. This review itself completes no implementation task
   and must not set Status: COMPLETE.
@@ -103,10 +104,12 @@ Persist the review and return:
   concise evidence references, but do not retain superseded plans, raw logs, copied
   diffs or dated review narratives in active state. Historical snapshots are
   already preserved outside hot context.
-- Keep Status: IN_PROGRESS whenever useful authorized work remains. Only set
-  Status: BLOCKED after inspecting ALL remaining gates/prerequisites and recording
-  why none can advance plus the exact external unblock action. A single stuck
-  gate, one failed review, or one inconclusive window is not enough.
+- Keep Status: IN_PROGRESS whenever useful authorized work remains. Status: BLOCKED
+  is non-terminal and means only that this review found no currently actionable
+  gate after inspecting ALL remaining gates/prerequisites. If used, record why each
+  remaining gate cannot advance, its exact external unblock action and retry trigger.
+  The runner will continue with a fresh recovery worker; never use BLOCKED as a
+  request to terminate the long-running executor.
 - Keep exactly one status in the tracking file's opening header before its first
   ## (or deeper) heading, outside code fences. Print a short evidence-backed
   conclusion and the next delivery target, then stop this supervisor invocation.
