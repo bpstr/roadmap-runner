@@ -36,9 +36,11 @@ Supervisors never consume worker iteration numbers. Consequently, worker attempt
 numbers in the terminal can exceed the counted work sessions when capacity retries
 occur. Ordinary fatal failures and user cancellation still stop execution.
 
-The selected tracking file's terminal status takes precedence only while its source
-revision is current: if worker 5 writes COMPLETE or BLOCKED and no controller edit
-needs reconciliation, the runner exits without launching a review. A three-task
+Only COMPLETE is a normal terminal tracking status. BLOCKED is a non-terminal
+recovery signal: the runner continues with another fresh worker (after any due
+supervisor checkpoint) so stuck gates can be deferred and other work can advance.
+If worker 5 writes COMPLETE and no controller edit needs reconciliation, the runner
+exits without launching a review. A three-task
 smoke test still takes three workers and no supervisor. This is not a final
 independent acceptance gate.
 
@@ -98,7 +100,9 @@ by runner-owned archived snapshots rather than appended to hot context. The work
 it to consume that review and test its next-run expectation.
 
 One stuck gate is not a global block. The supervisor must consider other useful
-authorized work before setting BLOCKED. It must not complete implementation tasks
+authorized work, defer unchanged blockers, and retarget another gate before setting
+BLOCKED. Even BLOCKED does not terminate the runner; it records that no useful work
+was found in this review window and hands recovery to a fresh worker. It must not complete implementation tasks
 or set COMPLETE; the runner rejects a supervisor-written COMPLETE in the current
 invocation. A unique Review ID must be persisted before the checkpoint succeeds.
 That ID verifies that a handoff was written, not that its reasoning is correct.
