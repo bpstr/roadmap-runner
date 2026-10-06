@@ -174,6 +174,7 @@ if (mode === 'capacity' && count === 1) {
 if (mode === 'delete-progress') { fs.unlinkSync(file); process.exit(0); }
 let text = fs.readFileSync(file, 'utf8');
 if (prompt.includes('Roadmap reconciliation required: YES')) text = text.replace('Status: COMPLETE', 'Status: IN_PROGRESS');
+if (prompt.includes('Blocked recovery mode: YES')) text = text.replace('Status: BLOCKED', 'Status: IN_PROGRESS');
 if (!/- \\[[ x]\\] EX-/.test(text)) {
   const gates = fs.readFileSync(source, 'utf8').match(/^- \\[ \\] EX-[^\\r\\n]+/gm);
   text += '\\n## Tasks\\n\\n' + gates.join('\\n') + '\\n';
@@ -228,16 +229,23 @@ test("resume skips previously checked tasks and preserves prior delivery evidenc
   assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
 });
 
-for (const [status, code] of [["COMPLETE", 0], ["BLOCKED", 3]]) {
-  test(`progress ${status} stops without launching or changing either file`, (t) => {
-    const evidence = `# Evidence\nStatus: ${status}\n\n## Evidence\nPrior proof.\n`;
-    const f = run(t, { evidence });
-    assert.equal(f.result.status, code, f.result.stderr);
-    assert.equal(f.calls, 0);
-    assert.equal(fs.readFileSync(f.file, "utf8"), evidence);
-    assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
-  });
-}
+test("progress COMPLETE stops without launching or changing either file", (t) => {
+  const evidence = "# Evidence\nStatus: COMPLETE\n\n## Evidence\nPrior proof.\n";
+  const f = run(t, { evidence });
+  assert.equal(f.result.status, 0, f.result.stderr);
+  assert.equal(f.calls, 0);
+  assert.equal(fs.readFileSync(f.file, "utf8"), evidence);
+  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+});
+
+test("progress BLOCKED is non-terminal and launches a recovery worker", (t) => {
+  const evidence = "# Evidence\nStatus: BLOCKED\n\n## Tasks\n- [ ] EX-1\n- [ ] EX-2\n- [ ] EX-3\n\n## Deferred gates\nEX-1 blocked externally.\n";
+  const f = run(t, { evidence });
+  assert.equal(f.result.status, 0, f.result.stderr);
+  assert.equal(f.calls, 3);
+  assert.match(f.result.stdout + f.result.stderr, /continuing in recovery mode/);
+  assert.equal(roadmapStatus(fs.readFileSync(f.file, "utf8")), "complete");
+});
 
 test("conflicting progress statuses fail before launching", (t) => {
   const f = run(t, { evidence: "Status: IN_PROGRESS\nStatus: COMPLETE\n" });
