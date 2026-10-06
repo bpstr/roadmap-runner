@@ -292,13 +292,20 @@ Status: COMPLETE
 
 A single blocked task does **not** stop the runner. The prompt requires the worker to inspect other remaining gates and continue anything useful that can still advance.
 
-Only when no remaining gate or prerequisite can materially advance may it set:
+When no remaining gate or prerequisite can materially advance in the current
+session, the worker may set:
 
 ```md
 Status: BLOCKED
 ```
 
-The runner then exits with code `3`.
+`BLOCKED` is **not terminal**. It is a recovery/defer signal: the runner launches
+another fresh worker, which re-evaluates dependency facts, skips unchanged blockers,
+and searches the rest of the roadmap for useful work. Each blocked gate should keep
+its evidence, exact external unblock action and retry trigger so later sessions do
+not repeatedly rediscover or hammer the same stuck action. Only `COMPLETE`, explicit
+user interruption, unrecoverable runner/input corruption, or an ordinary fatal
+client/process failure ends the loop.
 
 Completion remains an agent assertion: the runner reads the header status, not
 independent proof of every acceptance criterion. The three-iteration mock test
@@ -359,8 +366,8 @@ published contents. The next worker preserves valid evidence and stable IDs,
 reopens changed criteria, adds new gates, retires removed gates from active work,
 and replaces drifted handoffs and outdated supervisor targets.
 
-Old `COMPLETE` or `BLOCKED` state cannot stop the loop while reconciliation is
-pending. A fresh worker takes precedence over a scheduled review; a review based
+Old `COMPLETE` state cannot stop the loop while reconciliation is pending.
+`BLOCKED` never stops the loop; it requests a fresh recovery worker. A fresh worker takes precedence over a scheduled review; a review based
 on superseded requirements cannot stop the new revision with stale status or a
 missing handoff. Pending reconciliation clears only after a successful worker
 session on that same revision. Timeouts, capacity failures, cancellation and old
