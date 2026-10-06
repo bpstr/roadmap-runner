@@ -20,6 +20,13 @@ verification receipts. Do not rerun expensive validation merely for this review.
 
 Sources and authority:
 
+- Use the read-only Source roadmap snapshot named in Runner context wherever these
+  instructions say "original roadmap" or "source". It fixes the requirements for
+  this review. An external controller may correct the live roadmap; the next worker
+  will reconcile changes after this review, without interrupting the active session.
+  Never overwrite controller edits or edit the snapshot. A prior review's target
+  cannot override the current revision's requirements or authorize extra spending.
+
 - Read the original roadmap, current tracking file, prior Supervisor review, and
   the Run evidence JSON named in Runner context. That file contains bounded raw
   stdout/stderr, elapsed time, exit outcomes, and before/after tracking snapshots.

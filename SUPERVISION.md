@@ -36,8 +36,9 @@ Supervisors never consume worker iteration numbers. Consequently, worker attempt
 numbers in the terminal can exceed the counted work sessions when capacity retries
 occur. Ordinary fatal failures and user cancellation still stop execution.
 
-The selected tracking file's terminal status takes precedence: if worker 5 writes
-COMPLETE or BLOCKED, the runner exits without launching a review. A three-task
+The selected tracking file's terminal status takes precedence only while its source
+revision is current: if worker 5 writes COMPLETE or BLOCKED and no controller edit
+needs reconciliation, the runner exits without launching a review. A three-task
 smoke test still takes three workers and no supervisor. This is not a final
 independent acceptance gate.
 
@@ -45,15 +46,31 @@ The cadence/window starts fresh on each invocation of `roadmap-runner`; it is no
 reconstructed from model-written iteration history. Existing progress, review
 notes and next delivery targets remain in the tracking file across restarts.
 
+## External controller edits
+
+An external controller can revise the live roadmap to correct drift while a worker
+or review is running. The active session uses its fixed source snapshot; it is not
+cancelled, and controller edits are never restored over. At the next boundary the
+runner records the new revision and gives a worker priority over any pending review
+to reconcile requirements, valid evidence, priorities and stale terminal state.
+
+A review based on a superseded revision is archived but cannot stop revised work
+with its COMPLETE/BLOCKED status or missing handoff. Ordinary client failures and
+timeouts still stop as documented below. Changes during a supervisor capacity wait
+are picked up before another review attempt; reconciliation takes priority then too.
+Revision metadata and pending reconciliation survive restarts, independently of the
+supervisor cadence/window. Workers and this built-in supervisor still must not edit
+the source; external-controller authority is separate from these roles.
+
 ## What the supervisor inspects
 
 Each worker record includes its attempt number, start time, elapsed milliseconds,
-prompt revision, exit code/signal, timeout/interruption outcome, stdout/stderr
+prompt and source revisions, exit code/signal, timeout/interruption outcome, stdout/stderr
 excerpts, and before/after tracking snapshots and hashes. Elapsed time covers the
 whole worker call, including shutdown when applicable; it is not a fabricated
 measurement of coding time. Hash equality is only a signal, not proof of no work.
 
-The supervisor also reads the original roadmap, current files and verification
+The supervisor also reads its current source snapshot, current files and verification
 receipts, and the previous review. Its prompt looks for repeated rediscovery,
 unchanged failures, unaddressed dependencies, early exits after narrow tests,
 endless child-task splitting, and divergence between claimed and observed work.
@@ -88,8 +105,8 @@ That ID verifies that a handoff was written, not that its reasoning is correct.
 
 ## Output retention, context bounds and privacy
 
-The active progress file is capped at 128 KiB. The immutable source roadmap is
-re-read on every review and remains the authority when a handoff or proposed
+The active progress file is capped at 128 KiB. A source snapshot is refreshed
+between sessions and remains the authority when a handoff or proposed
 workflow change drifts from the original scope. Full progress snapshots are archived
 under the workspace-local `.roadmap-runner/.../history/` directory at worker and
 supervisor boundaries; they are cold audit history and are not bulk-loaded into
@@ -119,12 +136,13 @@ The review has its own timeout (default 10 minutes), plus a three-second shutdow
 grace. Ctrl-C and repeated-interrupt handling reuse the normal process lifecycle.
 Recognized Codex capacity failures retry the same review using the existing bounded
 capacity settings, not another worker. A fatal review failure, timeout, exhausted
-retry budget, missing Review ID, or source-integrity failure stops the runner.
+retry budget, missing Review ID on a current revision, or unreadable/invalid source
+stops the runner. An ordinary roadmap content edit does not.
 This does not automatically label the roadmap BLOCKED. Inspect any partial handoff
 before restarting; files are not silently restored.
 
-In preserved-source mode the same source-integrity checks run before and after
-supervisor attempts. The prompt permits only progress/handoff/evidence edits,
+Source revisions are checked before and after supervisor attempts; ordinary edits
+are adopted rather than rejected. The prompt permits only progress/handoff/evidence edits,
 not application changes, deployment or new spending. The adapters still retain
 their existing approval-free permissions: this is **not an OS write sandbox** or
 an independent semantic acceptance validator.

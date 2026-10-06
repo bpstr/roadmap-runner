@@ -6,7 +6,7 @@ Run a long Markdown implementation roadmap through fresh coding-agent CLI sessio
 
 The goal is to start one command, let it keep working for **8–10 hours or longer** on a large roadmap without human approval prompts, and have it stop automatically when the roadmap is finished.
 
-Each implementation batch gets a fresh CLI session. The source roadmap remains immutable; a bounded progress file plus the filesystem form the hot handoff. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
+Each implementation batch gets a fresh CLI session. Workers never edit the source roadmap, but external controllers may revise it between sessions; a bounded progress file plus the filesystem form the hot handoff. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
 
 ## Install
 
@@ -21,6 +21,15 @@ Update later:
 ```sh
 npm install -g @bpstr/roadmap-runner@latest
 ```
+
+For changes already committed to `main` but not yet published to npm:
+
+```sh
+npm install -g "github:bpstr/roadmap-runner#main"
+```
+
+Restart an already running process once after upgrading; code and prompts are
+loaded at startup. After that, controller roadmap edits require no restart.
 
 This installs:
 
@@ -144,7 +153,7 @@ One outer process can run for many hours:
 ```text
 fresh client session
         ↓
-read roadmap + filesystem
+read fixed roadmap snapshot + filesystem
         ↓
 resume current acceptance gate
         ↓
@@ -152,7 +161,7 @@ implement one coherent gate / child batch
         ↓
 verify
         ↓
-update roadmap + handoff
+update progress + handoff
         ↓
 exit session
         ↓
@@ -198,7 +207,8 @@ Unexpected client failures stop the runner rather than retrying forever.
 
 By default, a fresh supervisor reviews progress after every five successful or
 timed-out worker sessions, before another worker starts. Capacity-only retries
-are excluded; completed or globally blocked roadmaps stop without an extra review.
+are excluded; completed or globally blocked roadmaps stop without an extra review
+unless a changed source revision needs a fresh worker to reconcile it first.
 
 ```sh
 roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md \
@@ -219,10 +229,10 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 ## Roadmap progress tracking
 
-The source roadmap is now **requirements-only and immutable by default**. This is
-intentional: a long run must not slowly rewrite its own goal while accumulating
-megabytes of delivery narration. A source larger than **512 KiB** is rejected before
-launch as a likely polluted context file; restore or prepare a compact requirements-
+The source roadmap is **requirements-only and read-only to workers and the built-in
+supervisor**. An external controller may revise it to correct drift; updates are
+adopted between sessions. A source larger than **512 KiB** is rejected at every
+boundary as a likely polluted context file; restore or prepare a compact requirements-
 only roadmap instead of feeding historical delivery logs back into the model.
 
 Without `--progress-file`, Roadmap Runner creates workspace-local state under:
@@ -230,6 +240,8 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 ```text
 .roadmap-runner/<roadmap-name>-<stable-path-id>/
   progress.md
+  source-<progress-path-id>.json  # revision and pending reconciliation
+  source-<progress-path-id>.md    # fixed requirements snapshot for the active session
   history.jsonl
   history/*.md.gz
 ```
@@ -257,7 +269,7 @@ The accepted worker prompt is stored separately in `prompt.md` and asks the work
 
 It explicitly forbids append-only iteration narratives, copied diffs, raw CLI/test
 logs, repeated old handoffs and superseded supervisor plans in the active progress
-file. At every iteration it re-reads the immutable source roadmap; when progress
+file. At every iteration it reads the current fixed source snapshot; when progress
 state conflicts with source scope or acceptance criteria, the source wins.
 
 Put exactly one status line in the opening header, after an optional `#` title
@@ -292,7 +304,7 @@ Completion remains an agent assertion: the runner reads the header status, not
 independent proof of every acceptance criterion. The three-iteration mock test
 verifies orchestration, not a live model's compliance with the prompt.
 
-Resolve the recorded external blocker, return the roadmap to `Status: IN_PROGRESS`, and start the same command again.
+Resolve the recorded external blocker, return the progress file to `Status: IN_PROGRESS`, and start the same command again.
 
 ## Choose a custom progress path
 
@@ -309,8 +321,8 @@ Paths are resolved from the current workspace, not from the roadmap directory.
 The CLI option overrides the environment setting. With neither set, the internal
 `.roadmap-runner/.../progress.md` path is used.
 
-In all modes the roadmap is the read-only requirements source. The worker reads
-both files, but puts its checklist, child tasks, batch plan, handoff, verification
+In all modes the roadmap is read-only to the worker. It reads the current source
+snapshot and the progress file, but puts its checklist, child tasks, batch plan, handoff, verification
 evidence, deferrals and status only in the progress file. Iteration history is
 runner-owned cold history, not an append-only section in active model context.
 Original gate IDs/criteria and stricter run limits remain authoritative; source
@@ -322,26 +334,70 @@ scaffold is not proof of completion. An existing progress file is reused without
 being truncated or reset. Restart with the same roadmap/path to resume. The 128 KiB
 hot-state cap applies to custom progress files too.
 
-Only the progress file's opening-header status controls continuation:
-`COMPLETE` exits successfully and `BLOCKED` exits with code 3. The roadmap's
+The progress file's opening-header status controls continuation when no source
+revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` exits
+with code 3. The roadmap's
 own status/checkboxes are ignored as runtime state and may stay unchanged even
 when delivery is finished. The same header format rules apply. To unblock work,
-update the progress file, not the source roadmap.
+update the progress file; controller changes to the source trigger reconciliation instead.
 
 The runner rejects a progress path that resolves to the source itself, including
-symlink/hard-link aliases. It checks the source's byte hash before each iteration
-and after each worker returns, including failed or timed-out runs. A detected
-change, deletion or unreadable source stops the runner without starting another
-worker or silently restoring files. Inspect the change yourself; another tool
-or a human may have made it.
+symlink/hard-link aliases. Missing, unreadable, non-file or oversized sources still
+stop explicitly without restoring files. Ordinary roadmap content edits do not.
 
-This is an instruction plus an iteration-boundary integrity check, **not an OS
-write sandbox**: approval-free clients retain their filesystem permissions, and
-transient edits between checks cannot be prevented. Source hashes are captured
-for the current runner invocation only. Use one evidence file per roadmap; when
-requirements change between invocations, reconcile existing evidence and return
-its status to `IN_PROGRESS`, or choose a new progress file. An existing `COMPLETE`
-remains an agent assertion, not an automatic check against revised requirements.
+## External controller updates
+
+**Roadmap edits no longer stop the runner.** An external controller can correct
+drift, revise priorities, add requirements or remove superseded work in the live
+source file while execution continues. No flag, watcher, daemon or new API is needed.
+
+The active worker or supervisor keeps its fixed, runner-owned source snapshot.
+Once that session ends, the runner checks the live roadmap again, records its new
+SHA-256 revision, and tells the next worker to reconcile the latest requirements
+before selecting work. Multiple edits between boundaries coalesce to the latest
+published contents. The next worker preserves valid evidence and stable IDs,
+reopens changed criteria, adds new gates, retires removed gates from active work,
+and replaces drifted handoffs and outdated supervisor targets.
+
+Old `COMPLETE` or `BLOCKED` state cannot stop the loop while reconciliation is
+pending. A fresh worker takes precedence over a scheduled review; a review based
+on superseded requirements cannot stop the new revision with stale status or a
+missing handoff. Pending reconciliation clears only after a successful worker
+session on that same revision. Timeouts, capacity failures, cancellation and old
+sessions cannot acknowledge a newer revision. The worker must set status anew;
+completion and semantic reconciliation remain agent assertions, not independently
+verified proofs.
+
+Revision metadata is bound to both source and progress paths and survives restarts.
+An edit between invocations therefore reopens old terminal state on the next launch.
+Existing progress bytes are never reset by the runner. Each detected change archives
+the current progress with old/new source hashes in `history.jsonl`; historical
+snapshots remain outside normal model context. On the first upgrade from a version
+without revision metadata, the current source establishes the baseline: edits made
+before that baseline cannot be detected retroactively. Manually reconcile such
+legacy evidence or set its progress status to `IN_PROGRESS` before the first run.
+
+Controllers should publish a **complete file atomically**, using a temporary sibling
+and rename, rather than deleting or truncating the live roadmap in place. For example,
+from the workspace root:
+
+```sh
+# Prepare the full corrected roadmap in docs/roadmap.md.next, then publish it:
+mv docs/roadmap.md.next docs/roadmap.md
+```
+
+Use one runner per progress file. Controllers should edit the live roadmap only,
+not concurrently overwrite worker-owned progress, snapshots or revision metadata.
+The runner does not merge competing file writes, wait forever after completion,
+or restart an already exited process when a later edit arrives. Run the same command
+again in that case; persisted revision checks handle the changed requirements.
+
+Worker and built-in supervisor prompts still forbid source edits, weakened criteria
+and expanded permissions/budgets. The boundary check cannot identify who wrote an
+edit and does not reject content merely because its author is unknown. This is
+**not an OS write sandbox**: approval-free clients retain their filesystem access.
+The external controller is a separately authorized actor, not a new permission for
+an implementation worker to rewrite its own goal.
 
 ## Fresh contexts
 
@@ -368,7 +424,7 @@ The worker prompt explicitly disables implementation subagents. Long throughput 
 roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
---progress-file <path> override bounded progress-state path; source is always preserved
+--progress-file <path> override bounded progress-state path; workers never edit source
 --timeout <duration>   default: 2h
 --supervisor-every <n>  review every n workers (1-20); default 5, 0 disables
 --supervisor-timeout <duration> review timeout; default 10m
@@ -495,8 +551,8 @@ The tests do not call live models. They validate duration/status handling and th
 
 The runner deliberately does not maintain a task database. It does maintain small
 workspace-local orchestration state so requirements, hot progress and historical
-evidence have different lifecycles. The roadmap is the immutable goal; progress.md
-is bounded working memory; compressed boundary snapshots are cold audit history.
+evidence have different lifecycles. The roadmap is controller-managed requirements;
+a fixed source snapshot defines each session, progress.md is bounded working memory; compressed boundary snapshots are cold audit history.
 It does not create worktrees, commits, or pushes automatically, and it does not
 choose one Git repository as the workspace root.
 

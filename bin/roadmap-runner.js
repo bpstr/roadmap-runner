@@ -31,7 +31,7 @@ Usage:
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
-  --progress-file <path> Override the bounded progress-state path; source stays unchanged
+  --progress-file <path> Override the bounded progress-state path; workers never edit source
   --timeout <duration>   Per-run timeout. Default: 2h
   --supervisor-every <n> Review after n workers (1-20); default 5, 0 disables
   --supervisor-timeout <duration> Review timeout; default 10m
@@ -132,6 +132,7 @@ async function main() {
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
   console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);
+  console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
   console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
   console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
@@ -144,23 +145,23 @@ async function main() {
   let retryDelay = options.capacity.delayMs;
 
   while (true) {
-    tracking.assertUnchanged();
+    tracking.refreshSource(iteration);
     tracking.assertBounded();
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = roadmapStatus(contents);
 
-    if (status === "complete") {
+    if (status === "complete" && !tracking.needsReconciliation) {
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
       process.exit(0);
     }
 
-    if (status === "blocked") {
+    if (status === "blocked" && !tracking.needsReconciliation) {
       console.error("Roadmap globally blocked; resolve the recorded blocker before restarting.");
       process.exit(3);
     }
 
-    // Terminal state wins: no extra review once the roadmap is complete/blocked.
-    if (supervisor?.due) {
+    // Reconcile a controller revision before trusting terminal state or old reviews.
+    if (supervisor?.due && !tracking.needsReconciliation) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
       await supervisor.review({ options, workdir, afterIteration: iteration });
@@ -173,7 +174,8 @@ async function main() {
     const startedAt = new Date().toISOString();
     const started = performance.now();
     const output = supervisor?.capture();
-    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
+    const sourceRevision = tracking.sourceRevision;
+    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     const result = await runClient({
       client: options.client,
       executable: options.executable,
@@ -185,16 +187,16 @@ async function main() {
       onOutput: output?.write,
     });
 
-    tracking.assertUnchanged();
+    tracking.refreshSource(iteration);
     const elapsedMs = Math.round(performance.now() - started);
     const after = fs.readFileSync(tracking.file, "utf8");
     tracking.archive({ kind: "worker", iteration, metadata: {
-      startedAt, elapsedMs, promptRevision: PROMPT_REVISION, code: result.code,
+      startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, code: result.code,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted,
     } });
     tracking.assertBounded();
     supervisor?.record({
-      iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, result, output,
+      iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, result, output,
       before: contents, after,
     });
     if (result.interrupted) process.exit(130);
@@ -224,6 +226,7 @@ async function main() {
       fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);
     }
 
+    tracking.finishWorker(sourceRevision, result);
     console.log(`Iteration ${iteration} completed.`);
     console.log();
   }

@@ -39,7 +39,7 @@ test("default mode preserves the roadmap and creates bounded internal progress s
   assert.match(tracking.file, /[\\/].roadmap-runner[\\/].+[\\/]progress\.md$/);
   assert.equal(roadmapStatus(fs.readFileSync(tracking.file, "utf8")), "in-progress");
   assert.deepEqual(fs.readFileSync(roadmap), before);
-  assert.doesNotThrow(() => tracking.assertUnchanged());
+  assert.doesNotThrow(() => tracking.refreshSource());
   assert.doesNotThrow(() => tracking.assertBounded());
   const prompt = renderPrompt(template, roadmap, tracking.file, tracking.historyDir);
   assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
@@ -55,7 +55,7 @@ test("new nested evidence gets an incomplete scaffold without touching the sourc
   assert.equal(tracking.file, file);
   assert.equal(roadmapStatus(fs.readFileSync(file, "utf8")), "in-progress");
   assert.deepEqual(fs.readFileSync(roadmap), before);
-  assert.doesNotThrow(() => tracking.assertUnchanged());
+  assert.doesNotThrow(() => tracking.refreshSource());
 });
 
 test("existing evidence is never truncated or reset by initialization", (t) => {
@@ -93,10 +93,11 @@ test("source edits and deletion are detected without automatic restoration", (t)
   const { roadmap, file } = workspace(t);
   const tracking = prepareTracking(roadmap, file);
   fs.writeFileSync(roadmap, "Changed externally\n");
-  assert.throws(() => tracking.assertUnchanged(), /preserved roadmap changed/);
+  assert.equal(tracking.refreshSource(), true);
+  assert.equal(tracking.needsReconciliation, true);
   assert.equal(fs.readFileSync(roadmap, "utf8"), "Changed externally\n");
   fs.unlinkSync(roadmap);
-  assert.throws(() => tracking.assertUnchanged(), /no longer readable/);
+  assert.throws(() => tracking.refreshSource(), /no longer readable/);
   assert.equal(fs.existsSync(roadmap), false);
 });
 
@@ -105,7 +106,7 @@ test("progress replaced with a source alias is rejected at the next boundary", {
   const tracking = prepareTracking(roadmap, file);
   fs.unlinkSync(file);
   fs.linkSync(roadmap, file);
-  assert.throws(() => tracking.assertUnchanged(), /must be different/);
+  assert.throws(() => tracking.refreshSource(), /must be different/);
 });
 
 test("prompt keeps literal paths and the latest batching and evidence instructions", () => {
@@ -145,8 +146,8 @@ test("active progress is capped while archived snapshots preserve prior state", 
   assert.throws(() => tracking.assertBounded(), /active progress file exceeded/);
 });
 
-// This mock obeys the separate-file contract. Fault modes deliberately violate it
-// so the real CLI can prove that it stops instead of retrying or declaring success.
+// This mock models controller edits as well as missing-file faults. Ordinary edits
+// must continue; missing source/progress files still stop without restoration.
 function run(t, { sourceStatus = "IN_PROGRESS", evidence, mode = "normal", useEnv = false } = {}) {
   const { dir, roadmap, file } = workspace(t);
   fs.writeFileSync(roadmap, "\uFEFF" + example.replace("Status: IN_PROGRESS", `Status: ${sourceStatus}`).replaceAll("\n", "\r\n"));
@@ -172,6 +173,7 @@ if (mode === 'capacity' && count === 1) {
 }
 if (mode === 'delete-progress') { fs.unlinkSync(file); process.exit(0); }
 let text = fs.readFileSync(file, 'utf8');
+if (prompt.includes('Roadmap reconciliation required: YES')) text = text.replace('Status: COMPLETE', 'Status: IN_PROGRESS');
 if (!/- \\[[ x]\\] EX-/.test(text)) {
   const gates = fs.readFileSync(source, 'utf8').match(/^- \\[ \\] EX-[^\\r\\n]+/gm);
   text += '\\n## Tasks\\n\\n' + gates.join('\\n') + '\\n';
@@ -182,11 +184,11 @@ text = text.replace('- [ ] ' + task[1], '- [x] ' + task[1]);
 fs.writeFileSync(task[1] + '.txt', 'verified\\n');
 text += '- Verified ' + task[1] + '\\n';
 if (!/- \\[ \\] EX-/.test(text)) text = text.replace('Status: IN_PROGRESS', 'Status: COMPLETE');
-if (mode === 'edit-source' || mode === 'edit-capacity') fs.appendFileSync(source, '\\nUNAUTHORIZED EDIT\\n');
+if ((mode === 'edit-source' || mode === 'edit-capacity') && count === 1) fs.appendFileSync(source, '\\nCONTROLLER EDIT\\n');
 if (mode === 'delete-source') fs.unlinkSync(source);
-if (mode === 'edit-source') text = text.replace('Status: IN_PROGRESS', 'Status: COMPLETE');
+if (mode === 'edit-source' && count === 1) text = text.replace('Status: IN_PROGRESS', 'Status: COMPLETE');
 fs.writeFileSync(file, text);
-if (mode === 'edit-capacity') {
+if (mode === 'edit-capacity' && count === 1) {
   console.log(JSON.stringify({type:'error',message:'Selected model is at capacity'}));
   process.exitCode = 1;
 }
@@ -244,19 +246,25 @@ test("conflicting progress statuses fail before launching", (t) => {
   assert.match(f.result.stderr, /multiple roadmap header status/);
 });
 
-for (const mode of ["edit-source", "edit-capacity", "delete-source", "delete-progress"]) {
+for (const mode of ["edit-source", "edit-capacity"]) {
+  test(`continue after ${mode}, preserving controller edits and prior evidence`, (t) => {
+    const f = run(t, { mode });
+    assert.equal(f.result.status, 0, f.result.stderr);
+    assert.equal(f.calls, 3);
+    assert.match(f.result.stdout, /Roadmap changed/);
+    assert.match(fs.readFileSync(f.roadmap, "utf8"), /CONTROLLER EDIT/);
+    assert.match(fs.readFileSync(f.file, "utf8"), /Verified EX-1/);
+    if (mode === "edit-capacity") assert.match(f.result.stdout, /retry 1\/1/);
+  });
+}
+
+for (const mode of ["delete-source", "delete-progress"]) {
   test(`stop after ${mode}, without another worker or automatic restoration`, (t) => {
     const f = run(t, { mode });
     assert.equal(f.result.status, 1, f.result.stderr);
     assert.equal(f.calls, 1);
     assert.doesNotMatch(f.result.stdout, /Roadmap complete|retry 1\//);
-    if (mode.startsWith("edit-")) {
-      assert.match(f.result.stderr, /preserved roadmap changed/);
-      assert.match(fs.readFileSync(f.roadmap, "utf8"), /UNAUTHORIZED EDIT/);
-      assert.match(fs.readFileSync(f.file, "utf8"), /Verified EX-1/);
-    } else {
-      assert.equal(fs.existsSync(mode === "delete-source" ? f.roadmap : f.file), false);
-    }
+    assert.equal(fs.existsSync(mode === "delete-source" ? f.roadmap : f.file), false);
   });
 }
 

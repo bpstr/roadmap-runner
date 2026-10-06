@@ -62,7 +62,7 @@ if (supervisor) {
     setTimeout(() => process.exit(0), 5000);
   } else {
     fs.appendFileSync(tracking, '\\n## Supervisor review\\nReview ID: ' + reviewId + '\\nHealth: STUCK\\nNext delivery target: repair the canonical transport harness.\\nExpectation: produce integration receipt A1.\\n');
-    if (mode === 'source-mutation') fs.appendFileSync(roadmap, '\\nUnauthorized source change.');
+    if (mode === 'source-mutation') fs.appendFileSync(roadmap, '\\nController source change.');
     if (mode === 'false-complete') fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
     if (mode === 'global-block') fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: BLOCKED'));
     emit('Supervisor diagnostic: repeated narrow tests; target updated.');
@@ -235,7 +235,6 @@ test('supervisor capacity retries the review, not a worker', (t) => {
 for (const [mode, code, message] of [
   ['supervisor-failure', 9, /supervisor exited with code 9/],
   ['missing-report', 1, /did not record its Review ID/],
-  ['source-mutation', 1, /preserved roadmap changed/],
   ['false-complete', 1, /cannot declare implementation complete/],
   ['supervisor-timeout', 75, /supervisor timed out/],
   ['global-block', 3, /globally blocked/],
@@ -247,6 +246,16 @@ for (const [mode, code, message] of [
     assert.match(result.stderr, message);
   });
 }
+
+test('controller edit during a supervisor review continues with a fresh worker', (t) => {
+  const f = fixture(t, { mode: 'source-mutation', total: 6 });
+  const result = run(f);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6']);
+  assert.match(fs.readFileSync(f.roadmap, 'utf8'), /Controller source change/);
+  assert.match(fs.readFileSync(path.join(f.dir, 'W6.prompt'), 'utf8'), /Roadmap reconciliation required: YES/);
+  assert.match(result.stdout, /Roadmap changed during supervisor review/);
+});
 
 test('ordinary worker failures remain terminal', (t) => {
   const f = fixture(t, { mode: 'worker-failure' });

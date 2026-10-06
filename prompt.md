@@ -12,8 +12,11 @@ Archived progress snapshots (cold history; do not bulk-load):
 
 {{HISTORY_DIR}}
 
-This is one fresh-context iteration. The source roadmap is the immutable authority
-for goal, scope, constraints and acceptance criteria. The bounded tracking file is
+This is one fresh-context iteration. The source roadmap snapshot named in Runner
+context is the immutable authority for this session's goal, scope, constraints and
+acceptance criteria. Read that snapshot wherever these instructions say "source"
+or "original roadmap". An external controller may revise the live source to correct
+drift; such revisions take effect on the next run, not halfway through this session. The bounded tracking file is
 only the current working state. The runner archives prior tracking snapshots outside
 the active context, so audit history can survive without being re-fed every run.
 The working directory may contain multiple repositories. Read repository
@@ -27,6 +30,14 @@ instructions and preserve unrelated changes.
   current handoff. Map the active gate and every proposed child back to an original
   requirement. If tracking text conflicts with the source, the source wins. Remove
   the drift from active state instead of carrying it forward.
+- When Runner context requires roadmap reconciliation, first compare the current
+  source revision with the checklist, evidence, priorities and latest supervisor
+  target. Preserve valid evidence and IDs; reopen changed acceptance criteria,
+  add new gates, retire removed gates from active work, and replace stale handoffs.
+  Do not treat old COMPLETE/BLOCKED as valid for revised requirements. Set status
+  anew after reconciliation, even when no implementation is needed. This does not
+  authorize workers to edit the live source or snapshot, weaken criteria, or expand
+  existing side-effect permissions and budgets.
 - Keep the tracking file as bounded working memory, not an append-only journal.
   Replace Current handoff, Batch plan, Latest supervisor review and current evidence
   summaries in place. Do not paste raw CLI output, diffs, test logs, repeated prose,
