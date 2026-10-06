@@ -186,15 +186,21 @@ Update the tracking file and stop this invocation:
   closed, identify the material prerequisite advanced and how it reduces the
   remaining work. Repeated rediscovery, extra notes or adjacent tests alone
   are not progress toward the active gate.
-- Before declaring the entire roadmap blocked, inspect ALL remaining unchecked
-  gates and their dependencies for useful authorized implementation, repair or
-  verification work. One blocked gate, a failed check, a hard task or one
-  no-progress attempt is not enough: diagnose and repair, or move to a genuinely
-  ready gate with the deferral recorded. Avoid repeatedly running unchanged checks.
-- Set Status: BLOCKED only when no remaining gate or prerequisite can materially
-  advance within existing authorization and available resources. Record every
-  remaining gate blocking dependency and the exact external unblock action.
-  Otherwise keep Status: IN_PROGRESS and hand off the next actionable checkbox.
+- Treat blockers as **gate-local deferrals**, not as a reason to end the long-running
+  executor. When a gate cannot advance, record its blocker, evidence, unblock
+  condition and a bounded retry trigger, then SKIP it and scan every other unchecked
+  gate for useful authorized implementation, repair, investigation or verification.
+  Do not repeatedly spend fresh sessions on an unchanged blocker or failed check.
+- If Runner context says Blocked recovery mode: YES, the previous session exhausted
+  its ready set. Re-evaluate dependency facts once, then actively seek an alternative:
+  another ready gate, an independent child, preparatory work that reduces a blocker,
+  or a newly feasible verification/repair. Replace stale handoff targets rather than
+  retrying the same stuck action merely because it was previously active.
+- Status: BLOCKED is a **non-terminal recovery signal**. Use it only when this
+  session finds no materially useful authorized action after scanning ALL remaining
+  gates and prerequisites. Record every blocking dependency and exact external
+  unblock action. The runner will start another fresh recovery worker rather than
+  exit. Prefer Status: IN_PROGRESS whenever any useful work can advance.
 - Set Status: COMPLETE only when every original gate and its required in-scope
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.
