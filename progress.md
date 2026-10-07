@@ -42,3 +42,13 @@ Local evidence:
 ## Disk hygiene
 
 Removed 88 inactive, session-created prepared review directories after checking provenance and open files; archived their evidence first. Removed allocated bytes: 1327104; evidence archive bytes: 51929; remaining data-volume space: 14159597568 bytes (13.19 GiB). Exact paths are in the cleanup manifest. Existing Codanna data and unrelated caches are preserved. No session-created multi-GiB build/cache artifacts exist; broader cleanup requires separate user scope.
+
+## npm release — 2026-10-07
+
+Published `@bpstr/roadmap-runner@0.7.0` with public access and the `latest` tag.
+Public registry publication time: `2026-10-07T17:50:47.849Z`. Verified registry
+`latest` is `0.7.0` and both SHA-1 and SHA-512 integrity match the prepared tarball.
+The version bump is committed; existing Codanna files remain untouched/untracked.
+The initial authentication/2FA errors were resolved using npm's browser flows.
+Registry evidence: `/tmp/roadmap-runner-registry-metadata.json`.
+Release artifact: `/tmp/roadmap-runner-release-20261007-35befdd.tgz`.
