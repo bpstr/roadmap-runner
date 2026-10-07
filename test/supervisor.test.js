@@ -54,7 +54,11 @@ if (supervisor) {
   fs.writeFileSync('evidence-path', evidence);
   fs.copyFileSync(evidence, 'evidence-' + n + '.json');
   const reviewId = prompt.match(/^Review ID: (.+)$/m)[1];
-  if (mode === 'supervisor-capacity' && n === 1) capacity();
+  if (mode === 'supervisor-usage' && n === 1) {
+    console.log(JSON.stringify({type:'error',message: "You've hit your limit · resets at " + new Date(Date.now() + 1000).toISOString()}));
+    process.exitCode = 1;
+  }
+  else if (mode === 'supervisor-capacity' && n === 1) capacity();
   else if (mode === 'supervisor-failure') process.exitCode = 9;
   else if (mode === 'missing-report') emit('Healthy, but forgot to persist a review');
   else if (mode === 'supervisor-timeout' || mode === 'cancel-supervisor') {
@@ -78,7 +82,7 @@ if (supervisor) {
       fs.writeFileSync('consumed-supervisor-target', String(n));
     }
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
-    if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
+    if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace(/Status: (IN_PROGRESS|BLOCKED)/, 'Status: COMPLETE'));
     else if (mode !== 'noop') fs.appendFileSync(tracking, '\\nWorker ' + n + ' evidence\\n');
     if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 5000);
     if (mode === 'worker-failure') process.exitCode = 7;
@@ -91,7 +95,7 @@ if (supervisor) {
   if (every !== undefined) args.push('--supervisor-every', String(every));
   if (timeout) args.push('--supervisor-timeout', timeout);
   if (mode === 'worker-timeout') args.push('--timeout', '1s');
-  const env = { ...process.env, ROADMAP_SUPERVISOR_EVERY: '5', ROADMAP_SUPERVISOR_TIMEOUT: '10m',
+  const env = { ...process.env, ROADMAP_NOTIFY_BIN: "", ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1", ROADMAP_SUPERVISOR_EVERY: '5', ROADMAP_SUPERVISOR_TIMEOUT: '10m',
     ROADMAP_CAPACITY_RETRIES: '1', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '1' };
   t.after(() => {
     if (fs.existsSync(path.join(dir, 'evidence-path'))) {
@@ -234,10 +238,7 @@ test('supervisor capacity retries the review, not a worker', (t) => {
 
 for (const [mode, code, message] of [
   ['supervisor-failure', 9, /supervisor exited with code 9/],
-  ['missing-report', 1, /did not record its Review ID/],
   ['false-complete', 1, /cannot declare implementation complete/],
-  ['supervisor-timeout', 75, /supervisor timed out/],
-  ['global-block', 3, /globally blocked/],
 ]) {
   test(`${mode} does not launch a sixth worker`, (t) => {
     const f = fixture(t, { mode, total: 6, timeout: mode === 'supervisor-timeout' ? '300ms' : undefined });
@@ -246,6 +247,25 @@ for (const [mode, code, message] of [
     assert.match(result.stderr, message);
   });
 }
+
+for (const mode of ['missing-report', 'supervisor-timeout', 'supervisor-usage']) {
+  test(`${mode} preserves review evidence and continues delivery`, t => {
+    const f = fixture(t, { mode, total: 6, timeout: mode === 'supervisor-timeout' ? '1s' : undefined });
+    f.options.env.ROADMAP_USAGE_MAX_WAIT = '10';
+    const result = run(f);
+    assert.equal(result.status, 0, result.stderr);
+    const expected = mode === 'supervisor-usage' ? ['W1','W2','W3','W4','W5','S1','S2','W6'] : ['W1','W2','W3','W4','W5','S1','W6'];
+    assert.deepEqual(events(f), expected);
+  });
+}
+
+test('a supervisor blocker retargets a fresh worker instead of stopping delivery', t => {
+  const f = fixture(t, { mode: 'global-block', total: 6 });
+  const result = run(f);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6']);
+  assert.match(fs.readFileSync(path.join(f.dir, 'W6.prompt'), 'utf8'), /Blocked recovery mode: YES/);
+});
 
 test('controller edit during a supervisor review continues with a fresh worker', (t) => {
   const f = fixture(t, { mode: 'source-mutation', total: 6 });

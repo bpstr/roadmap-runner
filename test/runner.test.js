@@ -29,7 +29,7 @@ test("Codex adapter preserves accepted unattended invocation", () => {
 
 test("Claude adapter bypasses permission prompts", () => {
   const result = buildClientInvocation({ ...base, client: "claude" });
-  assert.deepEqual(result.args, ["-p", "--permission-mode", "bypassPermissions", "PROMPT"]);
+  assert.deepEqual(result.args, ["-p", "--permission-mode", "bypassPermissions", "--output-format", "stream-json", "--verbose", "PROMPT"]);
   assert.equal(result.approvalFree, true);
 });
 

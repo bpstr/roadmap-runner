@@ -196,6 +196,15 @@ Update the tracking file and stop this invocation:
   another ready gate, an independent child, preparatory work that reduces a blocker,
   or a newly feasible verification/repair. Replace stale handoff targets rather than
   retrying the same stuck action merely because it was previously active.
+- In the bounded `## Deferred gates` section, flag each problematic task using one
+  line: `- BLOCKED TASK-ID: reason | Unblock: exact condition | Retry: trigger`,
+  `- NEEDS_INFO TASK-ID: question | Unblock: required answer | Retry: answer arrives`,
+  `- PROBLEM TASK-ID: failed check | Unblock: repair | Retry: changed evidence`, or
+  `- SKIPPED TASK-ID: dependency | Unblock: prerequisite | Retry: prerequisite done`.
+  Keep these task IDs stable, remove the flag when resolved, and leave the task's
+  acceptance checkbox unchecked until implementation and validation both pass.
+  A deferral is visible unfinished work. Prefer independent ready tasks over a
+  repeated attempt on unchanged blockers; ask one precise question when input is needed.
 - Status: BLOCKED is a **non-terminal recovery signal**. Use it only when this
   session finds no materially useful authorized action after scanning ALL remaining
   gates and prerequisites. Record every blocking dependency and exact external
@@ -208,3 +217,8 @@ Update the tracking file and stop this invocation:
   Maintain exactly one of these status lines in the tracking file opening header, after an
   optional # title and before the first ## (or deeper) section heading, outside
   code fences. Historical status lines belong in sections below the header.
+
+When Runner context says Recovery verification required: YES, re-evaluate the
+persisted terminal status and acceptance evidence before trusting prior completion.
+The last session may have failed, timed out or exhausted quota after editing state.
+Preserve proven work and flags, validate remaining criteria, then continue ready tasks.

@@ -37,7 +37,7 @@ if (mode === 'recover' && count > 1) {
     temp,
     args: [cli, roadmap, '--client-bin', mock, '--model', 'unchanged-model'],
     options: { cwd: temp, encoding: 'utf8', timeout: 15_000,
-      env: { ...process.env, TEST_MODE: mode, ROADMAP_CAPACITY_RETRIES: '2', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '2' } },
+      env: { ...process.env, ROADMAP_NOTIFY_BIN: "", ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1", TEST_MODE: mode, ROADMAP_CAPACITY_RETRIES: '2', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '2' } },
   };
 }
 

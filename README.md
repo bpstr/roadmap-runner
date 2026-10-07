@@ -206,9 +206,10 @@ Unexpected client failures stop the runner rather than retrying forever.
 ## Supervisor checkpoints
 
 By default, a fresh supervisor reviews progress after every five successful or
-timed-out worker sessions, before another worker starts. Capacity-only retries
-are excluded; completed or globally blocked roadmaps stop without an extra review
-unless a changed source revision needs a fresh worker to reconcile it first.
+timed-out worker sessions, before another worker starts. Capacity-only and quota-only
+attempts are excluded. Completed roadmaps stop; blocked roadmaps continue through
+recovery workers and scheduled reviews. Source changes first require a fresh worker
+to reconcile the revised requirements.
 
 ```sh
 roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md \
@@ -342,8 +343,9 @@ being truncated or reset. Restart with the same roadmap/path to resume. The 128 
 hot-state cap applies to custom progress files too.
 
 The progress file's opening-header status controls continuation when no source
-revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` exits
-with code 3. The roadmap's
+revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` starts
+a recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
+worker to verify any terminal status it left before trusting completion. The roadmap's
 own status/checkboxes are ignored as runtime state and may stay unchanged even
 when delivery is finished. The same header format rules apply. To unblock work,
 update the progress file; controller changes to the source trigger reconciliation instead.
@@ -575,8 +577,9 @@ If Codex exits with code 1 and reports only the recognized "Selected model is at
 capacity" error, the runner waits five minutes and retries the same model. It
 allows ten retries after the initial failed attempt, then exits with code 75.
 Partial work and progress checkboxes are preserved; capacity does not mark the
-delivery state blocked or complete. Other errors stop without retrying. This recovery
-currently applies only to the Codex adapter.
+delivery state blocked or complete. Recognized usage limits use the separate durable
+quota pause below. Other worker errors stop without retrying. Capacity recovery
+applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.
 The two-hour per-run execution timeout remains separate from the retry wait.
@@ -594,3 +597,89 @@ Set the retry count to zero to disable this recovery. If the initial delay is
 smaller than the maximum, it doubles up to that maximum. Successful runs reset
 the capacity retry counter. OAuth startup warnings do not themselves trigger a
 retry or get repaired by this mechanism.
+
+
+## Durable usage-limit recovery
+
+Claude runs with `--output-format stream-json --verbose` so rejected quota events
+and error results are available even when the CLI returns zero. Codex structured
+usage-limit failures are recognized too. Error-marked quota messages can supply
+explicit ISO resets or local clocks with IANA zones, such as
+`resets 2pm (Europe/Budapest)`. Ordinary model prose does not count as a quota event.
+Structured reset timestamps take priority; simultaneous windows use the latest reset.
+
+The runner preserves progress and writes `<progress-file>.recovery.json` before
+waiting. A short/session limit without a usable reset uses five hours; an unknown
+weekly limit uses the one-day bound. At a known reset within the allowed wait, it
+starts a fresh session with the same configured client/model. The process remains
+running while paused. Worker and supervisor sessions share the incident deadline.
+A successful non-quota session clears that incident.
+
+The default maximum is **24 hours per consecutive quota incident**, including
+interrupt/restart time. Set `ROADMAP_USAGE_MAX_WAIT` to integer seconds from 1 to
+86400 to shorten it. If the reset is at or beyond the deadline, the runner waits
+only to the deadline, records `runner.usage_wait_expired`, and exits **75**. Restart
+with the same paths after the recorded reset; the expired checkpoint will clear.
+An unknown weekly reset requires a manual restart after its bounded retry time;
+there is no indefinite weekly sleep or switch to another model/account.
+
+Ctrl-C during a wait exits **130** and preserves the deadline/checkpoint. State is
+not silently reset on restart. An invalid checkpoint stops with an explicit error.
+Prepared tests verify parsing and recovery mechanics, not real provider reset behavior.
+
+## Blocker flags, rechecks and notifications
+
+Workers flag task-local problems in `## Deferred gates` while retaining unchecked
+acceptance tasks. They continue independent ready work and revisit a deferred task
+when its unblock condition changes or its bounded retry is due:
+
+```markdown
+- BLOCKED API-3: credential unavailable | Unblock: credential supplied | Retry: supplied
+- NEEDS_INFO UI-2: choose export format | Unblock: user answer | Retry: answer arrives
+- PROBLEM DATA-4: migration check failed | Unblock: repair passes | Retry: changed evidence
+- SKIPPED API-4: depends on API-3 | Unblock: API-3 validated | Retry: prerequisite done
+```
+
+A skipped item remains incomplete and cannot unlock its dependent tasks. The
+runner emits attention events for these flags even with `Status: IN_PROGRESS`.
+An unchanged flag set produces one notification across restarts; a changed reason
+or resolved blocker updates the event state. When the entire ready set is blocked,
+`Status: BLOCKED` starts another recovery worker.
+
+After two consecutive workers leave progress byte-for-byte unchanged, recovery
+rechecks back off from 60 seconds to a maximum of 15 minutes. Set
+`ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` in integer seconds (1–3600)
+to adjust this. Changed progress or a source revision resets the delay. Timeout
+sessions use this same unchanged-progress guard. This detects unchanged persisted
+state; rewriting notes alone can evade it, so the prompt also forbids repeatedly
+rediscovering unchanged blockers.
+
+Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
+to an executable's absolute path to receive each event's JSON on stdin. It is
+invoked directly, without shell interpolation, with a ten-second timeout. Hook
+failure is logged and does not halt roadmap work. Task IDs/statuses are included;
+blocker reasons, model output and credentials are not included in event payloads.
+Hooks should filter event types and avoid repeated alerts for recheck records.
+
+For macOS Notification Center, use the bundled example:
+
+```sh
+ROADMAP_NOTIFY_BIN=/absolute/path/to/examples/notify-macos.js \
+roadmap-runner docs/roadmap.md
+```
+
+The example uses `osascript`; OS notification settings determine display. It was
+syntax-checked, not sent to Notification Center during automated validation.
+Other hooks can provide a desktop notification or integrate with a configured
+service. Delivery is best effort; durable consumers replay the journal with their
+own saved cursor. No remote notification service is automatically configured.
+
+A timed-out supervisor or missing written review is recorded and deferred while
+workers continue. Ordinary client/authentication failures and false supervisor
+completion remain explicit errors with preserved evidence.
+
+See [MCP integration findings and bridge roadmap](docs/mcp-events.md) for MCP
+resource notifications and explicit Codex App Server dispatch. The server/dispatch
+bridge remains proposed. See the [roadmap-writing skill plan](docs/roadmap-writing-skill-plan.md)
+and [epic/task template](examples/epic-roadmap.md) for task-sized session contracts,
+dependencies and implementation-before-validation ordering.

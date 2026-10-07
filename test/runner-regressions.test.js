@@ -111,7 +111,7 @@ setInterval(() => {}, 1000);
   fs.writeFileSync(driver, `import fs from 'node:fs';
 import { runClient } from ${JSON.stringify(runnerUrl)};
 const result = await runClient({ client: ${JSON.stringify(client)}, executable: ${JSON.stringify(worker)},
-  prompt: '', workdir: ${JSON.stringify(dir)}, timeoutMs: ${signal ? 10000 : 1000},
+  prompt: '', workdir: ${JSON.stringify(dir)}, timeoutMs: ${signal ? 10000 : 2000},
   terminationGraceMs: 150, interruptGraceMs: 150 });
 fs.writeFileSync('settled-heartbeat', fs.readFileSync('heartbeat'));
 console.log('RESULT ' + JSON.stringify({ code: result.code, timedOut: result.timedOut, interrupted: result.interrupted }));

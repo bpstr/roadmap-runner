@@ -74,6 +74,7 @@ for (const [name, result] of [
   ["failure", { ...success, code: 7 }],
   ["spawn error", { ...success, error: new Error("spawn failed") }],
   ["capacity", { ...success, code: 1, retryableCapacity: true }],
+  ["quota with zero exit", { ...success, usageLimit: { kind: "session", resetAt: null } }],
 ]) {
   test(`${name} does not acknowledge a pending source revision`, (t) => {
     const f = workspace(t);

@@ -154,3 +154,13 @@ an independent semantic acceptance validator.
 The automated suite uses local mock executables to test cadence, output capture,
 retargeted handoff consumption, failures, cancellation and integrity. It does not
 establish live-model diagnosis quality or overnight delivery reliability.
+
+
+## Recoverable review interruptions
+
+Quota-only attempts do not count toward review cadence; worker and supervisor
+quota waits share the durable recovery checkpoint and maximum one-day incident
+wait. Timed-out reviews and reviews without their written Review ID keep captured
+evidence, emit `runner.supervisor_deferred`, and yield to the next worker. Ordinary
+CLI failures and false completion claims remain errors. BLOCKED is always a
+recovery signal; a supervisor must retarget independent work, not halt the runner.

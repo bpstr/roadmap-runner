@@ -113,3 +113,8 @@ Persist the review and return:
 - Keep exactly one status in the tracking file's opening header before its first
   ## (or deeper) heading, outside code fences. Print a short evidence-backed
   conclusion and the next delivery target, then stop this supervisor invocation.
+
+Keep task-local BLOCKED, NEEDS_INFO, PROBLEM and SKIPPED flags in `## Deferred gates`
+using the worker's `- STATUS TASK-ID: reason | Unblock: condition | Retry: trigger`
+format. Retarget independent ready work. Preserve unchecked acceptance criteria for
+all deferred tasks; a skipped prerequisite cannot unlock its dependent tasks.

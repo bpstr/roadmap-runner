@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { Recovery, recoverySettings } from "../lib/recovery.js";
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt } from "../lib/tracking.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
@@ -50,6 +51,10 @@ Environment:
   ROADMAP_MODEL
   ROADMAP_EFFORT
   ROADMAP_CLIENT_BIN
+  ROADMAP_NOTIFY_BIN         Notification executable; receives event JSON on stdin
+  ROADMAP_USAGE_MAX_WAIT     Quota wait ceiling in seconds; default/max 86400
+  ROADMAP_RECOVERY_DELAY     No-progress recheck delay in seconds; default 60
+  ROADMAP_RECOVERY_MAX_DELAY Maximum no-progress delay in seconds; default 900
   ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
   ROADMAP_CAPACITY_DELAY      Initial delay in seconds; default 300
   ROADMAP_CAPACITY_MAX_DELAY  Maximum delay in seconds; default 300
@@ -76,7 +81,7 @@ async function main() {
 
   let options;
   try {
-    options = { ...parseArgs(argv), capacity: capacityRetrySettings() };
+    options = { ...parseArgs(argv), capacity: capacityRetrySettings(), recovery: recoverySettings() };
     options.supervision = supervisorSettings(options);
   } catch (error) {
     fail(error.message, error.exitCode || 1);
@@ -122,6 +127,7 @@ async function main() {
 
   const tracking = prepareTracking(roadmap, options.progressFile, workdir);
   const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
+  const recovery = new Recovery({ tracking, roadmap, settings: options.recovery });
   const supervisor = options.supervision.every ? new Supervision({
     ...options.supervision, roadmap, tracking,
     template: fs.readFileSync(path.join(ROOT, "supervisor.md"), "utf8"),
@@ -140,6 +146,9 @@ async function main() {
   console.log("Press Ctrl-C to stop.");
   console.log();
 
+  console.log(`Events:    ${recovery.eventsFile}`);
+  await recovery.restore({ startup: true });
+
   let iteration = 0;
   let capacityFailures = 0;
   let retryDelay = options.capacity.delayMs;
@@ -150,10 +159,14 @@ async function main() {
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = roadmapStatus(contents);
 
-    if (status === "complete" && !tracking.needsReconciliation) {
+    if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
+      recovery.success();
+      await recovery.event("runner.completed", { iteration });
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
       process.exit(0);
     }
+
+    await recovery.attention(contents, status, iteration);
 
     const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
     if (blockedRecovery) {
@@ -165,7 +178,7 @@ async function main() {
     if (supervisor?.due && !tracking.needsReconciliation) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
-      await supervisor.review({ options, workdir, afterIteration: iteration });
+      await supervisor.review({ options, workdir, afterIteration: iteration, recovery });
       continue; // Re-read the supervisor's handoff/status before another worker.
     }
 
@@ -176,7 +189,7 @@ async function main() {
     const started = performance.now();
     const output = supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
-    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
+    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     const result = await runClient({
       client: options.client,
       executable: options.executable,
@@ -193,19 +206,27 @@ async function main() {
     const after = fs.readFileSync(tracking.file, "utf8");
     tracking.archive({ kind: "worker", iteration, metadata: {
       startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, code: result.code,
-      signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted,
+      signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
     tracking.assertBounded();
     supervisor?.record({
       iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, result, output,
       before: contents, after,
     });
+    if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) process.exit(130);
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
 
     if (result.timedOut) {
+      await recovery.attention(after, roadmapStatus(after), iteration);
+      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
+      continue;
+    }
+
+    if (result.usageLimit) {
+      await recovery.pause(result.usageLimit, "worker");
       continue;
     }
 
@@ -224,10 +245,16 @@ async function main() {
     retryDelay = options.capacity.delayMs;
 
     if (result.code !== 0) {
+      await recovery.event("runner.failed", { role: "worker", iteration, code: result.code });
       fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);
     }
 
+    recovery.success({ worker: true });
     tracking.finishWorker(sourceRevision, result);
+    await recovery.attention(after, roadmapStatus(after), iteration);
+    if (roadmapStatus(after) !== "complete" || tracking.needsReconciliation) {
+      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
+    }
     console.log(`Iteration ${iteration} completed.`);
     console.log();
   }

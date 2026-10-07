@@ -31,7 +31,7 @@ test("example roadmap completes in exactly three iterations", (t) => {
   ], {
     cwd: temp,
     encoding: "utf8",
-    env: process.env,
+    env: { ...process.env, ROADMAP_NOTIFY_BIN: "", ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1" },
   });
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
