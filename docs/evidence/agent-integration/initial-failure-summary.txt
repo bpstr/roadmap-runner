@@ -1,0 +1,14 @@
+41:✔ conflicting progress statuses fail before launching (222.380875ms)
+65:✖ changed attention flags notify once, remain unfinished, and clear on recovery (2.8575ms)
+71:✖ weekly CLI quota expires at the configured ceiling without another provider attempt (2149.3435ms)
+122:✔ conflicting progress header statuses fail before starting a worker (219.867125ms)
+174:ℹ tests 135
+176:ℹ pass 133
+177:ℹ fail 2
+178:ℹ cancelled 0
+183:✖ failing tests:
+186:✖ changed attention flags notify once, remain unfinished, and clear on recovery (2.8575ms)
+205:      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+215:✖ weekly CLI quota expires at the configured ceiling without another provider attempt (2149.3435ms)
+226:      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+229:      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {

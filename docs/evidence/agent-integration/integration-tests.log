@@ -1,0 +1,27 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (697.801292ms)
+✔ simultaneous requests cannot create competing managed workers (149.998792ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (3.420709ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (247.73975ms)
+✔ control rejects unauthenticated ownership and nested worker management (144.868125ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (360.19575ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (104.860333ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (26.614875ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (48.405291ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (50.93925ms)
+✔ prepared legacy MCP tools, restrictions, resources and subscriptions (1245.878042ms)
+✔ prepared modern MCP tools, restrictions, resources and subscriptions (1202.920209ms)
+✔ roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies (2.529958ms)
+✔ managed stop finishes only after an ignoring descendant is terminated (3498.239084ms)
+✔ setup connectivity checks only initialize/list MCP and never launch a provider (185.484666ms)
+✔ qualified local skills installer is staged and checked before publishing the skill (6.1325ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8103.407709

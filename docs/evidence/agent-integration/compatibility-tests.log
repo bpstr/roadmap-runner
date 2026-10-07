@@ -1,0 +1,76 @@
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision e89d2cfe0a67 will be reconciled by the next worker.
+✔ edits are adopted only at a boundary; snapshots and evidence stay intact during a run (6.874791ms)
+✔ pending reconciliation and source/progress binding survive restarts (7.766292ms)
+✔ timeout does not acknowledge a pending source revision (3.726333ms)
+✔ interrupt does not acknowledge a pending source revision (3.175292ms)
+✔ failure does not acknowledge a pending source revision (3.571708ms)
+✔ spawn error does not acknowledge a pending source revision (3.385167ms)
+✔ capacity does not acknowledge a pending source revision (3.371583ms)
+✔ quota with zero exit does not acknowledge a pending source revision (4.904959ms)
+✔ a successful old worker cannot acknowledge a newer revision (3.214791ms)
+✔ multiple edits coalesce to the newest complete publication (5.240125ms)
+✔ unreadable, non-file and oversized replacement sources remain errors (5.447917ms)
+✔ corrupt revision metadata is not silently treated as a new baseline (2.773667ms)
+✔ revision metadata cannot be reused for another source or progress file (5.581041ms)
+✔ live edit overrides stale COMPLETE and runs corrected requirements next (614.599125ms)
+✔ live edit overrides stale BLOCKED and runs corrected requirements next (528.629625ms)
+✔ live edit overrides stale IN_PROGRESS and runs corrected requirements next (494.914875ms)
+✔ edit between invocations reopens persisted COMPLETE without erasing evidence (437.903833ms)
+✔ edit between invocations reopens persisted BLOCKED without erasing evidence (475.381542ms)
+✔ capacity-edit preserves the revision through recovery (1485.467584ms)
+✔ timeout-edit preserves the revision through recovery (708.194083ms)
+✔ supervisor-edit defers obsolete review results to a new worker (634.170125ms)
+✔ supervisor-capacity-edit defers obsolete review results to a new worker (1608.731042ms)
+✔ real external controller edit during capacity backoff is adopted by the next attempt (1681.434708ms)
+✔ source changes do not swallow an independent fatal client failure (498.128417ms)
+✔ supervision defaults to five; supports CLI/env overrides and disable (1.439ms)
+✔ reject invalid supervisor interval "-1" (0.224291ms)
+✔ reject invalid supervisor interval "21" (0.061292ms)
+✔ reject invalid supervisor interval "1.5" (0.052375ms)
+✔ reject invalid supervisor interval "NaN" (0.056709ms)
+✔ reject invalid supervisor interval "" (0.0475ms)
+✔ reject invalid supervisor interval "05" (0.053292ms)
+✔ reject invalid supervisor interval "--model" (0.048208ms)
+✔ supervisor option validation rejects missing values and excessive timeouts (0.197667ms)
+✔ bounded capture retains exact short output and capped head/tail with omission count (0.310666ms)
+raw stdout
+✔ codex capture includes stdout and final stderr without a newline (344.112625ms)
+raw stdout
+✔ claude capture includes stdout and final stderr without a newline (200.342625ms)
+✔ reviews after workers 5 and 10; preserved=true (1114.498ms)
+✔ completion on worker 3 skips a pending/future review (545.738792ms)
+✔ completion on worker 5 skips a pending/future review (784.638375ms)
+✔ custom cadence and disabled supervision (1586.858167ms)
+✔ successful no-op workers are reviewed, not incorrectly blocked by byte equality (4853.364667ms)
+✔ worker capacity retries are excluded from cadence and counted in review context (1785.11575ms)
+✔ timed-out workers count toward review cadence (1370.976167ms)
+✔ text adapter participates in the same supervisor loop (721.21925ms)
+✔ supervisor capacity retries the review, not a worker (1760.01475ms)
+✔ supervisor-failure does not launch a sixth worker (674.424042ms)
+✔ false-complete does not launch a sixth worker (685.016584ms)
+✔ missing-report preserves review evidence and continues delivery (651.207917ms)
+✔ supervisor-timeout preserves review evidence and continues delivery (1737.869667ms)
+✔ supervisor-usage preserves review evidence and continues delivery (1808.382833ms)
+✔ a supervisor blocker retargets a fresh worker instead of stopping delivery (699.881542ms)
+✔ controller edit during a supervisor review continues with a fresh worker (674.539583ms)
+✔ ordinary worker failures remain terminal (460.327208ms)
+✔ SIGINT during supervisor exits 130 without another worker (654.10225ms)
+✔ rolling evidence stays bounded across many verbose runs (43.230542ms)
+✔ supervisor prompt binds evidence, scope, read-only source and next-run expectation (0.240958ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32502.178334

@@ -99,7 +99,7 @@ test("changed attention flags notify once, remain unfinished, and clear on recov
   await f.recovery.attention(flags, "in-progress", 1);
   await new Recovery(f.config).attention(flags, "in-progress", 2);
   assert.equal(f.events().length, 1);
-  assert.deepEqual(f.events()[0].items, [{ status: "BLOCKED", task: "A" }, { status: "SKIPPED", task: "B" }]);
+  assert.deepEqual(f.events()[0].items.map(({ status, task }) => ({ status, task })), [{ status: "BLOCKED", task: "A" }, { status: "SKIPPED", task: "B" }]);
   assert.ok(!JSON.stringify(f.events()).includes("credentials"));
   await f.recovery.attention(flags.replace("database", "new blocker"), "in-progress", 3);
   await f.recovery.attention("Status: IN_PROGRESS", "in-progress", 4);
@@ -177,7 +177,8 @@ test("weekly CLI quota expires at the configured ceiling without another provide
   assert.equal(result.status, 75, result.stderr);
   assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
   assert.match(fs.readFileSync(f.config.tracking.file, "utf8"), /BLOCKED A/);
-  assert.equal(f.events().at(-1).type, "runner.usage_wait_expired");
+  assert.equal(f.events().at(-2).type, "runner.usage_wait_expired");
+  assert.equal(f.events().at(-1).type, "runner.failed");
 });
 
 test("blocked CLI emits notification and executes the next worker for independent work", t => {

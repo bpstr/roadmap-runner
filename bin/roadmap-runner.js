@@ -1,34 +1,30 @@
 #!/usr/bin/env node
-
-import fs from "node:fs";
-import { createHash } from "node:crypto";
-import path from "node:path";
-import process from "node:process";
-import { fileURLToPath } from "node:url";
-import { Recovery, recoverySettings } from "../lib/recovery.js";
-import { Supervision, supervisorSettings } from "../lib/supervision.js";
-import { prepareTracking, renderPrompt } from "../lib/tracking.js";
-import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
-import {
-  capacityRetrySettings,
-  waitForRetry,
-  commandExists,
-  parseArgs,
-  parseDuration,
-  roadmapStatus,
-  runClient,
-} from "../lib/runner.js";
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
-const PROMPT_TEMPLATE = fs.readFileSync(path.join(ROOT, "prompt.md"), "utf8");
-const PROMPT_REVISION = createHash("sha256").update(PROMPT_TEMPLATE).digest("hex").slice(0, 12);
-
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { CLIENT_NAMES } from '../lib/clients.js';
+import { parseArgs } from '../lib/runner.js';
+import { RunManager, assertController } from '../dist/run-manager.js';
+import { serveMcp } from '../dist/mcp.js';
+import { setup } from '../dist/setup.js';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 function help() {
   console.log(`Roadmap Runner ${PACKAGE.version}
 
 Usage:
   roadmap-runner <roadmap-file> [options]
+  roadmap-runner start <roadmap-file> [options] [--json]
+  roadmap-runner status [run-id] [--workspace <path>] [--json]
+  roadmap-runner stop <run-id> [--workspace <path>] [--json]
+  roadmap-runner mcp --workspace <absolute-path>
+  roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
+
+Management options:
+  --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
+  --idempotency-key <id> Repeat the same managed start safely
+  --notify attention|off Desktop notification mode (default attention)
+  --notify-on <events>   Comma-separated event types, e.g. runner.usage_paused
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
@@ -63,204 +59,38 @@ The current directory is always the workspace.
 `);
 }
 
-function fail(message, code = 1) {
-  console.error(`roadmap-runner: ${message}`);
-  process.exit(code);
-}
-
-async function main() {
-  const argv = process.argv.slice(2);
-  if (argv.includes("--help") || argv.includes("-h")) {
-    help();
+const main = async () => {
+  let argv = process.argv.slice(2);
+  if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
+  if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
+  assertController();
+  const commands = ['start', 'stop', 'status', 'mcp', 'setup'];
+  const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
+  const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
+  const workspaceArg = take('--workspace', undefined);
+  const workspace = workspaceArg || process.cwd();
+  const json = argv.includes('--json'); argv = argv.filter(arg => arg !== '--json');
+  if (command === 'mcp') { if (!workspaceArg || !path.isAbsolute(workspaceArg) || argv.length) throw new Error('mcp requires --workspace <absolute-path>'); serveMcp(workspace); return; }
+  if (command === 'setup') {
+    const apps = []; while (argv.includes('--app')) apps.push(take('--app', undefined));
+    const scope = take('--scope', 'project'); const dryRun = argv.includes('--dry-run'); argv = argv.filter(arg => arg !== '--dry-run');
+    if (argv.length) throw new Error('Unknown setup argument: ' + argv[0]);
+    const result = setup({ apps, scope, workspace, dryRun }); console.log(JSON.stringify(result, null, 2));
+    if (result.some(item => item.mcp === 'failed' || item.skill === 'failed' || item.connectivity === 'failed_no_inference')) process.exitCode = 1; return;
+  }
+  if (command === 'status' || command === 'stop') {
+    if (argv.length > 1 || argv[0]?.startsWith('-') || (command === 'stop' && !argv[0])) throw new Error(command + ' requires a run ID (status may omit it)');
+    const manager = new RunManager(workspace); const value = command === 'stop' ? await manager.stop(argv[0]) : await manager.status(argv[0]);
+    console.log(JSON.stringify(value, null, json ? 0 : 2)); return;
+  }
+  const idempotencyKey = take('--idempotency-key', undefined); const options = parseArgs(argv);
+  if (!options.roadmap) { help(); process.exitCode = 64; return; }
+  if (command === 'start' || command === 'foreground') {
+    const manager = new RunManager(workspace);
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, idempotencyKey }, { executable: options.executable }, command === 'foreground');
+    if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
+    else process.exitCode = result.exitCode ?? 1;
     return;
   }
-  if (argv.includes("--version") || argv.includes("-v")) {
-    console.log(PACKAGE.version);
-    return;
-  }
-
-  let options;
-  try {
-    options = { ...parseArgs(argv), capacity: capacityRetrySettings(), recovery: recoverySettings() };
-    options.supervision = supervisorSettings(options);
-  } catch (error) {
-    fail(error.message, error.exitCode || 1);
-  }
-
-  if (!options.roadmap) {
-    help();
-    process.exit(64);
-  }
-
-  const workdir = process.cwd();
-  const roadmap = path.isAbsolute(options.roadmap)
-    ? path.normalize(options.roadmap)
-    : path.resolve(workdir, options.roadmap);
-
-  if (!fs.existsSync(roadmap) || !fs.statSync(roadmap).isFile()) {
-    fail(`roadmap not found: ${roadmap}`);
-  }
-
-  let timeoutMs;
-  try {
-    timeoutMs = parseDuration(options.timeout);
-  } catch (error) {
-    fail(error.message, 64);
-  }
-
-  const probe = buildClientInvocation({
-    client: options.client,
-    executable: options.executable,
-    prompt: "",
-    workdir,
-    model: options.model,
-    effort: options.effort,
-  });
-
-  if (!commandExists(probe.command)) {
-    fail(`${options.client} executable not found: ${probe.command}`);
-  }
-
-  if (!probe.approvalFree) {
-    console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
-  }
-
-  const tracking = prepareTracking(roadmap, options.progressFile, workdir);
-  const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
-  const recovery = new Recovery({ tracking, roadmap, settings: options.recovery });
-  const supervisor = options.supervision.every ? new Supervision({
-    ...options.supervision, roadmap, tracking,
-    template: fs.readFileSync(path.join(ROOT, "supervisor.md"), "utf8"),
-  }) : null;
-
-  console.log(`Roadmap Runner ${PACKAGE.version}`);
-  console.log(`Client:    ${options.client}`);
-  console.log(`Workspace: ${workdir}`);
-  console.log(`Roadmap:   ${roadmap}`);
-  console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);
-  console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
-  console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
-  console.log(`Timeout:   ${options.timeout} per run`);
-  console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
-  console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
-  console.log("Press Ctrl-C to stop.");
-  console.log();
-
-  console.log(`Events:    ${recovery.eventsFile}`);
-  await recovery.restore({ startup: true });
-
-  let iteration = 0;
-  let capacityFailures = 0;
-  let retryDelay = options.capacity.delayMs;
-
-  while (true) {
-    tracking.refreshSource(iteration);
-    tracking.assertBounded();
-    const contents = fs.readFileSync(tracking.file, "utf8");
-    const status = roadmapStatus(contents);
-
-    if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
-      recovery.success();
-      await recovery.event("runner.completed", { iteration });
-      console.log(`Roadmap complete after ${iteration} iteration(s).`);
-      process.exit(0);
-    }
-
-    await recovery.attention(contents, status, iteration);
-
-    const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
-    if (blockedRecovery) {
-      console.warn("Roadmap reported BLOCKED; continuing in recovery mode instead of stopping.");
-      console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
-    }
-
-    // Reconcile a controller revision before trusting terminal state or old reviews.
-    if (supervisor?.due && !tracking.needsReconciliation) {
-      console.log(`===== supervisor after iteration ${iteration} =====`);
-      console.log(`Run evidence: ${supervisor.evidenceFile}`);
-      await supervisor.review({ options, workdir, afterIteration: iteration, recovery });
-      continue; // Re-read the supervisor's handoff/status before another worker.
-    }
-
-    iteration += 1;
-    console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
-
-    const startedAt = new Date().toISOString();
-    const started = performance.now();
-    const output = supervisor?.capture();
-    const sourceRevision = tracking.sourceRevision;
-    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
-    const result = await runClient({
-      client: options.client,
-      executable: options.executable,
-      prompt: iterationPrompt,
-      workdir,
-      model: options.model,
-      effort: options.effort,
-      timeoutMs,
-      onOutput: output?.write,
-    });
-
-    tracking.refreshSource(iteration);
-    const elapsedMs = Math.round(performance.now() - started);
-    const after = fs.readFileSync(tracking.file, "utf8");
-    tracking.archive({ kind: "worker", iteration, metadata: {
-      startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, code: result.code,
-      signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
-    } });
-    tracking.assertBounded();
-    supervisor?.record({
-      iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, result, output,
-      before: contents, after,
-    });
-    if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
-    if (result.interrupted) process.exit(130);
-    if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
-
-    if (result.timedOut) {
-      await recovery.attention(after, roadmapStatus(after), iteration);
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
-      console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
-      console.log();
-      continue;
-    }
-
-    if (result.usageLimit) {
-      await recovery.pause(result.usageLimit, "worker");
-      continue;
-    }
-
-    if (result.retryableCapacity) {
-      if (capacityFailures >= options.capacity.retries) {
-        fail("model capacity retry limit reached; partial work preserved.", 75);
-      }
-      capacityFailures += 1;
-      const waiting = waitForRetry(retryDelay);
-      console.log(`Model at capacity; retry ${capacityFailures}/${options.capacity.retries} in ${retryDelay / 1000}s (same model).`);
-      if (await waiting) process.exit(130);
-      retryDelay = Math.min(retryDelay * 2, options.capacity.maxDelayMs);
-      continue;
-    }
-    capacityFailures = 0;
-    retryDelay = options.capacity.delayMs;
-
-    if (result.code !== 0) {
-      await recovery.event("runner.failed", { role: "worker", iteration, code: result.code });
-      fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);
-    }
-
-    recovery.success({ worker: true });
-    tracking.finishWorker(sourceRevision, result);
-    await recovery.attention(after, roadmapStatus(after), iteration);
-    if (roadmapStatus(after) !== "complete" || tracking.needsReconciliation) {
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
-    }
-    console.log(`Iteration ${iteration} completed.`);
-    console.log();
-  }
-}
-
-main().catch((error) => {
-  console.error("roadmap-runner:", error);
-  process.exit(error.exitCode || 1);
-});
+};
+main().catch(error => { console.error('roadmap-runner: ' + error.message); process.exitCode = error.exitCode || 1; });

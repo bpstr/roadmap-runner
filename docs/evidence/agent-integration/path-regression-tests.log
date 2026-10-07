@@ -1,0 +1,342 @@
+
+> @bpstr/roadmap-runner@0.7.0 pretest
+> npm run build
+
+
+> @bpstr/roadmap-runner@0.7.0 build
+> tsc
+
+
+> @bpstr/roadmap-runner@0.7.0 test
+> node test/run-tests.js
+
+✔ capacity configuration rejects invalid bounds (1.029583ms)
+✔ capacity retry recovers with same model and existing files (1696.692416ms)
+✔ persistent capacity errors exhaust finite exponential retries (3451.338667ms)
+✔ ordinary failure does not retry (333.263083ms)
+✔ mixed failure does not retry (325.353416ms)
+✔ Ctrl-C interrupts capacity backoff without another invocation (334.851333ms)
+✔ example roadmap completes in exactly three iterations (232.613625ms)
+Roadmap changed; revision 31a7cb3d71d8 will be reconciled by the next worker.
+✔ progress-file argument and environment are opt-in, with CLI precedence (0.715375ms)
+✔ default mode preserves the roadmap and creates bounded internal progress state (3.490083ms)
+✔ new nested evidence gets an incomplete scaffold without touching the source (2.30375ms)
+✔ existing evidence is never truncated or reset by initialization (2.985792ms)
+✔ reject source alias: same path (0.871958ms)
+✔ reject source alias: normalized path (0.855ms)
+✔ reject source alias: symlink (0.7425ms)
+✔ reject source alias: hard link (1.03875ms)
+✔ non-file progress targets are rejected without altering the source (0.754208ms)
+✔ source edits and deletion are detected without automatic restoration (3.772125ms)
+✔ progress replaced with a source alias is rejected at the next boundary (1.918916ms)
+✔ prompt keeps literal paths and the latest batching and evidence instructions (0.243667ms)
+✔ multi-megabyte source/history pollution is rejected before a worker sees it (1.007708ms)
+✔ active progress is capped while archived snapshots preserve prior state (2.176667ms)
+✔ three separate-file iterations preserve source bytes, ignoring source IN_PROGRESS (565.392125ms)
+✔ three separate-file iterations preserve source bytes, ignoring source COMPLETE (425.973ms)
+✔ three separate-file iterations preserve source bytes, ignoring source BLOCKED (400.7835ms)
+✔ resume skips previously checked tasks and preserves prior delivery evidence (354.179666ms)
+✔ progress COMPLETE stops without launching or changing either file (113.480166ms)
+✔ progress BLOCKED is non-terminal and launches a recovery worker (417.389417ms)
+✔ conflicting progress statuses fail before launching (129.196458ms)
+✔ continue after edit-source, preserving controller edits and prior evidence (406.264875ms)
+✔ continue after edit-capacity, preserving controller edits and prior evidence (1407.902459ms)
+✔ stop after delete-source, without another worker or automatic restoration (343.8515ms)
+✔ stop after delete-progress, without another worker or automatic restoration (341.174583ms)
+✔ capacity retry retains progress and source protection (1449.354709ms)
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-14T08:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-07T08:00:01.000Z).
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-08T13:00:00.000Z (deadline 2026-10-08T13:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+No progress change for 2 workers; recovery recheck in 0.01s.
+No progress change for 3 workers; recovery recheck in 0.02s.
+No progress change for 4 workers; recovery recheck in 0.02s.
+No progress change for 5 workers; recovery recheck in 0.02s.
+✔ reset clocks honor IANA timezone, next-day and dated weekly resets (32.40875ms)
+✔ quota observation distinguishes error events from model prose and advisory limits (0.795541ms)
+✔ short quota pauses restore and use one persistent incident budget (3.450875ms)
+✔ lowering the wait ceiling persists the shortened deadline across another restart (1.107792ms)
+✔ unknown reset fallbacks are five hours/session and at most one day/weekly (1.550416ms)
+✔ interrupts preserve the quota checkpoint and never renew its deadline (0.991ms)
+✔ changed attention flags notify once, remain unfinished, and clear on recovery (1.721833ms)
+✔ unchanged workers back off with a bounded delay and reset after changed evidence (1.937792ms)
+✔ wait settings reject zero, invalid input and values above one day (0.123166ms)
+✔ codex CLI quota pauses then restores a fresh worker (1556.998375ms)
+✔ claude CLI quota pauses then restores a fresh worker (1543.752083ms)
+✔ a terminal status left by a quota session must be verified by the next worker (1516.741125ms)
+✔ weekly CLI quota expires at the configured ceiling without another provider attempt (1499.318917ms)
+✔ blocked CLI emits notification and executes the next worker for independent work (1097.099459ms)
+✔ SIGINT during a real quota wait exits promptly and keeps state for restart (351.277542ms)
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision e89d2cfe0a67 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+✔ edits are adopted only at a boundary; snapshots and evidence stay intact during a run (6.025042ms)
+✔ pending reconciliation and source/progress binding survive restarts (4.57775ms)
+✔ timeout does not acknowledge a pending source revision (3.33325ms)
+✔ interrupt does not acknowledge a pending source revision (3.117125ms)
+✔ failure does not acknowledge a pending source revision (3.031708ms)
+✔ spawn error does not acknowledge a pending source revision (3.023375ms)
+✔ capacity does not acknowledge a pending source revision (3.137625ms)
+✔ quota with zero exit does not acknowledge a pending source revision (2.879417ms)
+✔ a successful old worker cannot acknowledge a newer revision (2.725333ms)
+✔ multiple edits coalesce to the newest complete publication (2.705167ms)
+✔ unreadable, non-file and oversized replacement sources remain errors (2.493583ms)
+✔ corrupt revision metadata is not silently treated as a new baseline (1.577167ms)
+✔ revision metadata cannot be reused for another source or progress file (1.922708ms)
+✖ live edit overrides stale COMPLETE and runs corrected requirements next (582.970875ms)
+✖ live edit overrides stale BLOCKED and runs corrected requirements next (489.803208ms)
+✖ live edit overrides stale IN_PROGRESS and runs corrected requirements next (501.278917ms)
+✖ edit between invocations reopens persisted COMPLETE without erasing evidence (104.239917ms)
+✖ edit between invocations reopens persisted BLOCKED without erasing evidence (510.3025ms)
+✔ capacity-edit preserves the revision through recovery (1503.996375ms)
+✔ timeout-edit preserves the revision through recovery (668.48575ms)
+✔ supervisor-edit defers obsolete review results to a new worker (516.439583ms)
+✔ supervisor-capacity-edit defers obsolete review results to a new worker (1528.168875ms)
+Roadmap changed; revision 40606173f169 will be reconciled by the next worker.
+✔ real external controller edit during capacity backoff is adopted by the next attempt (1531.650709ms)
+✔ source changes do not swallow an independent fatal client failure (581.226083ms)
+✔ header status: fenced completion example (1.025583ms)
+✔ header status: historical blocker (0.142666ms)
+✔ header status: historical completion (0.065417ms)
+✔ header status: long backtick fence (0.098334ms)
+✔ header status: tilde fence (0.0945ms)
+✔ header status: BOM and CRLF (0.180042ms)
+✔ header status: indented example (0.046791ms)
+✔ header status: status only in a section (0.05625ms)
+✔ header status: uninitialized roadmap (0.054417ms)
+✔ reject duplicate header: Status: IN_PROGRESS / Status: COMPLETE (0.274542ms)
+✔ reject duplicate header: Status: COMPLETE / Status: COMPLETE (0.058875ms)
+✔ reject invalid header: Status: DONE (0.070875ms)
+✔ reject invalid header: Status: / COMPLETE (0.040291ms)
+✔ a documentation example cannot skip the three real worker iterations (262.833125ms)
+✔ conflicting progress header statuses fail before starting a worker (148.963833ms)
+✔ timeout with ignored descendant stdio (2709.417625ms)
+✔ timeout with inherited descendant pipes (2704.812584ms)
+✔ SIGINT after the leader closes (740.832708ms)
+✔ SIGTERM with inherited pipes (728.673917ms)
+✔ repeated SIGINT (594.226458ms)
+✔ text adapter cancellation (732.018583ms)
+✔ spawn failure removes its signal listeners (2.198375ms)
+Codex error: Selected model is at capacity
+✔ final capacity JSON without a newline is drained before resolving (327.324333ms)
+✔ Codex adapter preserves accepted unattended invocation (0.766542ms)
+✔ Claude adapter bypasses permission prompts (0.068208ms)
+✔ Gemini adapter uses current noninteractive YOLO mode (0.0645ms)
+✔ Campfire-compatible secondary adapters are stable (0.06425ms)
+✔ Codex model and effort overrides are applied (0.0845ms)
+✔ duration parsing supports runner units (0.233208ms)
+✔ roadmap completion states are exact line based (0.29375ms)
+✔ client can be selected through args or environment (0.17175ms)
+✔ supervision defaults to five; supports CLI/env overrides and disable (1.088458ms)
+✔ reject invalid supervisor interval "-1" (0.2155ms)
+✔ reject invalid supervisor interval "21" (0.057833ms)
+✔ reject invalid supervisor interval "1.5" (0.053166ms)
+✔ reject invalid supervisor interval "NaN" (0.060625ms)
+✔ reject invalid supervisor interval "" (0.049042ms)
+✔ reject invalid supervisor interval "05" (0.05775ms)
+✔ reject invalid supervisor interval "--model" (0.04425ms)
+✔ supervisor option validation rejects missing values and excessive timeouts (0.13ms)
+✔ bounded capture retains exact short output and capped head/tail with omission count (0.300666ms)
+raw stdout
+✔ codex capture includes stdout and final stderr without a newline (319.094041ms)
+raw stdout
+✔ claude capture includes stdout and final stderr without a newline (191.619042ms)
+✖ reviews after workers 5 and 10; preserved=true (907.663083ms)
+✔ completion on worker 3 skips a pending/future review (551.868208ms)
+✔ completion on worker 5 skips a pending/future review (575.576875ms)
+✔ custom cadence and disabled supervision (1614.042459ms)
+✔ successful no-op workers are reviewed, not incorrectly blocked by byte equality (4751.995583ms)
+✔ worker capacity retries are excluded from cadence and counted in review context (1709.857458ms)
+✔ timed-out workers count toward review cadence (1339.483916ms)
+✔ text adapter participates in the same supervisor loop (731.805541ms)
+✔ supervisor capacity retries the review, not a worker (1738.575959ms)
+✔ supervisor-failure does not launch a sixth worker (635.084042ms)
+✔ false-complete does not launch a sixth worker (663.264916ms)
+✔ missing-report preserves review evidence and continues delivery (649.710666ms)
+✔ supervisor-timeout preserves review evidence and continues delivery (1626.989208ms)
+✔ supervisor-usage preserves review evidence and continues delivery (1691.593541ms)
+✔ a supervisor blocker retargets a fresh worker instead of stopping delivery (696.381625ms)
+✔ controller edit during a supervisor review continues with a fresh worker (668.417167ms)
+✔ ordinary worker failures remain terminal (429.288ms)
+✔ SIGINT during supervisor exits 130 without another worker (610.419292ms)
+✔ rolling evidence stays bounded across many verbose runs (35.727583ms)
+✔ supervisor prompt binds evidence, scope, read-only source and next-run expectation (0.300167ms)
+ℹ tests 135
+ℹ suites 0
+ℹ pass 129
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60396.89725
+
+✖ failing tests:
+
+test at test/roadmap-updates.test.js:210:3
+✖ live edit overrides stale COMPLETE and runs corrected requirements next (582.970875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:222:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/roadmap-updates.test.js:210:3
+✖ live edit overrides stale BLOCKED and runs corrected requirements next (489.803208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:222:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/roadmap-updates.test.js:210:3
+✖ live edit overrides stale IN_PROGRESS and runs corrected requirements next (501.278917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:222:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/roadmap-updates.test.js:227:3
+✖ edit between invocations reopens persisted COMPLETE without erasing evidence (104.239917ms)
+  Error: ENOENT: no such file or directory, open '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-WiuS3H/observations.jsonl'
+      at Object.readFileSync (node:fs:484:20)
+      at observations (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:207:32)
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:233:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-WiuS3H/observations.jsonl'
+  }
+
+test at test/roadmap-updates.test.js:227:3
+✖ edit between invocations reopens persisted BLOCKED without erasing evidence (510.3025ms)
+  AssertionError [ERR_ASSERTION]: Roadmap reported BLOCKED; continuing in recovery mode instead of stopping.
+  The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.
+  Desktop notifications: backend_unavailable; inspect status/progress for attention.
+  node:assert:152
+    throw new AssertionError(obj);
+    ^
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at Object.<anonymous> (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-xknYcN/mock.cjs:51:10)
+      at Module._compile (node:internal/modules/cjs/loader:1872:14)
+      at Object..js (node:internal/modules/cjs/loader:2003:10)
+      at Module.load (node:internal/modules/cjs/loader:1594:32)
+      at Module._load (node:internal/modules/cjs/loader:1396:12)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+  
+  Node.js v24.19.0
+  roadmap-runner: codex exited with code 1; stopping.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:232:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/supervisor.test.js:157:3
+✖ reviews after workers 5 and 10; preserved=true (907.663083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/supervisor-test-qaGYzo/delivery.md'
+  - '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/supervisor-test-qaGYzo/delivery.md'
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/supervisor.test.js:168:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/supervisor-test-qaGYzo/delivery.md',
+    expected: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/supervisor-test-qaGYzo/delivery.md',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

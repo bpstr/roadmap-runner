@@ -1,16 +1,20 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {
     "roadmap-runner": "./bin/roadmap-runner.js"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/*.test.js"
+    "test": "node test/run-tests.js",
+    "build": "tsc",
+    "pretest": "npm run build",
+    "prepack": "npm run build",
+    "prepare": "npm run build"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "keywords": [
     "codex",
@@ -43,10 +47,24 @@
     "LICENSE",
     "examples",
     "docs/mcp-events.md",
-    "docs/roadmap-writing-skill-plan.md"
+    "docs/roadmap-writing-skill-plan.md",
+    "dist",
+    "src",
+    "skills",
+    "docs/agent-integration.md",
+    "docs/agent-integration-evidence.md"
   ],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
+    "smol-toml": "1.9.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15",
+    "typescript": "5.9.3"
   }
 }

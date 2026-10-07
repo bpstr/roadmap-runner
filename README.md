@@ -481,10 +481,10 @@ roadmap-runner architecture/roadmap.md --client gemini --model <model>
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 20+
 - at least one supported CLI installed and authenticated
 
-No Python, GNU `timeout`, jq, daemon, database, task registry, or plugin installation is required.
+No Python, GNU `timeout`, jq, daemon, database or plugin installation is required. Managed runs use a private filesystem registry.
 
 The secondary client adapters assume the same native CLI authentication approach as Campfire.
 
@@ -661,7 +661,7 @@ failure is logged and does not halt roadmap work. Task IDs/statuses are included
 blocker reasons, model output and credentials are not included in event payloads.
 Hooks should filter event types and avoid repeated alerts for recheck records.
 
-For macOS Notification Center, use the bundled example:
+Built-in attention delivery uses an installed `terminal-notifier` on macOS or `notify-send` on graphical Linux. Use `--notify off` to disable it and `--notify-on runner.usage_paused` to request quota alerts. The older AppleScript hook below opens Script Editor when its notifications are clicked:
 
 ```sh
 ROADMAP_NOTIFY_BIN=/absolute/path/to/examples/notify-macos.js \
@@ -678,8 +678,4 @@ A timed-out supervisor or missing written review is recorded and deferred while
 workers continue. Ordinary client/authentication failures and false supervisor
 completion remain explicit errors with preserved evidence.
 
-See [MCP integration findings and bridge roadmap](docs/mcp-events.md) for MCP
-resource notifications and explicit Codex App Server dispatch. The server/dispatch
-bridge remains proposed. See the [roadmap-writing skill plan](docs/roadmap-writing-skill-plan.md)
-and [epic/task template](examples/epic-roadmap.md) for task-sized session contracts,
-dependencies and implementation-before-validation ordering.
+See [agent integration](docs/agent-integration.md) for `start`, `stop`, `status`, local MCP and explicit app setup. The bundled [roadmap design skill](skills/write-runner-roadmap/SKILL.md) includes task contracts and a template. Automatic chat wake-up and agent dispatch remain outside this release.

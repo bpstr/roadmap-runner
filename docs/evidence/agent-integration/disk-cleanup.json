@@ -1,0 +1,146 @@
+{
+  "removedCacheFiles": [
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/04/5a/2b5d7a7c407d85d746baa0f5c9388a333e35a717a8a0a81943daa6cb1364",
+      "bytes": 683,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/0f/8a/bfe7e6db18d68e85955f01859a37a4b3fa7d389ec08e1f3629691d06d0fd",
+      "bytes": 706,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/95/a5/662213c6a568bbac6f6afb452281b9513741f0b3f62395beaa2c5b55aabc9754b91ce21fb237ccfbdf53ce0f62e700642515eeffb578549bb062d1807dd6",
+      "bytes": 154829,
+      "allocatedBytes": 155648
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/2d/77/508bea68950956b52d2c7de1ba28b43a32ab6c3cc37855f692bafa728f61",
+      "bytes": 652,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/ad/fb/65ae484764e7230f090696752d65992f68f1c2b03013a78a46a6e38e3036937430d717dd70b950c9a16a0fb0a5ffdd83d0e5f1ee1774938dc6322abf9086",
+      "bytes": 715997,
+      "allocatedBytes": 716800
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/41/9a/024c1d5a52335a63e569e9423fbd01db731fddba1a390a710aef1bdd15ce",
+      "bytes": 675,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/86/97/7e1cb38dec77595ea61c84c33ff8b6934db74ad00537367808278295c966d8f5b7d0a9d2fd703fb8c9fe9d528536029e15b14d099108ba171008d41da65d",
+      "bytes": 31492,
+      "allocatedBytes": 32768
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/58/f0/4fe556f104b09be642895a82afa463fe560d9a0dc8f507efeef825a6905e",
+      "bytes": 1400,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/ee/2a/86091ba6e59dd4c55a61c7a753e9120f7194d2fa38dc4f1c7139f718f9f972b5f2f80f3eea30f0ba181831352b02fe326bc83e5edc305aa47625f241eed9",
+      "bytes": 15766464,
+      "allocatedBytes": 15769600
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/80/59/4d1d5ddd6e33ae1a93574963925ff047fe6054fabf788fdeb0dc15f688bc",
+      "bytes": 715,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/7b/9f/4c7d6b92b2c8fa0e843de89093a9d5b50174f9fd7b674e5d1659de8c53529ae37e1f154186a2c08b25b18dc920e11c6bf1416a1158ad77ec55d816460d5b",
+      "bytes": 1537977,
+      "allocatedBytes": 1540096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/94/20/9f7736468c664df22baf94367fc1ed384cf4bfc32d8f36e1d2ad5afcaa7d",
+      "bytes": 1452,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/db/76/e460c9264579c808a056c4d7caab14989135236d80789fc1fc733ae8d5c72cad4521d98da44d287144161c0087e1a98c476afba4bc9a1df2e1c48e02025a",
+      "bytes": 307277,
+      "allocatedBytes": 311296
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/98/88/b0a4db889f950b3d7f0b5a2d8e0856bb36f0a7cee15b58c8667e14b8e6fd",
+      "bytes": 2158,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/23/0c/81a319ac34da242217d8c1432f3b9dde6d776f8ae4cc64d59d05e118e9ac0d6a40fa542f6540781d9dd3cc5402441e1cbd0145623aae388bb00d77d536fa",
+      "bytes": 104544,
+      "allocatedBytes": 106496
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/b4/92/9981841263690dfae74c4e9c7feedd4eb134e97373c3058a5631385279518a612fcf94d4f7bb8579a5154052bad405fdc1739144f6b8da9e3e79522e5adb",
+      "bytes": 26926,
+      "allocatedBytes": 28672
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/af/8f/666f1a752e25a7578b66df4c5b87c046bf8c334f3d5ba24945a66f514e62",
+      "bytes": 735,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/b7/08/598b0bf4cffb77cf345605a53c2225a8237418d4acc5e661754875bb25da",
+      "bytes": 733,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/1d/cf/ea948f7677adfb0412dec54569446a52f4674e7f6f76befbeda1ca43e45a2e3218d6c75b72269519a541c172c2d30cf8f63ba72b2b48d9a03525e11a4dae",
+      "bytes": 48489,
+      "allocatedBytes": 49152
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/b7/7c/bef778b25c0ebbc1ec51711ea957725f5792a3e2511e72d6c71494c7dbbe",
+      "bytes": 1402,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/dd/e1/e800bab88022633eda0340b74b0be46fc31b3b1018306c93de117edeb303d6aab246d569c398b8df6fbca988fa0022ec63e78d376ecee3b587ce9328ce03",
+      "bytes": 270043,
+      "allocatedBytes": 270336
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/e8/ad/09d01e1a140286a104a3deaa2cda92fe426a5115039ba9b221f230288b0c",
+      "bytes": 689,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/8b/00/d9aa0d10006ae0f516afe47e27d0ceb87379a4479f5c27ac10a7eec2e2723482c984c5a79d6982cd3b8e1e4f802d041c236d38863cc96dd8c7744fd1fd25",
+      "bytes": 21020,
+      "allocatedBytes": 24576
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/fb/b7/3efc0a543cb243c1a669836d2d21e1636f6185a967621a75e6f396b7a5ee",
+      "bytes": 682,
+      "allocatedBytes": 4096
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/content-v2/sha512/17/44/7f876f9db32e7024051eded014ea8a9adaa6d66394e935f2ff4469a8d72dfc862c8ed70df1da33edb7beb09ae6892380d09ce06edb570d5d0d924c85145a",
+      "bytes": 444970,
+      "allocatedBytes": 446464
+    },
+    {
+      "path": "/Users/bpstr/.npm/_cacache/index-v5/fc/ee/fc3e1dd6706bd557d2840d92ff10cdd6928b92fb8c46d2195dfbd8d4b2be",
+      "bytes": 1408,
+      "allocatedBytes": 4096
+    }
+  ],
+  "removedTemporary": "/tmp/roadmap-runner-compat-registry",
+  "removedTemporaryBytes": 248144,
+  "reclaimedFileBytes": 19692262,
+  "reclaimedCacheAllocatedBytes": 19509248,
+  "remainingFreeKiB": 14062540,
+  "preserved": [
+    "node_modules",
+    "dist",
+    "source files",
+    "test evidence",
+    "unrelated caches"
+  ]
+}

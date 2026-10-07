@@ -1,0 +1,266 @@
+[
+  {
+    "id": "@bpstr/roadmap-runner@0.7.0",
+    "name": "@bpstr/roadmap-runner",
+    "version": "0.7.0",
+    "size": 92063,
+    "unpackedSize": 304910,
+    "shasum": "213a9b2631cf0c2ae47acb5b77c1a830b9147eed",
+    "integrity": "sha512-rWLad8aGA2BEbm+ZcsX4V5q3aJND9HllVhoiXIej6fcpXiwQgA93OtQCwqJGfGxTPbAYcKU1Bw999twy1rweDQ==",
+    "filename": "bpstr-roadmap-runner-0.7.0.tgz",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 1066,
+        "mode": 420
+      },
+      {
+        "path": "README.md",
+        "size": 30060,
+        "mode": 420
+      },
+      {
+        "path": "SUPERVISION.md",
+        "size": 9716,
+        "mode": 420
+      },
+      {
+        "path": "bin/roadmap-runner.js",
+        "size": 5773,
+        "mode": 493
+      },
+      {
+        "path": "dist/events.d.ts",
+        "size": 565,
+        "mode": 420
+      },
+      {
+        "path": "dist/events.js",
+        "size": 2600,
+        "mode": 420
+      },
+      {
+        "path": "dist/lifecycle.d.ts",
+        "size": 163,
+        "mode": 420
+      },
+      {
+        "path": "dist/lifecycle.js",
+        "size": 12752,
+        "mode": 420
+      },
+      {
+        "path": "dist/mcp.d.ts",
+        "size": 91,
+        "mode": 420
+      },
+      {
+        "path": "dist/mcp.js",
+        "size": 6985,
+        "mode": 420
+      },
+      {
+        "path": "dist/notifications.d.ts",
+        "size": 563,
+        "mode": 420
+      },
+      {
+        "path": "dist/notifications.js",
+        "size": 6853,
+        "mode": 420
+      },
+      {
+        "path": "dist/roadmap-contract.d.ts",
+        "size": 66,
+        "mode": 420
+      },
+      {
+        "path": "dist/roadmap-contract.js",
+        "size": 3397,
+        "mode": 420
+      },
+      {
+        "path": "dist/run-manager.d.ts",
+        "size": 5698,
+        "mode": 420
+      },
+      {
+        "path": "dist/run-manager.js",
+        "size": 13218,
+        "mode": 420
+      },
+      {
+        "path": "dist/run-state.d.ts",
+        "size": 2197,
+        "mode": 420
+      },
+      {
+        "path": "dist/run-state.js",
+        "size": 2696,
+        "mode": 420
+      },
+      {
+        "path": "dist/setup.d.ts",
+        "size": 158,
+        "mode": 420
+      },
+      {
+        "path": "dist/setup.js",
+        "size": 12791,
+        "mode": 420
+      },
+      {
+        "path": "dist/worker.d.ts",
+        "size": 129,
+        "mode": 420
+      },
+      {
+        "path": "dist/worker.js",
+        "size": 8383,
+        "mode": 420
+      },
+      {
+        "path": "docs/agent-integration-evidence.md",
+        "size": 5238,
+        "mode": 420
+      },
+      {
+        "path": "docs/agent-integration.md",
+        "size": 8250,
+        "mode": 420
+      },
+      {
+        "path": "docs/mcp-events.md",
+        "size": 6619,
+        "mode": 420
+      },
+      {
+        "path": "docs/roadmap-writing-skill-plan.md",
+        "size": 5728,
+        "mode": 420
+      },
+      {
+        "path": "examples/epic-roadmap.md",
+        "size": 5593,
+        "mode": 420
+      },
+      {
+        "path": "examples/notify-macos.js",
+        "size": 1328,
+        "mode": 493
+      },
+      {
+        "path": "examples/three-iteration-roadmap.md",
+        "size": 1070,
+        "mode": 420
+      },
+      {
+        "path": "lib/clients.js",
+        "size": 2012,
+        "mode": 420
+      },
+      {
+        "path": "lib/recovery.js",
+        "size": 14154,
+        "mode": 420
+      },
+      {
+        "path": "lib/runner.js",
+        "size": 12925,
+        "mode": 420
+      },
+      {
+        "path": "lib/supervision.js",
+        "size": 9560,
+        "mode": 420
+      },
+      {
+        "path": "lib/tracking.js",
+        "size": 9816,
+        "mode": 420
+      },
+      {
+        "path": "lib/wait.js",
+        "size": 696,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1517,
+        "mode": 420
+      },
+      {
+        "path": "prompt.md",
+        "size": 15902,
+        "mode": 420
+      },
+      {
+        "path": "skills/write-runner-roadmap/references/task-contract.md",
+        "size": 1344,
+        "mode": 420
+      },
+      {
+        "path": "skills/write-runner-roadmap/SKILL.md",
+        "size": 2520,
+        "mode": 420
+      },
+      {
+        "path": "skills/write-runner-roadmap/templates/roadmap.md",
+        "size": 5593,
+        "mode": 420
+      },
+      {
+        "path": "src/events.ts",
+        "size": 2379,
+        "mode": 420
+      },
+      {
+        "path": "src/lifecycle.ts",
+        "size": 11241,
+        "mode": 420
+      },
+      {
+        "path": "src/mcp.ts",
+        "size": 6408,
+        "mode": 420
+      },
+      {
+        "path": "src/notifications.ts",
+        "size": 5880,
+        "mode": 420
+      },
+      {
+        "path": "src/roadmap-contract.ts",
+        "size": 3053,
+        "mode": 420
+      },
+      {
+        "path": "src/run-manager.ts",
+        "size": 11582,
+        "mode": 420
+      },
+      {
+        "path": "src/run-state.ts",
+        "size": 3382,
+        "mode": 420
+      },
+      {
+        "path": "src/setup.ts",
+        "size": 10832,
+        "mode": 420
+      },
+      {
+        "path": "src/worker.ts",
+        "size": 6887,
+        "mode": 420
+      },
+      {
+        "path": "supervisor.md",
+        "size": 7481,
+        "mode": 420
+      }
+    ],
+    "entryCount": 50,
+    "bundled": []
+  }
+]

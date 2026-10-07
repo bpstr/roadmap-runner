@@ -1,0 +1,32 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (533.7915ms)
+✔ simultaneous requests cannot create competing managed workers (140.330875ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (2.984125ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (143.898958ms)
+✔ control rejects unauthenticated ownership and nested worker management (141.318375ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (325.503ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (69.392958ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (23.936125ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (47.556875ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (25.7375ms)
+✔ prepared legacy MCP tools, restrictions, resources and subscriptions (1201.726292ms)
+✔ prepared modern MCP tools, restrictions, resources and subscriptions (1212.66425ms)
+✔ roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies (3.911125ms)
+✔ managed stop finishes only after an ignoring descendant is terminated (3572.930167ms)
+✔ setup connectivity checks only initialize/list MCP and never launch a provider (328.981708ms)
+✔ qualified local skills installer is staged and checked before publishing the skill (7.320375ms)
+✔ benign SKIPPED dependency flags do not trigger desktop attention (4.183666ms)
+Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+✔ Linux delivery uses notify-send, and off suppresses explicitly selected events (12.794791ms)
+✔ damaged notification state and thrown transports cannot interrupt runner work (14.22125ms)
+✔ managed startup failure reports its run identity without claiming readiness (106.393125ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8050.530042

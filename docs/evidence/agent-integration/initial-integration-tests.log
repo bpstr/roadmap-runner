@@ -1,0 +1,70 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (721.63125ms)
+✔ simultaneous requests cannot create competing managed workers (140.908791ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (3.347833ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (140.888417ms)
+✔ control rejects unauthenticated ownership and nested worker management (139.972375ms)
+✖ managed quota wait can stop promptly and preserves its recovery checkpoint (8113.634583ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (78.931541ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (26.486875ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (46.832208ms)
+✖ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (19.634125ms)
+✖ prepared legacy MCP tools, restrictions, resources and subscriptions (9186.159041ms)
+✖ prepared modern MCP tools, restrictions, resources and subscriptions (8318.957708ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 8
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27068.466667
+
+✖ failing tests:
+
+test at test/agent-integration.test.js:79:1
+✖ managed quota wait can stop promptly and preserves its recovery checkpoint (8113.634583ms)
+  Error: Fixture deadline exceeded
+      at wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:82:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/agent-integration.test.js:120:1
+✖ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (19.634125ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(parseToml(content).mcp_servers['roadmap-runner'].args.includes(f.workspace))
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:128:134)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at test/agent-integration.test.js:143:37
+✖ prepared legacy MCP tools, restrictions, resources and subscriptions (9186.159041ms)
+  Error: Fixture deadline exceeded
+      at wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:155:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/agent-integration.test.js:143:37
+✖ prepared modern MCP tools, restrictions, resources and subscriptions (8318.957708ms)
+  Error: Fixture deadline exceeded
+      at wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:149:17)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

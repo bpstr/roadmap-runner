@@ -1,7 +1,6 @@
 # Roadmap writing skill plan
 
-Proposed skill: `write-runner-roadmap`. This is a design and reviewable template,
-not an installed skill. Apply Writing for Agents to its final instructions:
+The `write-runner-roadmap` skill is now bundled under `skills/` and installed by explicit setup. The design rationale below remains the packaging contract. Apply Writing for Agents to its final instructions:
 ordered steps with checkable completion criteria, one source of truth for task
 semantics, and external references only for branches that need them.
 

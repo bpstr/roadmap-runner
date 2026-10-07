@@ -1,8 +1,8 @@
 # Runner events and MCP integration investigation
 
 Reviewed 2026-10-07. The event journal and notification hook are implemented. An
-MCP server and automatic agent-dispatch service are proposed, not implemented or
-live-tested. Prepared tests establish local runner behavior only.
+MCP server is now implemented; see [agent integration](agent-integration.md).
+Automatic agent dispatch remains proposed and has not been live-tested. Prepared tests establish local runner behavior only.
 
 ## Supported integration now
 
@@ -79,7 +79,7 @@ adapter. See [Codex App Server](https://learn.chatgpt.com/docs/app-server).
 - [ ] MCP-3.4 Apply user answers through the runner's controller-owned roadmap/source revision mechanism. Preserve task IDs, checkbox evidence and unresolved dependencies.
 - [ ] MCP-3.5 Validate all dispatch, cancellation, duplicate-event and quota cases through mocked transports. Any meaningful live dogfood is a separate workflow requiring exact real content, request/spend caps and a stop condition before inference.
 
-The current implementation deliberately provides the journal/hook boundary first.
+The implementation now provides managed control and local resource subscriptions alongside the journal/hook boundary.
 Building these bridge epics does not block ongoing roadmap execution. Public hosting,
 remote authentication and production rollout belong after local bridge validation.
 

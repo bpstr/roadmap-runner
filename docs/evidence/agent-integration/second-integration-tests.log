@@ -1,0 +1,41 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (611.264625ms)
+✔ simultaneous requests cannot create competing managed workers (137.971417ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (3.094542ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (159.642291ms)
+✔ control rejects unauthenticated ownership and nested worker management (139.774292ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (365.750792ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (72.778792ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (25.601917ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (51.431166ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (42.257958ms)
+✖ prepared legacy MCP tools, restrictions, resources and subscriptions (9173.312083ms)
+✖ prepared modern MCP tools, restrictions, resources and subscriptions (9176.382916ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20133.578792
+
+✖ failing tests:
+
+test at test/agent-integration.test.js:143:37
+✖ prepared legacy MCP tools, restrictions, resources and subscriptions (9173.312083ms)
+  Error: Fixture deadline exceeded
+      at wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:155:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/agent-integration.test.js:143:37
+✖ prepared modern MCP tools, restrictions, resources and subscriptions (9176.382916ms)
+  Error: Fixture deadline exceeded
+      at wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:155:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
