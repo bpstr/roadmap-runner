@@ -55,8 +55,6 @@ The full suite predates the two final hardening cases; the subsequent targeted
 integration suite validates their final implementation without repeating unrelated
 regressions.
 
-## Disk hygiene
-
 ## Setup diagnostics and CI — 2026-10-11
 
 The read-only `doctor` command adds app configuration/skill inspection, strict
