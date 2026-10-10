@@ -60,6 +60,7 @@ register the runner with your coding agent:
 
 ```sh
 roadmap-runner setup --app codex --scope project
+roadmap-runner doctor --app codex --scope project
 ```
 
 Then give your agent this prompt:
@@ -72,6 +73,12 @@ progress, report meaningful changes or required input, and end monitoring when t
 run completes or stops. Hourly monitoring needs a separate host schedule; runner
 supervisor checkpoints occur between worker batches. See [agent integration](docs/agent-integration.md)
 for other supported apps and setup details.
+
+After the host creates the hourly monitor, check its saved Codex registration with
+`roadmap-runner doctor --monitor-id <automation-id> --run-id <run-id>`.
+Include the absolute workspace and run ID in the monitor's prompt. Diagnostics
+verify local MCP connectivity and saved hourly registration; scheduled execution
+remains a separate host check.
 
 ### CLI clients
 
@@ -573,11 +580,17 @@ iterations and only stops after the third checkbox is complete.
 
 ```sh
 npm test
+npm run check:package
 npm install -g .
 roadmap-runner path/to/roadmap.md
 ```
 
 The tests do not call live models. They validate duration/status handling and the exact adapter argument construction, including the accepted Codex unattended flags.
+
+GitHub CI runs the prepared tests and npm tarball checks on Linux and macOS with
+Node.js 20, 22 and 24. Package checks exercise the extracted CLI's version/help
+using locked local dependencies and remove their temporary tarball afterwards.
+CI receives no provider credentials and never runs live inference.
 
 ## Design
 

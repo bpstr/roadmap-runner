@@ -38,6 +38,46 @@ monitor when the run completes or stops. MCP supplies start, stop and status too
 the hourly schedule belongs to the host. Supervisor checkpoints between worker
 batches do not create an hourly monitor.
 
+## Setup diagnostics
+
+Check app registration, the bundled skill and local MCP connectivity:
+
+```sh
+roadmap-runner doctor --app codex --scope project --json
+roadmap-runner doctor --app claude --scope user --workspace /absolute/project
+```
+
+`doctor` defaults to Codex and project scope. It reports the package version,
+configuration paths, conflicts, skill differences and actionable setup steps.
+It preserves app configuration and uses only MCP initialization and tools listing;
+it never calls a tool or launches a coding worker. The probe validates the direct
+local transport, not the app's project trust approval or UI loading. Missing or
+conflicting registration and failed connectivity return exit code 1. A customized
+skill is reported separately and does not make working MCP connectivity fail.
+User-scoped Codex setup and diagnostics respect `CODEX_HOME`.
+
+After the host creates an hourly monitor, include the absolute workspace and
+managed run ID in its prompt. Copy the saved Codex automation ID into this check:
+
+```sh
+roadmap-runner doctor --app codex --workspace /absolute/project \
+  --monitor-id hourly-roadmap-monitor --run-id <run-id> --json
+```
+
+`registered_hourly` means a saved active Codex registration matches the workspace
+and optional run ID. Inspection supports local version-1 `automation.toml` files
+under `$CODEX_HOME/automations` (default `~/.codex/automations`), heartbeat and cron
+registrations, and `FREQ=HOURLY;INTERVAL=1` with an optional single minute/second.
+Restricted, expired/bounded or other recurrence rules remain unqualified. The
+command does not print monitor prompts or change schedules. With `--monitor-id`,
+a missing, inactive, mismatched or unqualified registration returns exit code 1.
+Without it, monitoring is `not_checked`; this does not assert that a schedule exists.
+
+Saved registration does not prove a successful scheduled run or that the host is
+available. Keep the desktop app running and computer awake for local scheduled
+work, and check execution history in the host. Other hosts' monitoring remains
+unverified. See [scheduled tasks](https://developers.openai.com/codex/app/automations).
+
 ## Durable state and control
 
 The private registry defaults to `~/Library/Application Support/roadmap-runner`

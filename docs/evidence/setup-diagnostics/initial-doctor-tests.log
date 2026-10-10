@@ -1,0 +1,109 @@
+✖ doctor checks installed MCP/skill without modifying configuration or calling tools (10.907ms)
+✔ doctor refuses conflicting, disabled, missing and malformed MCP entries without executing them (6.075083ms)
+✔ MCP connectivity rejects timeout, malformed replies, initialization errors and wrong tool names (0.4105ms)
+✖ doctor confirms saved hourly registration for the exact workspace and run without exposing prompts (5.120791ms)
+✖ monitor diagnostics reject paused, restricted, malformed and mismatched registrations (10.02725ms)
+✔ doctor validates arguments and reports unsupported monitoring hosts explicitly (4.015458ms)
+✔ setup and doctor agree on user-scoped CODEX_HOME and project-scoped paths for every app (14.460042ms)
+✖ packaged CLI doctor uses only local MCP initialization and creates no managed runs (283.655708ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 4
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 479.264083
+
+✖ failing tests:
+
+test at test/doctor.test.js:40:1
+✖ doctor checks installed MCP/skill without modifying configuration or calling tools (10.907ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '/Users/bpstr/Github/roadmap-runner/bin/roadmap-runner.js',
+      'mcp',
+      '--workspace',
+  +   '/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-doctor-rsCpBV/workspace with spaces'
+  -   '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-doctor-rsCpBV/workspace with spaces'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/doctor.test.js:47:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '/Users/bpstr/Github/roadmap-runner/bin/roadmap-runner.js', 'mcp', '--workspace', '/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-doctor-rsCpBV/workspace with spaces' ],
+    expected: [ '/Users/bpstr/Github/roadmap-runner/bin/roadmap-runner.js', 'mcp', '--workspace', '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-doctor-rsCpBV/workspace with spaces' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/doctor.test.js:83:1
+✖ doctor confirms saved hourly registration for the exact workspace and run without exposing prompts (5.120791ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/doctor.test.js:86:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/doctor.test.js:94:1
+✖ monitor diagnostics reject paused, restricted, malformed and mismatched registrations (10.02725ms)
+  AssertionError [ERR_ASSERTION]: {"prompt":"Monitor run-1234 in \"/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-doctor-lF8nVm/workspace with spaces\""}
+  + actual - expected
+  
+  + 'workspace_mismatch'
+  - 'run_mismatch'
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/doctor.test.js:110:89)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'workspace_mismatch',
+    expected: 'run_mismatch',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/doctor.test.js:139:1
+✖ packaged CLI doctor uses only local MCP initialization and creates no managed runs (283.655708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/doctor.test.js:144:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

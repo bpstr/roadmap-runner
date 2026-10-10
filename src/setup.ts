@@ -8,15 +8,15 @@ import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 import { atomicJson } from './run-state.js';
 import { assertController } from './run-manager.js';
 
-const packageRoot = fileURLToPath(new URL('../', import.meta.url));
-const version = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version;
-const adapters = {
+export const packageRoot = fileURLToPath(new URL('../', import.meta.url));
+export const version = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).version;
+export const adapters = {
   codex: { executable: 'codex', config: '.codex/config.toml', userConfig: '.codex/config.toml', skills: '.agents/skills', agent: 'codex' },
   claude: { executable: 'claude', config: '.mcp.json', userConfig: '.claude.json', skills: '.claude/skills', agent: 'claude-code' },
   grok: { executable: 'grok', config: '.grok/config.toml', userConfig: '.grok/config.toml', skills: '.grok/skills', agent: 'grok' },
 };
-const sameEntry = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b) || (a?.command === b.command && JSON.stringify(a.args) === JSON.stringify(b.args) && Object.keys(a).every(key => key in b));
-const treeHash = (dir: string): string => {
+export const sameEntry = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b) || (a?.command === b.command && JSON.stringify(a.args) === JSON.stringify(b.args) && Object.keys(a).every(key => key in b));
+export const treeHash = (dir: string): string => {
   const hash = createHash('sha256');
   const visit = (base: string, relative = '') => {
     for (const name of fs.readdirSync(base).sort()) {
@@ -32,6 +32,35 @@ const writeText = (file: string, text: string) => {
   try { fs.writeFileSync(tmp, text, { mode: 0o600, flag: 'wx' }); fs.renameSync(tmp, file); }
   finally { fs.rmSync(tmp, { force: true }); }
 };
+export const setupPaths = (name: string, scope: string, workspace: string, home: string, env: NodeJS.ProcessEnv = process.env) => {
+  const adapter = adapters[name];
+  const root = scope === 'user' ? home : workspace;
+  return {
+    config: name === 'codex' && scope === 'user' && env.CODEX_HOME
+      ? path.join(env.CODEX_HOME, 'config.toml') : path.join(root, scope === 'user' ? adapter.userConfig : adapter.config),
+    skillPath: path.join(root, adapter.skills, 'write-runner-roadmap'),
+  };
+};
+export const checkConnectivity = (workspace: string, run: typeof spawnSync = spawnSync): string => {
+  // Never call tools: initialization and listing exercise the local transport only.
+  const messages = [
+    { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'roadmap-setup-check', version: '1' } } },
+    { jsonrpc: '2.0', method: 'notifications/initialized' },
+    { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
+  ];
+  try {
+    const check = run(process.execPath, [path.join(packageRoot, 'bin/roadmap-runner.js'), 'mcp', '--workspace', workspace], {
+      cwd: workspace, encoding: 'utf8', timeout: 5000, maxBuffer: 65536, input: messages.map(message => JSON.stringify(message)).join('\n') + '\n',
+    });
+    const replies = String(check.stdout || '').trim().split('\n').map(line => JSON.parse(line));
+    const initialized = replies.find(reply => reply.id === 1);
+    const listed = replies.find(reply => reply.id === 2);
+    const names = listed?.result?.tools?.map(tool => tool.name).sort();
+    return !check.error && check.status === 0 && !initialized?.error && typeof initialized?.result?.protocolVersion === 'string' &&
+      !listed?.error && JSON.stringify(names) === JSON.stringify(['roadmap_start', 'roadmap_status', 'roadmap_stop'])
+      ? 'passed_no_inference' : 'failed_no_inference';
+  } catch { return 'failed_no_inference'; }
+};
 export const setup = (options: { apps: string[]; scope?: string; workspace: string; dryRun?: boolean }, dependencies: any = {}) => {
   assertController(); const workspace = fs.realpathSync(options.workspace); const scope = options.scope || 'project';
   if (!['project', 'user'].includes(scope)) throw new Error('Scope must be project or user');
@@ -39,14 +68,14 @@ export const setup = (options: { apps: string[]; scope?: string; workspace: stri
   const home = dependencies.home || os.homedir(); const run = dependencies.spawnSync || spawnSync;
   const results: any[] = [];
   for (const name of [...new Set(options.apps)]) {
-    if (!(name in adapters)) throw new Error(`Unsupported setup app: ${name}`);
-    const adapter = adapters[name]; const targetRoot = scope === 'user' ? home : workspace;
-    const config = path.join(targetRoot, scope === 'user' ? adapter.userConfig : adapter.config);
+    if (!Object.hasOwn(adapters, name)) throw new Error(`Unsupported setup app: ${name}`);
+    const adapter = adapters[name];
+    const { config, skillPath: skillTarget } = setupPaths(name, scope, workspace, home, dependencies.env ?? (dependencies.home ? {} : process.env));
     const entrypoint = path.join(packageRoot, 'bin', 'roadmap-runner.js');
     const entry = { command: process.execPath, args: [entrypoint, 'mcp', '--workspace', workspace] };
     const item: any = { app: name, scope, config, mcp: 'pending', skill: 'pending', workspace, connectivity: 'not_run', changes: [] };
     const skillSource = path.join(packageRoot, 'skills', 'write-runner-roadmap');
-    const skillTarget = path.join(targetRoot, adapter.skills, 'write-runner-roadmap'); item.skillPath = skillTarget;
+    item.skillPath = skillTarget;
     try {
       const detected = run(adapter.executable, name === 'grok' ? ['mcp', '--help'] : ['--version'], { cwd: workspace, encoding: 'utf8', timeout: 3000, maxBuffer: 65536 });
       item.detected = detected.status === 0;
@@ -123,19 +152,7 @@ export const setup = (options: { apps: string[]; scope?: string; workspace: stri
       }
     } catch (error) { item.skill = 'failed'; item.skillError = error.message; }
     if (!options.dryRun && item.mcp !== 'failed') {
-      const messages = [
-        { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'roadmap-setup-check', version: '1' } } },
-        { jsonrpc: '2.0', method: 'notifications/initialized' },
-        { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
-      ];
-      const check = run(process.execPath, [path.join(packageRoot, 'bin/roadmap-runner.js'), 'mcp', '--workspace', workspace], {
-        cwd: workspace, encoding: 'utf8', timeout: 5000, maxBuffer: 65536, input: messages.map(message => JSON.stringify(message)).join('\n') + '\n',
-      });
-      try {
-        const replies = (check.stdout || '').trim().split('\n').map(line => JSON.parse(line));
-        const tools = replies.find(reply => reply.id === 2)?.result?.tools;
-        item.connectivity = check.status === 0 && tools?.length === 3 ? 'passed_no_inference' : 'failed_no_inference';
-      } catch { item.connectivity = 'failed_no_inference'; }
+      item.connectivity = checkConnectivity(workspace, run);
     }
     results.push(item);
   }

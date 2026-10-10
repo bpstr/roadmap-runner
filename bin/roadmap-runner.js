@@ -7,6 +7,7 @@ import { parseArgs } from '../lib/runner.js';
 import { RunManager, assertController } from '../dist/run-manager.js';
 import { serveMcp } from '../dist/mcp.js';
 import { setup } from '../dist/setup.js';
+import { doctor } from '../dist/doctor.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 function help() {
@@ -19,12 +20,15 @@ Usage:
   roadmap-runner stop <run-id> [--workspace <path>] [--json]
   roadmap-runner mcp --workspace <absolute-path>
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
+  roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
 
 Management options:
   --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
   --idempotency-key <id> Repeat the same managed start safely
   --notify attention|off Desktop notification mode (default attention)
   --notify-on <events>   Comma-separated event types, e.g. runner.usage_paused
+  --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration
+  --run-id <id>          Doctor: require that monitor to name this managed run
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
@@ -64,13 +68,21 @@ const main = async () => {
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   assertController();
-  const commands = ['start', 'stop', 'status', 'mcp', 'setup'];
+  const commands = ['start', 'stop', 'status', 'mcp', 'setup', 'doctor'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
   const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
   const workspaceArg = take('--workspace', undefined);
   const workspace = workspaceArg || process.cwd();
   const json = argv.includes('--json'); argv = argv.filter(arg => arg !== '--json');
   if (command === 'mcp') { if (!workspaceArg || !path.isAbsolute(workspaceArg) || argv.length) throw new Error('mcp requires --workspace <absolute-path>'); serveMcp(workspace); return; }
+  if (command === 'doctor') {
+    const apps = []; while (argv.includes('--app')) apps.push(take('--app', undefined));
+    const scope = take('--scope', 'project'); const monitorId = take('--monitor-id', undefined); const runId = take('--run-id', undefined);
+    if (argv.length) throw new Error('Unknown doctor argument: ' + argv[0]);
+    const result = doctor({ apps, scope, workspace, monitorId, runId });
+    console.log(JSON.stringify(result, null, json ? 0 : 2));
+    if (!result.ok) process.exitCode = 1; return;
+  }
   if (command === 'setup') {
     const apps = []; while (argv.includes('--app')) apps.push(take('--app', undefined));
     const scope = take('--scope', 'project'); const dryRun = argv.includes('--dry-run'); argv = argv.filter(arg => arg !== '--dry-run');

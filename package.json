@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node test/run-tests.js",
     "build": "tsc",
+    "check:package": "node scripts/check-package.js",
     "pretest": "npm run build",
     "prepack": "npm run build",
     "prepare": "npm run build"

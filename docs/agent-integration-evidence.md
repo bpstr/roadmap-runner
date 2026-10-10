@@ -57,6 +57,34 @@ regressions.
 
 ## Disk hygiene
 
+## Setup diagnostics and CI — 2026-10-11
+
+The read-only `doctor` command adds app configuration/skill inspection, strict
+MCP initialization and tool-name checks, and saved Codex hourly-monitor inspection.
+Prepared monitor fixtures cover missing/paused registrations, restricted cadence,
+workspace/run mismatches, malformed/oversized files and paths escaping the local
+automation directory. A local MCP exchange confirms no managed run is created.
+User-scope fixtures cover `CODEX_HOME`; app configuration and saved monitor files
+remain unchanged by inspection. Saved registration does not qualify host execution.
+
+The first focused run had **8 executed, 4 passed, 4 failed, 0 skipped** because
+macOS `/var` and `/private/var` aliases differed. The corrected checks accept the
+explicit workspace alias and compare canonical MCP arguments. The subsequent
+focused run had **8 executed, 8 passed, 0 failed/cancelled/skipped**.
+
+The final full suite had **163 executed, 163 passed, 0 failed/cancelled/skipped**.
+The npm tarball contained **53 files** and passed required-file/exclusion checks
+plus extracted CLI version/help checks using the existing locked dependencies.
+All checks use prepared coding clients and local transports; no inference or host
+schedule was executed. Initial failure, final focused/full results and package
+output are retained in `docs/evidence/setup-diagnostics/`.
+
+The new GitHub workflow runs this suite and tarball check on Node 20/22/24,
+Linux and macOS, without provider credentials. Hosted results are recorded by
+GitHub Actions separately from these local results.
+
+## Earlier integration-session disk hygiene
+
 Removed 26 cache files created by this session and the inactive prepared-process registry at `/tmp/roadmap-runner-compat-registry`. Exact cache paths are recorded in [the cleanup manifest](evidence/agent-integration/disk-cleanup.json). Deleted file content totals 19,692,262 bytes; the cache files occupied 19,509,248 allocated bytes. Remaining data-volume space: 13.41 GiB. Source, Git history, node_modules (39 MiB), compiled package artifacts (128 KiB), all failure/pass evidence and unrelated processes/caches were preserved.
 
 The largest inspected remaining cache is `~/.npm/_cacache` (about 1.1 GiB), shared with unrelated work. Broader removal requires user approval; this session did not expand cleanup to it.

@@ -1,0 +1,16 @@
+✔ doctor checks installed MCP/skill without modifying configuration or calling tools (10.645125ms)
+✔ doctor refuses conflicting, disabled, missing and malformed MCP entries without executing them (6.145083ms)
+✔ MCP connectivity rejects timeout, malformed replies, initialization errors and wrong tool names (0.549208ms)
+✔ doctor confirms saved hourly registration for the exact workspace and run without exposing prompts (5.855208ms)
+✔ monitor diagnostics reject paused, restricted, malformed and mismatched registrations (13.3815ms)
+✔ doctor validates arguments and reports unsupported monitoring hosts explicitly (4.349917ms)
+✔ setup and doctor agree on user-scoped CODEX_HOME and project-scoped paths for every app (13.896375ms)
+✔ CLI doctor uses only local MCP initialization and creates no managed runs (475.254416ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 622.214
