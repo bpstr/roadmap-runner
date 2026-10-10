@@ -52,6 +52,29 @@ roadmap-runner docs/roadmap.md
 
 The current `pwd` is always the workspace. It may contain multiple Git repositories.
 
+### Example agent setup prompt
+
+Managed runs and app setup require version `0.8.0` or newer. If npm's `latest`
+version is older, use the GitHub installation command above. From your workspace,
+register the runner with your coding agent:
+
+```sh
+roadmap-runner setup --app codex --scope project
+```
+
+Then give your agent this prompt:
+
+> Start a roadmap runner on ROADMAP.md and monitor it hourly.
+
+The agent should start a managed run, retain its run ID, and create an hourly
+monitor through the host's scheduler. Each check should read the run's status and
+progress, report meaningful changes or required input, and end monitoring when the
+run completes or stops. Hourly monitoring needs a separate host schedule; runner
+supervisor checkpoints occur between worker batches. See [agent integration](docs/agent-integration.md)
+for other supported apps and setup details.
+
+### CLI clients
+
 Default client:
 
 ```sh

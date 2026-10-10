@@ -5,6 +5,9 @@ control, desktop attention alerts, app setup and a bundled roadmap design skill.
 Node.js 20 or newer is required by the pinned `@modelcontextprotocol/server` 2.3.1
 SDK. Installation alone does not edit app settings or start a run.
 
+These commands require version `0.8.0` or newer. If the published npm version is
+older, install from GitHub `main` as described in the [README](../README.md#install).
+
 ```sh
 roadmap-runner setup --app codex --app claude --app grok --scope project --dry-run
 roadmap-runner setup --app codex --scope project
@@ -21,6 +24,19 @@ runs. A managed start returns after readiness; its worker survives CLI/MCP
 connections closing. Stop first reports `stopping`; `stopped` follows process-tree
 cleanup. Run IDs are local to the explicit workspace. Use `--idempotency-key` to
 repeat an identical managed request; changing its options is rejected.
+
+## Example setup prompt
+
+After registering the runner with your app, give your agent this prompt:
+
+> Start a roadmap runner on ROADMAP.md and monitor it hourly.
+
+Start one managed run and retain its run ID for subsequent `roadmap_status` calls
+or `roadmap-runner status <run-id> --json` checks. Create an hourly monitor through
+the host's scheduler, report meaningful changes or required input, and end the
+monitor when the run completes or stops. MCP supplies start, stop and status tools;
+the hourly schedule belongs to the host. Supervisor checkpoints between worker
+batches do not create an hourly monitor.
 
 ## Durable state and control
 
