@@ -1,0 +1,23 @@
+{
+  "version": "0.9.0",
+  "date": "2026-10-12",
+  "tests": {
+    "passed": 171,
+    "failed": 0,
+    "skipped": 0
+  },
+  "package": {
+    "filename": "bpstr-roadmap-runner-0.9.0.tgz",
+    "bytes": 102958,
+    "integrity": "sha512-0tECVX5R8Kt0QZ9VCZtVSxeeICOQRzmWdfYw+n9SuKW2MgiBz5wWadDuK8cp5U/JFRncxUjw6YlsJjgKGJ5MGQ==",
+    "sha256": "26f1dbb90332632066e07496da7af5af4e0bc9edec94d4aae0dda6c5366ea1f7"
+  },
+  "inferenceRequests": 0,
+  "notificationValidation": "mocked transports and installed terminal-notifier help; no Notification Center display claim",
+  "retainedFailures": [
+    "sandbox process/registry restrictions",
+    "mock MCP teardown deadline; targeted rerun passed",
+    "mock worker startup exceeded 1s test timeout; fixture allows 3s and final suite passed",
+    "sandbox npm cache write; isolated session cache passed"
+  ]
+}

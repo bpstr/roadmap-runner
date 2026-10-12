@@ -6,7 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseArgs, roadmapStatus } from "../lib/runner.js";
-import { MAX_SOURCE_BYTES, MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
+import { COMPACT_TRACKING_BYTES, MAX_SOURCE_BYTES, MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "prompt.md"), "utf8");
@@ -127,11 +127,36 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.doesNotMatch(prompt, /Update the roadmap and stop|status log in the roadmap|EDIT_ROADMAP/);
 });
 
-test("multi-megabyte source/history pollution is rejected before a worker sees it", (t) => {
+test("source/history pollution is rejected before a worker sees it", (t) => {
   const { dir, roadmap } = workspace(t);
   fs.writeFileSync(roadmap, "# Roadmap\n\n" + "history noise\n".repeat(Math.ceil(MAX_SOURCE_BYTES / 10)));
   assert.ok(fs.statSync(roadmap).size > MAX_SOURCE_BYTES);
   assert.throws(() => prepareTracking(roadmap, "", dir), /compact requirements-only roadmap/);
+});
+
+test("a 350 KB source is rejected unchanged even though older versions accepted it", t => {
+  const { dir, roadmap } = workspace(t);
+  const contents = "# Roadmap\n" + "x".repeat(350000);
+  fs.writeFileSync(roadmap, contents);
+  assert.equal(MAX_SOURCE_BYTES, 128 * 1024);
+  assert.throws(() => prepareTracking(roadmap, "", dir), /source roadmap exceeded/);
+  assert.equal(fs.readFileSync(roadmap, "utf8"), contents);
+  assert.equal(fs.existsSync(path.join(dir, ".roadmap-runner")), false);
+});
+
+test("progress compaction is requested before the hard limit without discarding state", t => {
+  const { dir, roadmap } = workspace(t);
+  const tracking = prepareTracking(roadmap, "", dir);
+  assert.equal(tracking.compactionContext(), "");
+  const contents = "# Progress\nStatus: IN_PROGRESS\n- [ ] GATE-1: preserve criterion\n".padEnd(COMPACT_TRACKING_BYTES, "x");
+  fs.writeFileSync(tracking.file, contents);
+  tracking.archive({ kind: "worker", iteration: 55 });
+  assert.doesNotThrow(() => tracking.assertBounded());
+  assert.match(tracking.compactionContext(), /Progress compaction required/);
+  assert.match(tracking.compactionContext(), /Preserve every gate ID, acceptance criterion, checkbox state/);
+  assert.equal(fs.readFileSync(tracking.file, "utf8"), contents);
+  fs.writeFileSync(tracking.file, "x".repeat(MAX_TRACKING_BYTES + 1));
+  assert.throws(() => tracking.assertBounded(), /active progress file exceeded/);
 });
 
 test("active progress is capped while archived snapshots preserve prior state", (t) => {
@@ -173,6 +198,10 @@ if (mode === 'capacity' && count === 1) {
 }
 if (mode === 'delete-progress') { fs.unlinkSync(file); process.exit(0); }
 let text = fs.readFileSync(file, 'utf8');
+if (mode === 'compact' && count === 1) {
+  assert.match(prompt, /Progress compaction required/);
+  text = text.split('## Padding')[0];
+}
 if (prompt.includes('Roadmap reconciliation required: YES')) text = text.replace('Status: COMPLETE', 'Status: IN_PROGRESS');
 if (prompt.includes('Blocked recovery mode: YES')) text = text.replace('Status: BLOCKED', 'Status: IN_PROGRESS');
 if (!/- \\[[ x]\\] EX-/.test(text)) {
@@ -196,6 +225,7 @@ if (mode === 'edit-capacity' && count === 1) {
 `);
   fs.chmodSync(worker, 0o755);
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("ROADMAP_")));
+  Object.assign(env, { ROADMAP_STATE_DIR: path.join(dir, "registry"), ROADMAP_NOTIFY: "off", ROADMAP_NOTIFY_BIN: "" });
   Object.assign(env, { PROGRESS_TEST_MODE: mode, ROADMAP_CAPACITY_RETRIES: "1", ROADMAP_CAPACITY_DELAY: "1", ROADMAP_CAPACITY_MAX_DELAY: "1" });
   if (useEnv) env.ROADMAP_PROGRESS_FILE = path.basename(file);
   const result = spawnSync(process.execPath, [path.join(root, "bin/roadmap-runner.js"), path.basename(roadmap),
@@ -283,4 +313,13 @@ test("capacity retry retains progress and source protection", (t) => {
   assert.match(f.result.stdout, /retry 1\/1/);
   assert.match(fs.readFileSync(f.file, "utf8"), /Capacity attempt preserved/);
   assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+});
+
+test("worker receives the compaction directive before continuing a large handoff", t => {
+  const evidence = "# State\nStatus: IN_PROGRESS\n\n## Padding\n".padEnd(COMPACT_TRACKING_BYTES, "x");
+  const f = run(t, { mode: "compact", evidence });
+  assert.equal(f.result.status, 0, f.result.stderr);
+  assert.equal(f.calls, 3);
+  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+  assert.ok(fs.statSync(f.file).size < COMPACT_TRACKING_BYTES);
 });

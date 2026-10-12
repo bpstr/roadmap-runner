@@ -11,6 +11,7 @@ const event = JSON.parse(input);
 const titles = {
   "runner.blocked": "Roadmap needs help",
   "runner.needs_attention": "Roadmap task deferred",
+  "runner.stuck": "Roadmap is stuck",
   "runner.usage_paused": "Roadmap paused for usage reset",
   "runner.usage_wait_expired": "Roadmap usage wait expired",
   "runner.failed": "Roadmap runner stopped",

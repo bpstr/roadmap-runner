@@ -1,6 +1,6 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {
@@ -53,7 +53,8 @@
     "src",
     "skills",
     "docs/agent-integration.md",
-    "docs/agent-integration-evidence.md"
+    "docs/agent-integration-evidence.md",
+    "CHANGELOG.md"
   ],
   "publishConfig": {
     "access": "public",

@@ -188,6 +188,7 @@ if (role === 'S') {
 `);
   fs.chmodSync(mock, 0o755);
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("ROADMAP_")));
+  Object.assign(env, { ROADMAP_STATE_DIR: path.join(f.dir, "registry"), ROADMAP_NOTIFY: "off", ROADMAP_NOTIFY_BIN: "" });
   Object.assign(env, { ROADMAP_CAPACITY_RETRIES: "1", ROADMAP_CAPACITY_DELAY: "1", ROADMAP_CAPACITY_MAX_DELAY: "1" });
   const args = [path.join(root, "bin/roadmap-runner.js"), f.roadmap,
     "--progress-file", f.progress, "--client-bin", mock, "--supervisor-every", String(every)];

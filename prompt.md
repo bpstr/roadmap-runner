@@ -166,6 +166,7 @@ Update the tracking file and stop this invocation:
 
 - Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
   acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
+- Keep active progress below 96 KiB, with a hard runner limit of 128 KiB. When Runner context requests compaction, compact before implementation; preserve all gate IDs, criteria, checkbox states, unresolved blockers and current evidence references. Never put removed iteration prose into the source roadmap. If required state cannot fit, report the context blocker rather than deleting requirements.
 - Maintain compact Checked-item evidence only for acceptance gates whose current
   state matters: ID, implemented/verified/deployed state, a short evidence reference,
   and last relevant change. Do not accumulate one prose log entry per iteration.

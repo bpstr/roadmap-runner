@@ -116,6 +116,40 @@ test("unchanged workers back off with a bounded delay and reset after changed ev
   assert.equal(f.recovery.state.idle, 0);
 });
 
+test("stuck attention is emitted once across restarts and rearmed after progress resumes", async t => {
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  await f.recovery.idle("private progress", "private progress");
+  assert.equal(fs.existsSync(f.recovery.eventsFile), false);
+  await f.recovery.idle("private progress", "private progress");
+  let alerts = f.events().filter(event => event.type === "runner.stuck");
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].attention, true);
+  assert.equal(alerts[0].unchangedWorkers, 2);
+  assert.ok(!JSON.stringify(alerts).includes("private progress"));
+  const restarted = new Recovery(f.config);
+  await restarted.idle("private progress", "private progress");
+  assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 1);
+  await restarted.idle("before", "after");
+  assert.equal(f.events().at(-1).type, "runner.progress_resumed");
+  await restarted.idle("private progress", "private progress");
+  await restarted.idle("private progress", "private progress");
+  assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 2);
+  await restarted.idle("same", "same", true);
+  assert.equal(f.events().at(-1).type, "runner.progress_resumed");
+});
+
+test("a supervisor stuck report stays active until a worker changes progress", async t => {
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  await f.recovery.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });
+  await f.recovery.idle("same", "same");
+  assert.equal(f.recovery.state.stuck, true);
+  const restarted = new Recovery(f.config);
+  await restarted.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });
+  assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 1);
+  await restarted.idle("before", "after");
+  assert.equal(f.events().at(-1).type, "runner.progress_resumed");
+});
+
 test("wait settings reject zero, invalid input and values above one day", () => {
   for (const value of ["0", "86401", "NaN", "Infinity", "-1"]) assert.throws(() => recoverySettings({ ROADMAP_USAGE_MAX_WAIT: value }));
   assert.throws(() => recoverySettings({ ROADMAP_RECOVERY_DELAY: "20", ROADMAP_RECOVERY_MAX_DELAY: "10" }));
@@ -152,6 +186,7 @@ if (count === 1) {
 `);
   fs.chmodSync(mock, 0o755);
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("ROADMAP_")));
+  Object.assign(env, { ROADMAP_STATE_DIR: path.join(f.dir, "registry"), ROADMAP_NOTIFY: "off", ROADMAP_NOTIFY_BIN: "" });
   return { ...f, args: [cli, f.config.roadmap, "--progress-file", f.config.tracking.file, "--client", client, "--client-bin", mock, "--supervisor-every", "0"], options: { cwd: f.dir, env: { ...env, ROADMAP_USAGE_MAX_WAIT: mode === "weekly" ? "1" : "10" }, encoding: "utf8", timeout: 10000 } };
 }
 

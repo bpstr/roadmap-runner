@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { boundedText, OUTPUT_BYTES, Supervision, supervisorSettings } from "../lib/supervision.js";
+import { boundedText, currentReviewIsStuck, OUTPUT_BYTES, Supervision, supervisorSettings } from "../lib/supervision.js";
 import { parseArgs, runClient } from "../lib/runner.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -65,7 +65,7 @@ if (supervisor) {
     fs.writeFileSync('supervisor-ready', 'yes');
     setTimeout(() => process.exit(0), 5000);
   } else {
-    fs.appendFileSync(tracking, '\\n## Supervisor review\\nReview ID: ' + reviewId + '\\nHealth: STUCK\\nNext delivery target: repair the canonical transport harness.\\nExpectation: produce integration receipt A1.\\n');
+    fs.appendFileSync(tracking, '\\n## Latest supervisor review\\nReview ID: ' + reviewId + '\\nHealth: STUCK\\nNext delivery target: repair the canonical transport harness.\\nExpectation: produce integration receipt A1.\\n');
     if (mode === 'source-mutation') fs.appendFileSync(roadmap, '\\nController source change.');
     if (mode === 'false-complete') fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
     if (mode === 'global-block') fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: BLOCKED'));
@@ -94,7 +94,8 @@ if (supervisor) {
   if (preserved) args.push('--progress-file', tracking);
   if (every !== undefined) args.push('--supervisor-every', String(every));
   if (timeout) args.push('--supervisor-timeout', timeout);
-  if (mode === 'worker-timeout') args.push('--timeout', '1s');
+  // Allow the mock to start even on a busy host; its deliberate 5s wait still times out.
+  if (mode === 'worker-timeout') args.push('--timeout', '3s');
   const env = { ...process.env, ROADMAP_NOTIFY_BIN: "", ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1", ROADMAP_SUPERVISOR_EVERY: '5', ROADMAP_SUPERVISOR_TIMEOUT: '10m',
     ROADMAP_CAPACITY_RETRIES: '1', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '1' };
   t.after(() => {
@@ -108,6 +109,16 @@ if (supervisor) {
 
 function run(f) { return spawnSync(process.execPath, f.args, f.options); }
 function events(f) { return fs.readFileSync(path.join(f.dir, 'events'), 'utf8').trim().split('\n'); }
+
+test('only the current supervisor review can report stuck, excluding examples and history', () => {
+  const report = '## Latest supervisor review\nReview ID: current\nHealth: STUCK\n';
+  assert.equal(currentReviewIsStuck(report, 'current'), true);
+  assert.equal(currentReviewIsStuck(report, 'stale'), false);
+  assert.equal(currentReviewIsStuck('```md\n' + report + '```\n', 'current'), false);
+  assert.equal(currentReviewIsStuck(report.replace('Health: STUCK', '```md\nHealth: STUCK\n```'), 'current'), false);
+  assert.equal(currentReviewIsStuck(report + '## Latest supervisor review\nReview ID: newer\nHealth: HEALTHY\n', 'current'), false);
+  assert.equal(currentReviewIsStuck('## History\nReview ID: current\nHealth: STUCK\n', 'current'), false);
+});
 
 test('supervision defaults to five; supports CLI/env overrides and disable', () => {
   assert.deepEqual(supervisorSettings(parseArgs(['r.md'], {})), { every: 5, timeoutMs: 600000 });
@@ -159,6 +170,10 @@ for (const preserved of [true]) {
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6','W7','W8','W9','W10','S2','W11']);
+    const journal = fs.readFileSync(f.tracking + ".events.jsonl", "utf8").trim().split("\n").map(JSON.parse);
+    const stuck = journal.filter(event => event.type === "runner.stuck");
+    assert.equal(stuck.length, 2);
+    assert.ok(stuck.every(event => event.attention && event.reasonCode === "supervisor_stuck"));
     assert.match(fs.readFileSync(f.tracking, 'utf8'), /Next delivery target: repair the canonical transport harness/);
     assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
     if (preserved) assert.equal(fs.readFileSync(f.roadmap, 'utf8'), f.source);

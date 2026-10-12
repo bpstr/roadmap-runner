@@ -19,6 +19,8 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.blocked` | Current ready set exhausted; recovery continues |
 | `runner.needs_attention` | Task blocked, skipped, problematic or needs an answer while other work can continue |
 | `runner.unblocked` | Previously flagged attention cleared |
+| `runner.stuck` | Current supervisor STUCK report or two unchanged workers; attention alert once per stagnation episode |
+| `runner.progress_resumed` | Progress or source revision changed; clears stuck notification deduplication |
 | `runner.recovery_wait` | Repeated unchanged progress state; bounded recheck backoff |
 | `runner.usage_paused` | Worker/supervisor quota rejected; checkpoint saved |
 | `runner.usage_resumed` | Reset wait ended; next session may run |

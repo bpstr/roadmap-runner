@@ -117,6 +117,35 @@ test('notification timeout, missing backend and headless Linux are best effort a
   const transport = fakeTransport({ platform: 'linux' }); transport.env = {}; const n = new Notifications({ notify: 'attention' }, path.join(f.dir, 'headless'), transport); n.enqueue(event); await n.flush(); assert.equal(transport.calls.length, 0); assert.equal(n.state.deliveries[0].result, 'backend_unavailable');
 });
 
+test('failed notification submission can retry after the backend is repaired', async t => {
+  const f = fixture(t); const file = path.join(f.dir, 'notification-retry');
+  const event = { id: 'stuck', type: 'runner.stuck', attention: true, unchangedWorkers: 2, roadmap: f.roadmap };
+  const failed = new Notifications({ notify: 'attention' }, file, fakeTransport({ mode: 'failure' }));
+  failed.enqueue(event); await failed.flush();
+  assert.equal(failed.state.fingerprints.length, 0);
+  const transport = fakeTransport(); const repaired = new Notifications(failed.options, file, transport);
+  repaired.enqueue(event); repaired.enqueue(event); await repaired.flush();
+  assert.equal(transport.calls.length, 1);
+  assert.ok(transport.calls[0].args.includes('Roadmap Runner is stuck'));
+  repaired.enqueue({ id: 'resumed', type: 'runner.progress_resumed', roadmap: f.roadmap });
+  repaired.enqueue({ ...event, id: 'stuck-again' }); await repaired.flush();
+  assert.equal(transport.calls.length, 2);
+});
+
+test('legacy failed fingerprints do not suppress notifications after an upgrade', async t => {
+  const f = fixture(t); const file = path.join(f.dir, 'legacy-notifications'); const transport = fakeTransport();
+  const event = { id: 'old', type: 'runner.blocked', attention: true, roadmap: f.roadmap };
+  const original = new Notifications({ notify: 'attention' }, file, transport);
+  original.enqueue(event); await original.flush();
+  const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+  delete state.version; state.deliveries[0].result = 'backend_unavailable';
+  fs.writeFileSync(file, JSON.stringify(state));
+  const upgraded = new Notifications(original.options, file, transport);
+  upgraded.enqueue(event); await upgraded.flush();
+  assert.equal(transport.calls.length, 2);
+  assert.equal(upgraded.state.lastError, undefined);
+});
+
 test('setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation', t => {
   const f = fixture(t); const home = path.join(f.dir, 'home'); fs.mkdirSync(home);
   const dependencies = { home, spawnSync: (command, args) => command === 'grok' ? { status: 0, stdout: 'grok mcp add --scope' } : { status: 1 } };

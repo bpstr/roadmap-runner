@@ -1,0 +1,11 @@
+✔ only the current supervisor review can report stuck, excluding examples and history (1.62525ms)
+✔ reviews after workers 5 and 10; preserved=true (1692.401708ms)
+✔ timed-out workers count toward review cadence (1468.701041ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3266.7745

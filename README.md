@@ -262,7 +262,7 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 The source roadmap is **requirements-only and read-only to workers and the built-in
 supervisor**. An external controller may revise it to correct drift; updates are
-adopted between sessions. A source larger than **512 KiB** is rejected at every
+adopted between sessions. A source larger than **128 KiB** is rejected at every
 boundary as a likely polluted context file; restore or prepare a compact requirements-
 only roadmap instead of feeding historical delivery logs back into the model.
 
@@ -279,7 +279,11 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 
 `progress.md` is bounded hot state. It contains the current checklist, handoff,
 concise evidence references, deferred gates and latest supervisor review. It is
-capped at **128 KiB**. If a worker makes it larger, the runner first archives the
+capped at **128 KiB**. At **96 KiB**, the next worker or supervisor is instructed
+to compact superseded handoff/review prose and repeated evidence before implementation,
+while preserving criteria, checkbox states, blockers and current evidence references.
+Compaction is performed by the agent; the runner never silently truncates requirements.
+If a worker makes it larger, the runner first archives the
 boundary snapshot and then stops instead of feeding the oversized file into another
 fresh context.
 
@@ -682,8 +686,12 @@ An unchanged flag set produces one notification across restarts; a changed reaso
 or resolved blocker updates the event state. When the entire ready set is blocked,
 `Status: BLOCKED` starts another recovery worker.
 
-After two consecutive workers leave progress byte-for-byte unchanged, recovery
-rechecks back off from 60 seconds to a maximum of 15 minutes. Set
+A current supervisor review with `Health: STUCK` triggers the same attention alert.
+After two consecutive workers leave progress byte-for-byte unchanged, the runner
+emits `runner.stuck` as a default attention alert, once per stagnation episode even
+across restarts. Changed progress or a source revision emits `runner.progress_resumed`
+and allows a future stuck episode to alert again. Repeated recovery checks stay quiet.
+Recovery rechecks back off from 60 seconds to a maximum of 15 minutes. Set
 `ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` in integer seconds (1–3600)
 to adjust this. Changed progress or a source revision resets the delay. Timeout
 sessions use this same unchanged-progress guard. This detects unchanged persisted
@@ -697,7 +705,7 @@ failure is logged and does not halt roadmap work. Task IDs/statuses are included
 blocker reasons, model output and credentials are not included in event payloads.
 Hooks should filter event types and avoid repeated alerts for recheck records.
 
-Built-in attention delivery uses an installed `terminal-notifier` on macOS or `notify-send` on graphical Linux. Use `--notify off` to disable it and `--notify-on runner.usage_paused` to request quota alerts. The older AppleScript hook below opens Script Editor when its notifications are clicked:
+Built-in attention delivery uses an installed `terminal-notifier` on macOS or `notify-send` on graphical Linux. On macOS, install the backend with `brew install terminal-notifier` before starting the runner. Missing backends produce an explicit diagnostic and a recorded delivery failure; failed submissions are not saved as successfully delivered notification fingerprints. Use `--notify off` to disable it and `--notify-on runner.usage_paused` to request quota alerts. The older AppleScript hook below opens Script Editor when its notifications are clicked:
 
 ```sh
 ROADMAP_NOTIFY_BIN=/absolute/path/to/examples/notify-macos.js \

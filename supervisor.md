@@ -96,8 +96,10 @@ Persist the review and return:
 - Replace the compact "Latest supervisor review" in the tracking file; do not append
   another permanent review section. Include the exact
   `Review ID: ...` supplied in Runner context (the runner checks it was written),
-  review date, covered iteration numbers, health (HEALTHY / SLOW / STUCK / UNCERTAIN),
-  evidence and cause, prior intervention outcome, previous/new delivery target,
+  review date, covered iteration numbers, and an exact `Health: HEALTHY`,
+  `Health: SLOW`, `Health: STUCK` or `Health: UNCERTAIN` field under
+  `## Latest supervisor review`. A current `Health: STUCK` triggers an attention alert.
+  Include evidence and cause, prior intervention outcome, previous/new delivery target,
   next-run expectation and verification, fallback, and unresolved blockers.
 - Replace Current handoff / Batch plan so the next worker can execute the chosen
   action without rediscovering the diagnosis. Preserve stable parent criteria and
@@ -118,3 +120,5 @@ Keep task-local BLOCKED, NEEDS_INFO, PROBLEM and SKIPPED flags in `## Deferred g
 using the worker's `- STATUS TASK-ID: reason | Unblock: condition | Retry: trigger`
 format. Retarget independent ready work. Preserve unchecked acceptance criteria for
 all deferred tasks; a skipped prerequisite cannot unlock its dependent tasks.
+
+When Runner context requests progress compaction, compact superseded review/handoff prose and repeated evidence before recording this review. Preserve gate IDs, acceptance criteria, checkbox states, unresolved blockers and current evidence references. Target below 96 KiB; the hard limit is 128 KiB. Earlier full snapshots remain in cold history. Never move removed prose into the source roadmap or weaken requirements to fit.
