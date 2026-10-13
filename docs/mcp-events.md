@@ -27,7 +27,13 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.usage_wait_expired` | Incident wait ceiling reached; exit 75 |
 | `runner.supervisor_deferred` | Timed-out/incomplete review preserved; worker continues |
 | `runner.failed` | Ordinary worker CLI failure; partial work preserved |
-| `runner.completed` | Current source revision completed by the worker |
+| `runner.queued` | A roadmap was appended to an active managed run |
+| `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |
+| `runner.completed` | The final roadmap completed; the managed queue is finished |
+
+Managed run journals keep event sequences increasing across roadmap handoffs.
+Each roadmap's progress-local journal retains its own sequence and completion
+event. Use the managed run journal when monitoring the whole queue.
 
 Repeated unchanged task attention is suppressed across restarts. A changed reason,
 set of tasks or global status creates a new event. Hooks are best effort: the event

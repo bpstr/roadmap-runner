@@ -10,7 +10,9 @@ import { parseArgs, parseDuration } from '../lib/runner.js';
 import { trackingPaths } from '../lib/tracking.js';
 import { supervisorSettings } from '../lib/supervision.js';
 import { readEvents, eventTypes } from './events.js';
-import { registryRoot, privateDir, runDir, readRun, saveRun, publicRun, outputTail, type RunRecord } from './run-state.js';
+import { registryRoot, privateDir, runDir, readRun, saveRun, publicRun, outputTail, type RunRecord, type QueueItem } from './run-state.js';
+
+export const queueItemSchema = z.object({ roadmap: z.string().min(1), progressFile: z.string().min(1).optional() }).strict();
 
 export const startSchema = z.object({
   workspace: z.string().min(1), roadmap: z.string().min(1), progressFile: z.string().optional(),
@@ -19,6 +21,7 @@ export const startSchema = z.object({
   supervisorTimeout: z.string().default('10m'), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
   notify: z.enum(['attention', 'off']).default('attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   idempotencyKey: z.string().min(1).max(128).optional(),
+  queue: z.array(queueItemSchema).max(99).default([]),
 }).strict();
 const terminal = (r: RunRecord) => ['stopped', 'exited', 'unknown'].includes(r.processState);
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 24);
@@ -29,14 +32,14 @@ export const canonicalPath = (input: string): string => {
 };
 export const within = (root: string, file: string) => file === root || (!path.relative(root, file).startsWith('..' + path.sep) && path.relative(root, file) !== '..' && !path.isAbsolute(path.relative(root, file)));
 export const assertController = () => { if (process.env.ROADMAP_WORKER_CONTEXT) throw new Error('Roadmap workers cannot start or control managed runs'); };
-export const control = (record: RunRecord, operation = 'ping'): Promise<any> => new Promise((resolve, reject) => {
+export const control = (record: RunRecord, operation = 'ping', input?: unknown): Promise<any> => new Promise((resolve, reject) => {
   const client = net.createConnection(record.socket); let response = ''; let finished = false;
   const finish = (error?, value?) => { if (finished) return; finished = true; client.destroy(); error ? reject(error) : resolve(value); };
   client.setTimeout(1500, () => finish(new Error('Run control unavailable')));
   client.on('error', error => finish(error));
-  client.on('connect', () => client.write(JSON.stringify({ token: record.token, operation }) + '\n'));
+  client.on('connect', () => client.write(JSON.stringify({ token: record.token, operation, input }) + '\n'));
   client.on('data', chunk => { response += chunk; if (response.length > 4096) return finish(new Error('Invalid control response')); if (!response.includes('\n')) return;
-    try { const result = JSON.parse(response.split('\n')[0]); if (result.id !== record.id || result.token !== record.token) throw new Error('Run ownership mismatch'); finish(null, result); } catch (error) { finish(error); }
+    try { const result = JSON.parse(response.split('\n')[0]); if (result.id !== record.id || result.token !== record.token) throw new Error('Run ownership mismatch'); if (result.error) throw new Error(result.error); finish(null, result); } catch (error) { finish(error); }
   });
   client.on('end', () => { if (!finished) finish(new Error('Run control disconnected')); });
 });
@@ -72,6 +75,44 @@ export class RunManager {
       try { if (fs.readFileSync(lock, 'utf8') === record.id) fs.rmSync(lock); } catch (error) { if (error.code !== 'ENOENT') throw error; }
     }
   }
+  resolveQueueItem(input: unknown, foreground = false): QueueItem {
+    const request = queueItemSchema.parse(input);
+    const roadmap = canonicalPath(path.resolve(this.workspace, request.roadmap));
+    if ((!foreground && !within(this.workspace, roadmap)) || !fs.statSync(roadmap).isFile()) throw new Error('Roadmap must be a file inside the authorized workspace');
+    const progressFile = canonicalPath(trackingPaths(roadmap, request.progressFile ? path.resolve(this.workspace, request.progressFile) : '', this.workspace).file);
+    if ((!foreground && !within(this.workspace, progressFile)) || this.sameFile(progressFile, roadmap)) throw new Error('Progress must be separate and inside the authorized workspace');
+    if (fs.existsSync(progressFile) && !fs.statSync(progressFile).isFile()) throw new Error('Progress must be a regular file');
+    return { roadmap, progressFile, state: 'pending' };
+  }
+  sameFile(a: string, b: string) {
+    if (a === b) return true;
+    if (!fs.existsSync(a) || !fs.existsSync(b)) return false;
+    const left = fs.statSync(a), right = fs.statSync(b);
+    return left.dev === right.dev && left.ino === right.ino;
+  }
+  validateQueue(queue: QueueItem[]) {
+    for (let i = 0; i < queue.length; i++) {
+      for (let j = 0; j < queue.length; j++) {
+        if (this.sameFile(queue[i].progressFile, queue[j].roadmap)) throw new Error('Queue progress must be separate from every source roadmap');
+        if (i !== j && (this.sameFile(queue[i].roadmap, queue[j].roadmap) || this.sameFile(queue[i].progressFile, queue[j].progressFile))) throw new Error('Queue roadmaps and progress files must be distinct');
+      }
+    }
+  }
+  appendQueue(record: RunRecord, input: unknown) {
+    if (!['starting', 'running'].includes(record.processState)) throw new Error('Run is no longer accepting queued roadmaps');
+    const queue = record.queue || [{ roadmap: record.roadmap, progressFile: record.progressFile, state: 'running' as const }];
+    if (queue.length >= 100) throw new Error('Queue limit is 100 roadmaps');
+    const item = this.resolveQueueItem(input); this.validateQueue([...queue, item]);
+    const lock = path.join(this.root, 'locks', hash(item.progressFile));
+    try { fs.linkSync(path.join(runDir(this.root, record.id), 'owner'), lock); }
+    catch (error) { if (error.code === 'EEXIST') throw new Error('Queued progress is already reserved'); throw error; }
+    record.queue = [...queue, item]; record.locks.push(lock);
+    try { saveRun(this.root, record); } catch (error) { record.queue = queue; record.locks.pop(); fs.rmSync(lock); throw error; }
+  }
+  async enqueue(id: string, input: unknown) {
+    assertController(); const request = queueItemSchema.parse(input); const record = await this.reconcile(this.get(id));
+    await control(record, 'enqueue', request); return publicRun(this.get(id));
+  }
   async start(input: unknown, trustedOptions: any = {}, foreground = false) {
     assertController(); const request = startSchema.parse(input);
     const workspace = fs.realpathSync(request.workspace);
@@ -82,9 +123,11 @@ export class RunManager {
     const optionProgress = request.progressFile ? (foreground ? path.resolve(request.workspace, request.progressFile) : canonicalPath(path.resolve(workspace, request.progressFile))) : '';
     const progressFile = canonicalPath(trackingPaths(optionRoadmap, optionProgress, workspace).file);
     if ((!foreground && !within(workspace, progressFile)) || progressFile === roadmap) throw new Error('Progress must be separate and inside the authorized workspace');
+    const queue = [this.resolveQueueItem({ roadmap, progressFile }, foreground), ...request.queue.map(item => this.resolveQueueItem(item, foreground))];
+    this.validateQueue(queue);
     const options = { ...parseArgs([], {}), ...request, roadmap: optionRoadmap, progressFile: optionProgress, ...trustedOptions };
     parseDuration(options.timeout); supervisorSettings(options);
-    const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, idempotencyKey: undefined }));
+    const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, queue, idempotencyKey: undefined }));
     for (const id of fs.readdirSync(path.join(this.root, 'runs')).sort()) {
       const r = readRun(this.root, id);
       if (r.workspace === workspace && request.idempotencyKey && r.idempotencyKey === request.idempotencyKey) {
@@ -93,12 +136,12 @@ export class RunManager {
       }
     }
     const id = randomBytes(12).toString('hex');
-    const locks = [path.join(this.root, 'locks', hash(workspace)), path.join(this.root, 'locks', hash(progressFile))];
+    const locks = [...new Set([path.join(this.root, 'locks', hash(workspace)), ...queue.map(item => path.join(this.root, 'locks', hash(item.progressFile)))])];
     privateDir(runDir(this.root, id));
     const socketDir = process.platform === 'win32' ? '' : privateDir(path.join('/tmp', `rr-${process.getuid?.() ?? 'user'}-${hash(this.root)}`));
     const record: RunRecord = { id, token: randomBytes(32).toString('hex'), workspace, roadmap, progressFile,
       processState: 'starting', roadmapState: 'in_progress', waitReason: null, createdAt: new Date().toISOString(), heartbeat: new Date().toISOString(), sequence: 0,
-      options: { ...options, requestFingerprint: fingerprint }, socket: process.platform === 'win32' ? `\\\\.\\pipe\\rr-${id}` : path.join(socketDir, `${id}.sock`), locks, idempotencyKey: request.idempotencyKey };
+      options: { ...options, requestFingerprint: fingerprint }, socket: process.platform === 'win32' ? `\\\\.\\pipe\\rr-${id}` : path.join(socketDir, `${id}.sock`), locks, idempotencyKey: request.idempotencyKey, queue, queueIndex: 0 };
     saveRun(this.root, record);
     const ownerFile = path.join(runDir(this.root, id), 'owner');
     fs.writeFileSync(ownerFile, id, { mode: 0o600 });

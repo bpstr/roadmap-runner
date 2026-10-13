@@ -3,6 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 
+export type QueueItem = { roadmap: string; progressFile: string; state: 'pending' | 'running' | 'complete' | 'failed' | 'stopped' };
 export type RunRecord = {
   id: string; token: string; workspace: string; roadmap: string; progressFile: string;
   processState: 'starting' | 'running' | 'stopping' | 'stopped' | 'exited' | 'unknown';
@@ -13,6 +14,7 @@ export type RunRecord = {
   endedAt?: string; role?: string; iteration?: number; sourceRevision?: string;
   resetAt?: string; deadline?: string; attentionTasks?: string[]; artifacts?: any;
   childGroups?: number[];
+  queue?: QueueItem[]; queueIndex?: number;
 };
 export const registryRoot = () => process.env.ROADMAP_STATE_DIR || (process.platform === 'darwin'
   ? path.join(os.homedir(), 'Library', 'Application Support', 'roadmap-runner')

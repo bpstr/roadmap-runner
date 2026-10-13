@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
-import { RunManager, startSchema, canonicalPath, within, assertController } from './run-manager.js';
+import { RunManager, startSchema, queueItemSchema, canonicalPath, within, assertController } from './run-manager.js';
 
 const runId = z.string().regex(/^[a-f0-9]{24}$/);
 const statusSchema = z.object({ runId: runId.optional(), outputBytes: z.number().int().min(0).max(8192).default(8192), cursor: z.number().int().min(0).default(0), offset: z.number().int().min(0).default(0) }).strict();
@@ -27,6 +27,7 @@ export const serveMcp = (workspace: string) => {
     };
     const call = (fn: any) => async (input: any) => { try { await authorizeRoots(); return response(await fn(input)); } catch (error) { return { isError: true, content: [{ type: 'text' as const, text: JSON.stringify({ error: error.message, runId: error.runId }) }] }; } };
     server.registerTool('roadmap_start', { description: 'Start a detached run in the configured workspace. Defaults to attention desktop alerts. Never use for automated provider tests.', inputSchema: startSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, call(input => manager.start(input)));
+    server.registerTool('roadmap_enqueue', { description: 'Append a roadmap to an active run. Starts automatically after preceding roadmaps complete successfully, using the run\'s client settings.', inputSchema: queueItemSchema.extend({ runId }).strict(), annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } }, call(({ runId, ...item }) => manager.enqueue(runId, item)));
     server.registerTool('roadmap_stop', { description: 'Request authenticated stop; inspect status until stopped.', inputSchema: z.object({ runId }).strict(), annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } }, call(input => manager.stop(input.runId)));
     server.registerTool('roadmap_status', { description: 'Read run state, bounded untrusted output and cursor-based events, or a workspace run page. This does not change watches.', inputSchema: statusSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } }, call(input => manager.status(input.runId, input)));
     const list = async () => { await authorizeRoots(); const page = await manager.status(); return { resources: page.runs.flatMap(r => ['state', 'events'].map(kind => ({ uri: `roadmap://${r.id}/${kind}`, name: `${r.id} ${kind}`, mimeType: 'application/json' }))) }; };

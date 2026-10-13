@@ -52,7 +52,7 @@ export class Notifications {
       });
     }
     if (!(event.attention && this.options.notify === 'attention') && !this.options.notifyOn?.includes(event.type)) return;
-    const key = `${event.type}:` + createHash('sha256').update(JSON.stringify([event.type, event.attentionFingerprint || event.items || null, event.resetAt || null, event.deadline || null, event.type === 'runner.turn_limit_reached' ? event.iteration : null])).digest('hex');
+    const key = `${event.type}:` + createHash('sha256').update(JSON.stringify([event.roadmap || null, event.type, event.attentionFingerprint || event.items || null, event.resetAt || null, event.deadline || null, event.type === 'runner.turn_limit_reached' ? event.iteration : null])).digest('hex');
     if (this.state.fingerprints.includes(key) || this.pendingKeys.has(key)) return;
     if (this.queue.length >= 16) { this.record(event.id, 'queue_full'); return; }
     this.pendingKeys.add(key);

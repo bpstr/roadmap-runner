@@ -16,6 +16,7 @@ function help() {
 Usage:
   roadmap-runner <roadmap-file> [options]
   roadmap-runner start <roadmap-file> [options] [--json]
+  roadmap-runner queue <run-id> <roadmap-file> [--progress-file <path>] [--json]
   roadmap-runner status [run-id] [--workspace <path>] [--json]
   roadmap-runner stop <run-id> [--workspace <path>] [--json]
   roadmap-runner mcp --workspace <absolute-path>
@@ -25,6 +26,7 @@ Usage:
 Management options:
   --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
   --idempotency-key <id> Repeat the same managed start safely
+  --queue <path>        Run another roadmap after completion; repeat for FIFO order
   --notify attention|off Desktop notification mode (default attention)
   --notify-on <events>   Comma-separated event types, e.g. runner.usage_paused
   --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration
@@ -68,12 +70,18 @@ const main = async () => {
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   assertController();
-  const commands = ['start', 'stop', 'status', 'mcp', 'setup', 'doctor'];
+  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
   const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
   const workspaceArg = take('--workspace', undefined);
   const workspace = workspaceArg || process.cwd();
   const json = argv.includes('--json'); argv = argv.filter(arg => arg !== '--json');
+  if (command === 'queue') {
+    const progressFile = take('--progress-file', undefined);
+    if (argv.length !== 2 || argv.some(arg => arg.startsWith('-'))) throw new Error('queue requires a run ID and roadmap file');
+    const value = await new RunManager(workspace).enqueue(argv[0], { roadmap: argv[1], progressFile });
+    console.log(JSON.stringify(value, null, json ? 0 : 2)); return;
+  }
   if (command === 'mcp') { if (!workspaceArg || !path.isAbsolute(workspaceArg) || argv.length) throw new Error('mcp requires --workspace <absolute-path>'); serveMcp(workspace); return; }
   if (command === 'doctor') {
     const apps = []; while (argv.includes('--app')) apps.push(take('--app', undefined));
@@ -95,11 +103,12 @@ const main = async () => {
     const manager = new RunManager(workspace); const value = command === 'stop' ? await manager.stop(argv[0]) : await manager.status(argv[0]);
     console.log(JSON.stringify(value, null, json ? 0 : 2)); return;
   }
+  const queue = []; while (argv.includes('--queue')) queue.push({ roadmap: take('--queue', undefined) });
   const idempotencyKey = take('--idempotency-key', undefined); const options = parseArgs(argv);
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, idempotencyKey }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

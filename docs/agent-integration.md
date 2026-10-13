@@ -135,7 +135,13 @@ Script Editor attribution if explicitly selected.
 
 ## MCP and protocol support
 
-The three tools are `roadmap_start`, `roadmap_stop` and read-only `roadmap_status`.
+The tools are `roadmap_start`, `roadmap_enqueue`, `roadmap_stop` and read-only `roadmap_status`.
+Start accepts an optional ordered `queue` of `{ roadmap, progressFile? }` entries
+after the initial roadmap. Enqueue accepts `{ runId, roadmap, progressFile? }`
+and appends to an active run. Each roadmap starts only after its predecessor
+completes successfully, using the same client settings and separate progress.
+Status includes `queue` entry states and a zero-based `queueIndex`; retain the
+same run ID throughout. Stop ends the whole run and leaves later entries pending.
 Status optionally accepts `runId`, `outputBytes` (0–8192), `cursor` and list `offset`.
 State and event resources are `roadmap://<id>/state` and
 `roadmap://<id>/events?cursor=<sequence>`. Model-controlled starts cannot select

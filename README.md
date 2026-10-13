@@ -176,6 +176,35 @@ this recommendation does not silently change existing commands or detect roadmap
 size automatically. Timeout cleanup grace is additional. Supervisor cadence and
 its separate timeout are unchanged: every five workers is not an hourly review.
 
+## Roadmap queues
+
+Queue roadmaps in the order they should run:
+
+```sh
+roadmap-runner docs/first.md --queue docs/second.md --queue docs/third.md
+# Detached execution with a run ID:
+roadmap-runner start docs/first.md --queue docs/second.md --json
+# Append to that active run:
+roadmap-runner queue <run-id> docs/third.md --json
+```
+
+The next roadmap starts automatically after the current roadmap completes
+successfully. All entries use the same workspace, client, model and supervisor
+settings. Each roadmap has a separate progress file and history; `--progress-file`
+on start applies to the first roadmap. The queue command accepts its own
+`--progress-file` for the appended roadmap.
+
+`status <run-id>` includes the ordered `queue`, each entry's state, and the
+zero-based `queueIndex`. The run ID remains the same through every handoff, and
+the workspace stays reserved until the run ends. Stopping or a terminal failure
+ends the run with later entries still pending. A blocked roadmap continues its
+existing recovery workflow and holds the queue until it completes.
+
+Queues accept up to 100 distinct roadmaps. Paths and progress-file conflicts are
+checked before launch or append. Managed queues persist across CLI or MCP
+disconnection; they require the managed worker to remain alive. To continue after
+a stopped or failed run, start a new run with the unfinished roadmaps.
+
 ## Continuous execution
 
 One outer process can run for many hours:

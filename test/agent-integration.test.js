@@ -110,6 +110,7 @@ test('notification filters and persistent deduplication omit model content and m
   assert.equal(transport.calls.length, 1); assert.equal(transport.calls[0].command, 'terminal-notifier'); assert.ok(!transport.calls[0].args.some(a => /SECRET|osascript|execute|activate|open/.test(a)));
   const restarted = new Notifications(n.options, file, transport); restarted.enqueue(event); await restarted.flush(); assert.equal(transport.calls.length, 1);
   restarted.enqueue({ ...event, id: 'q', type: 'runner.usage_paused', attention: false, resetAt: 'later' }); await restarted.flush(); assert.equal(transport.calls.length, 2);
+  restarted.enqueue({ ...event, id: 'next-roadmap', roadmap: path.join(f.workspace, 'next.md') }); await restarted.flush(); assert.equal(transport.calls.length, 3);
 });
 test('notification timeout, missing backend and headless Linux are best effort and recorded', async t => {
   const f = fixture(t); const event = { id: 'a', type: 'runner.failed', attention: true, roadmap: f.roadmap };
@@ -170,7 +171,7 @@ const mcpFixture = async (t, modern = false) => {
   return { ...f, child, messages, request };
 };
 for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy'} MCP tools, restrictions, resources and subscriptions`, async t => {
-  const f = await mcpFixture(t, modern); const listing = await f.request('tools/list'); assert.deepEqual(listing.result.tools.map(t => t.name), ['roadmap_start','roadmap_stop','roadmap_status']);
+  const f = await mcpFixture(t, modern); const listing = await f.request('tools/list'); assert.deepEqual(listing.result.tools.map(t => t.name), ['roadmap_start','roadmap_enqueue','roadmap_stop','roadmap_status']);
   const invalid = await f.request('tools/call', { name: 'roadmap_start', arguments: { ...f.request, workspace: f.workspace, roadmap: f.roadmap, executable: f.worker } }); assert.ok(invalid.error || invalid.result.isError);
   const started = await f.request('tools/call', { name: 'roadmap_start', arguments: { workspace: f.workspace, roadmap: 'roadmap.md', notify: 'off', supervisorEvery: 0 } }); assert.ok(!started.error && !started.result.isError, JSON.stringify(started)); const r = JSON.parse(started.result.content[0].text); f.runs.push(r.id); assert.equal(r.processState, 'running');
   const uri = `roadmap://${r.id}/state`;
@@ -178,6 +179,11 @@ for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy
     const sub = await f.request('subscriptions/listen', { notifications: { resourceSubscriptions: [uri] } }); assert.ok(sub.result || sub.method === 'notifications/subscriptions/acknowledged', JSON.stringify(sub));
   } else { assert.ok((await f.request('resources/subscribe', { uri })).result); }
   const resource = await f.request('resources/read', { uri }); assert.ok(!resource.error, JSON.stringify(resource)); assert.equal(JSON.parse(resource.result.contents[0].text).id, r.id);
+  const next = path.join(f.workspace, 'next.md'); fs.writeFileSync(next, '# Next\n- [ ] Prepared fixture\n');
+  const enqueued = await f.request('tools/call', { name: 'roadmap_enqueue', arguments: { runId: r.id, roadmap: 'next.md' } });
+  assert.ok(!enqueued.error && !enqueued.result.isError, JSON.stringify(enqueued));
+  assert.equal(JSON.parse(enqueued.result.content[0].text).queue[1].state, 'pending');
+  const duplicate = await f.request('tools/call', { name: 'roadmap_enqueue', arguments: { runId: r.id, roadmap: 'next.md' } }); assert.ok(duplicate.result.isError);
   const tail = await f.request('tools/call', { name: 'roadmap_status', arguments: { runId: r.id, outputBytes: 8192 } }); assert.ok(Buffer.byteLength(JSON.stringify(tail)) < 32768);
   const update = await wait(() => f.messages.find(m => m.method === 'notifications/resources/updated')).catch(() => assert.fail(JSON.stringify(f.messages).slice(-8000))); assert.equal(update.params.uri, uri);
   const stopped = await f.request('tools/call', { name: 'roadmap_stop', arguments: { runId: r.id } }); assert.ok(!stopped.result.isError);
