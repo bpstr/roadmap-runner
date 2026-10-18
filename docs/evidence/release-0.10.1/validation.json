@@ -37,7 +37,7 @@
   "historical_failure": {
     "passed": 35,
     "failed": 1,
-    "log": "retained-initial-failure.log",
+    "log": "retained-initial-failure.json",
     "failed_case": "setup connectivity checks only initialize/list MCP and never launch a provider",
     "subsequent_evidence": "Focused 44-pass rerun and 205-pass suite supersede the failed result; original log retained."
   },
