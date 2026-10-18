@@ -178,6 +178,27 @@ its separate timeout are unchanged: every five workers is not an hourly review.
 
 ## Roadmap queues
 
+### Split large plans before running
+
+Workers reread the active roadmap every session. Breaking a huge file into small
+tasks still leaves each worker with a huge input. For a large plan, write focused
+roadmap files for coherent milestones, then queue those files in dependency order.
+Keep the overall index with the controller and give each worker only the current
+milestone, its constraints and concise references to prerequisite evidence.
+
+Each file needs its own acceptance criteria, local validation and compact handoff.
+Use separate progress files and keep full logs and past milestone histories out of
+the next worker's required input. A blocked roadmap holds the queue, so place
+independent implementation before externally blocked release work. Splitting and
+progress migration are controller work; the runner does not partition inputs
+automatically.
+
+The bundled skill's [splitting strategy](skills/write-runner-roadmap/references/roadmap-splitting.md)
+covers suggested input budgets, dependency boundaries, evidence handoffs and
+revisions of an existing large plan.
+
+### Start or extend a queue
+
 Queue roadmaps in the order they should run:
 
 ```sh
@@ -503,6 +524,10 @@ roadmap-runner <roadmap-file> [options]
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
 --client-bin <path>    override selected client executable
+--notify attention|off desktop alerts; default off
+--notify-on <events>   extra desktop alerts; requires --notify attention
+--prevent-sleep        prevent idle system sleep for the entire run
+--no-prevent-sleep     override ROADMAP_PREVENT_SLEEP
 --help
 --version
 ```
@@ -518,9 +543,25 @@ ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
 ROADMAP_CLIENT_BIN
+ROADMAP_NOTIFY        off (default) or attention
+ROADMAP_PREVENT_SLEEP  set to 1 or true to prevent idle system sleep
 ```
 
 For backward compatibility, `ROADMAP_CODEX` is also accepted as the executable override.
+
+Use `roadmap-runner start docs/roadmap.md --prevent-sleep` to keep the machine
+awake while the runner is active, including recovery waits and queued roadmap
+handoffs. MCP callers can set `preventSleep: true` on `roadmap_start`. The default
+is off; `--no-prevent-sleep` overrides the environment setting.
+
+On macOS this uses `/usr/bin/caffeinate -i -w <runner-pid>` to prevent idle system
+sleep while allowing the display to sleep. On Linux it uses `systemd-inhibit`
+with an idle/sleep lock; systemd and permission to take that lock are required.
+Other platforms report `unsupported_platform`. A missing or refused backend
+produces a warning and `sleepInhibition.state: unavailable` in run status;
+roadmap work continues. An active lock is released on completion, failure or
+stop, and when the runner process exits. This option does not override lid
+closure or an explicit request to sleep.
 
 ## Examples
 
@@ -717,7 +758,7 @@ or resolved blocker updates the event state. When the entire ready set is blocke
 
 A current supervisor review with `Health: STUCK` triggers the same attention alert.
 After two consecutive workers leave progress byte-for-byte unchanged, the runner
-emits `runner.stuck` as a default attention alert, once per stagnation episode even
+emits `runner.stuck` as an attention event, once per stagnation episode even
 across restarts. Changed progress or a source revision emits `runner.progress_resumed`
 and allows a future stuck episode to alert again. Repeated recovery checks stay quiet.
 Recovery rechecks back off from 60 seconds to a maximum of 15 minutes. Set
@@ -734,7 +775,47 @@ failure is logged and does not halt roadmap work. Task IDs/statuses are included
 blocker reasons, model output and credentials are not included in event payloads.
 Hooks should filter event types and avoid repeated alerts for recheck records.
 
-Built-in attention delivery uses an installed `terminal-notifier` on macOS or `notify-send` on graphical Linux. On macOS, install the backend with `brew install terminal-notifier` before starting the runner. Missing backends produce an explicit diagnostic and a recorded delivery failure; failed submissions are not saved as successfully delivered notification fingerprints. Use `--notify off` to disable it and `--notify-on runner.usage_paused` to request quota alerts. The older AppleScript hook below opens Script Editor when its notifications are clicked:
+Desktop alerts are optional and off by default. For CLI runs, enable them with
+`--notify attention` or `ROADMAP_NOTIFY=attention`; MCP starts use `notify: "attention"`.
+The permission command configures macOS authorization; each roadmap run still
+needs this explicit opt-in. `--notify-on` selects extra event types but does not
+enable desktop delivery by itself.
+
+Runner events remain available with desktop alerts off. MCP clients can call
+`roadmap_events` with `{ "runId": "<run-id>", "cursor": 0 }`, then persist the
+returned cursor to replay new events after reconnecting. Clients can also read
+and subscribe to `roadmap://<run-id>/events`, including a `?cursor=<sequence>`
+URI. Legacy clients use `resources/subscribe`; modern clients use
+`subscriptions/listen`. Resource updates identify the URI, and the client reads
+the event page. See [MCP integration](docs/agent-integration.md#mcp-and-protocol-support).
+
+Built-in attention delivery uses an installed `terminal-notifier` on macOS or
+`notify-send` on graphical Linux. On macOS, install the backend with
+`brew install terminal-notifier` before starting the runner. The runner searches
+PATH and both Homebrew locations (`/opt/homebrew/bin` and `/usr/local/bin`), so
+desktop apps with a restricted PATH can find it. Missing backends produce an
+explicit diagnostic and a recorded delivery failure; failed submissions are not
+saved as successfully delivered notification fingerprints.
+
+With terminal-notifier 3, denied macOS authorization is recorded as
+`permission_denied`. Request permission explicitly before a long run:
+
+```sh
+roadmap-runner notifications request-permission
+```
+
+The command allows up to two minutes for the macOS consent dialog and submits a
+confirmation notification through terminal-notifier. If permission was already
+denied, macOS does not show the dialog again; the command opens **System Settings
+> Notifications** so you can enable **terminal-notifier**, then rerun the command.
+It preserves the saved permission decision. Use `--json` for a structured result;
+an unsuccessful request exits nonzero. The command is supported on macOS and does
+not start a roadmap run. Use `terminal-notifier -diagnose` to inspect authorization
+without sending a notification. A successful submission confirms that the
+backend accepted the notification; Focus and other OS settings still determine
+whether it appears. Use `--notify off` to disable delivery and
+`--notify attention --notify-on runner.usage_paused` to request quota alerts. The older AppleScript
+hook below opens Script Editor when its notifications are clicked:
 
 ```sh
 ROADMAP_NOTIFY_BIN=/absolute/path/to/examples/notify-macos.js \

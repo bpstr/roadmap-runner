@@ -4,6 +4,10 @@ Reviewed 2026-10-07. The event journal and notification hook are implemented. An
 MCP server is now implemented; see [agent integration](agent-integration.md).
 Automatic agent dispatch remains proposed and has not been live-tested. Prepared tests establish local runner behavior only.
 
+Updated 2026-10-14: desktop notifications default off. MCP event reads and
+resource subscriptions remain available independently; requesting macOS
+permission does not opt a roadmap run into desktop alerts.
+
 ## Supported integration now
 
 Every run writes append-only JSONL at `<progress-file>.events.jsonl`. Each event
@@ -43,6 +47,22 @@ Repeated quota/backoff events are operational records; notification consumers sh
 filter them to avoid alerting on every recheck. The macOS example already filters
 recovery rechecks.
 
+## Implemented MCP event delivery
+
+`roadmap_events` accepts `{ runId, cursor? }` and returns bounded journal pages
+without worker output. Persist its returned cursor after consuming each page.
+`eventsTruncated` requests another page; `cursorExpired` and `oldestCursor`
+identify a gap caused by journal rotation, and `malformedRecords` counts skipped
+damaged records. The same page is available at
+`roadmap://<run-id>/events?cursor=<sequence>`.
+
+Subscribe to an event resource with legacy `resources/subscribe`, or modern
+`subscriptions/listen` using `notifications.resourceSubscriptions`. Resource
+updates preserve the subscribed URI, including a cursor query. Read the page
+after an update and replay from the saved cursor after reconnecting. Legacy
+unsubscribe and modern listen cancellation stop updates. These interfaces work
+when desktop alerts are off or the desktop backend is unavailable.
+
 ## What MCP can do
 
 An MCP server can expose `roadmap://<run-id>/state`, let a connected client subscribe,
@@ -69,9 +89,9 @@ adapter. See [Codex App Server](https://learn.chatgpt.com/docs/app-server).
 
 ### Epic MCP-1 — Read-only event adapter
 
-- [ ] MCP-1.1 Implement run registration bound to a specific workspace and progress path; expose bounded state and cursor-based event reads through an official MCP SDK.
-- [ ] MCP-1.2 Implement resource subscribe/unsubscribe; notify only on a state transition, keeping model output out of notification payloads.
-- [ ] MCP-1.3 Validate with prepared JSON-RPC clients: capability negotiation, disconnect/reconnect, partial trailing journal records and event replay.
+- [x] MCP-1.1 Implement run registration bound to a specific workspace and progress path; expose bounded state and cursor-based event reads through an official MCP SDK.
+- [x] MCP-1.2 Implement resource subscribe/unsubscribe; notify only on a state transition, keeping model output out of notification payloads.
+- [x] MCP-1.3 Validate with prepared JSON-RPC clients: capability negotiation, disconnect/reconnect, partial trailing journal records and event replay.
 
 ### Epic MCP-2 — Durable notification delivery
 

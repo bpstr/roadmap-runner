@@ -8,6 +8,7 @@ import { RunManager, assertController } from '../dist/run-manager.js';
 import { serveMcp } from '../dist/mcp.js';
 import { setup } from '../dist/setup.js';
 import { doctor } from '../dist/doctor.js';
+import { requestNotificationPermission } from '../dist/notification-permission.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 function help() {
@@ -22,13 +23,16 @@ Usage:
   roadmap-runner mcp --workspace <absolute-path>
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
   roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
+  roadmap-runner notifications request-permission [--json]
 
 Management options:
   --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
   --idempotency-key <id> Repeat the same managed start safely
   --queue <path>        Run another roadmap after completion; repeat for FIFO order
-  --notify attention|off Desktop notification mode (default attention)
-  --notify-on <events>   Comma-separated event types, e.g. runner.usage_paused
+  --prevent-sleep        Prevent idle system sleep for the entire run
+  --no-prevent-sleep     Override ROADMAP_PREVENT_SLEEP
+  --notify attention|off Desktop notification mode (default off)
+  --notify-on <events>   Extra desktop event types; requires --notify attention
   --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration
   --run-id <id>          Doctor: require that monitor to name this managed run
 
@@ -53,6 +57,8 @@ Environment:
   ROADMAP_MODEL
   ROADMAP_EFFORT
   ROADMAP_CLIENT_BIN
+  ROADMAP_NOTIFY            Desktop mode: off (default) or attention
+  ROADMAP_PREVENT_SLEEP      Set to 1 or true to prevent idle system sleep
   ROADMAP_NOTIFY_BIN         Notification executable; receives event JSON on stdin
   ROADMAP_USAGE_MAX_WAIT     Quota wait ceiling in seconds; default/max 86400
   ROADMAP_RECOVERY_DELAY     No-progress recheck delay in seconds; default 60
@@ -70,12 +76,23 @@ const main = async () => {
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   assertController();
-  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor'];
+  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
   const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
   const workspaceArg = take('--workspace', undefined);
   const workspace = workspaceArg || process.cwd();
   const json = argv.includes('--json'); argv = argv.filter(arg => arg !== '--json');
+  if (command === 'notifications') {
+    if (argv.length !== 1 || argv[0] !== 'request-permission') throw Object.assign(new Error('notifications requires request-permission [--json]'), { exitCode: 64 });
+    const controller = new AbortController(); const cancel = () => controller.abort();
+    process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
+    try {
+      const result = await requestNotificationPermission({ signal: controller.signal });
+      console.log(json ? JSON.stringify(result) : result.message);
+      if (!result.ok) process.exitCode = result.result === 'cancelled' ? 130 : 1;
+    } finally { process.removeListener('SIGINT', cancel); process.removeListener('SIGTERM', cancel); }
+    return;
+  }
   if (command === 'queue') {
     const progressFile = take('--progress-file', undefined);
     if (argv.length !== 2 || argv.some(arg => arg.startsWith('-'))) throw new Error('queue requires a run ID and roadmap file');
@@ -108,7 +125,7 @@ const main = async () => {
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

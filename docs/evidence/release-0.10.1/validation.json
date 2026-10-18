@@ -1,0 +1,116 @@
+{
+  "version": "0.10.1",
+  "date": "2026-10-18",
+  "inference": "Prepared clients and mocked transports only; no paid or live provider validation.",
+  "retained_evidence": [
+    {
+      "selector": "npm test",
+      "passed": 205,
+      "failed": 0,
+      "skipped": 0,
+      "log": "retained-tests-passed.log"
+    },
+    {
+      "selector": "Focused compatibility checks after initial failure",
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0,
+      "log": "retained-focused-passed.log"
+    },
+    {
+      "selector": [
+        "event selection alone cannot enable desktop delivery",
+        "prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off",
+        "prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "log": "retained-events-passed.log"
+    },
+    {
+      "selector": "Bundled skill validation",
+      "result": "passed",
+      "log": "retained-skill-validation.log"
+    }
+  ],
+  "historical_failure": {
+    "passed": 35,
+    "failed": 1,
+    "log": "retained-initial-failure.log",
+    "failed_case": "setup connectivity checks only initialize/list MCP and never launch a provider",
+    "subsequent_evidence": "Focused 44-pass rerun and 205-pass suite supersede the failed result; original log retained."
+  },
+  "selection": {
+    "reused": "Runtime source and fixture checks from October 14, plus skill checks from October 16. No runtime implementation edits in this release-preparation turn.",
+    "changed_inputs": [
+      "package.json and package-lock.json version 0.10.1",
+      "CHANGELOG.md release heading and guidance entry",
+      "scripts/check-package.js adds required splitting reference"
+    ],
+    "new_check": "npm run check:package",
+    "reason": "Version and packaged guidance changed, invalidating the earlier package/version result.",
+    "expected_cost": "One local build/package check, normally under 30 seconds; no new test writing or local full-suite run. Existing GitHub CI remains the release gate.",
+    "release_gate": "Existing .github/workflows/ci.yml: full prepared suite and package verification on Node 20/22/24, Linux and macOS."
+  },
+  "new_results": {
+    "package": "passed",
+    "log": "package-check.log",
+    "guidance_links": "passed",
+    "whitespace": "passed",
+    "packaged_files": 61
+  },
+  "candidate_sha256": {
+    "bin/roadmap-runner.js": "4425bcd6d2f9d5b42120640f6f31c97d453c290b16d1285b27c8dfa12db15923",
+    "lib/clients.js": "9433bc7a6c2703e4354f75e7fcaebd2e6e0a55f7a6b280fdda906248f842ee5a",
+    "lib/recovery.js": "91b8aff277cae73d1dbad93f4cbb81d23ea4e7a40c9ce402c165c3a4ca6ec9d9",
+    "lib/runner.js": "27286f078ab5586559ca6343c1f4737e429790e941ffc9cde8ebbf0f8b6036ec",
+    "lib/supervision.js": "ad77e84a82d64fb4c8ffeeef991f8917f276f597742829a5023e336503273f81",
+    "lib/tracking.js": "84da9cd41f689065fd3e739522d15ad22b2ea81c771a47b40489d0c271d1d4ba",
+    "lib/wait.js": "3d149f99f942595f608a8aa7e130d7c840a55ac4629b46811be0dcc1dfbf1c4d",
+    "package-lock.json": "ed359d9f808b9beee25acfbc9deafb8e49f4ce1eb9cec53b81490cc7496085f4",
+    "package.json": "ea1ba52f8f144c8273eb95380dd04ea06e85a4f31fa61de30303b895f03a87a7",
+    "prompt.md": "2e18a98412c769543d7d0063ff8c5de18f2a928f9ce1d600b1c44a7d72959468",
+    "scripts/check-package.js": "586c6ac64136829e46c42f8e5c899a11b683cce0cf62344eab2945c2862db603",
+    "skills/write-runner-roadmap/SKILL.md": "1087990b211dd87fc1e9dc547a5137dd25392aa34a1706d36a492cb5fc410b3f",
+    "skills/write-runner-roadmap/references/roadmap-splitting.md": "415e95cb3977e2a1828fa2fa48f4ce46f3ab18612131a165f0525852bbd2aa9b",
+    "skills/write-runner-roadmap/references/task-contract.md": "6dd6d2b0de9e16d5fed571aad2ab8cbc54e4cc0efd89eff26748e1ba4dc8d417",
+    "skills/write-runner-roadmap/templates/roadmap.md": "1daa5b26cef3f3b763c5e46a5447003b72613736192e57b8ff3187f1947455c2",
+    "src/doctor.ts": "3b796558deb5974707da4ab36e4ec200cf1dc4fce43a6b3e70c8fcd5da135bec",
+    "src/events.ts": "358e0e42513392b3d1833538b1a64fcfc051445838f70d81afa41e9d814b0b43",
+    "src/lifecycle.ts": "2f6a34fab232f97a9f8a4536e597e821a21661b283a4ad4e618484b683ef3cf5",
+    "src/mcp.ts": "9cbdc802bf6d3a12d5e17636d113bbf520a3d8a3ca4c59d435736b71fca13a26",
+    "src/notification-permission.ts": "e86912473b4a539b38c54264b07cfc25a927a789087d1769a076845e9f3cccf2",
+    "src/notifications.ts": "6738550d15957e8cfea47ff8fba9f8d0e976c8bc86fa250de1dab72dcec9e958",
+    "src/roadmap-contract.ts": "43eab67b02cdb3358d67d924be343f7c7f982fa6e91a06c94cfc79b2a66377c7",
+    "src/run-manager.ts": "f1965d32c439f222e537fccfc25b06cdc129bdae52f8edfdf0bc84dbc3992655",
+    "src/run-state.ts": "52bb406de51c1ea599e028af205b673f1797ce5a05f70d90f02203c760db49f2",
+    "src/setup.ts": "23057df030b706dba19d5f9a9db1f018b7305b71a125ce3255503b41f04597dc",
+    "src/sleep-inhibitor.ts": "ad49bc6086bf6e4d79bc4f47585beaf1ac5c6e745d708cb7a2803693098cde20",
+    "src/worker.ts": "56e370dcc20302d1eaf68d1292651d54efcf48281c93e16bfcc9a25def4fafa0",
+    "supervisor.md": "0971b9dd43b2edf68d7642116ffc7336ae3780b4ab9eb7e819181cc88d3bacf9",
+    "test/agent-integration.test.js": "fea5da7af5a6ddff8bee93ce722d7228f72c8f1afa9568c691f54411018fb9b9",
+    "test/capacity.test.js": "01f97daf3392e26c8a44ccd8e30d4c5f008d2b9309e3ffeb278cd3c6b25c1bd2",
+    "test/doctor.test.js": "6a1aef24a0d945c8783e2c3ecf428b73312a4733eb21dfa397eb4733c850451a",
+    "test/example-integration.test.js": "25cb6ed765c9ba2319b6fc31d27a49a9bb316bcebfd09f0d0aae75ad2c013268",
+    "test/fixtures/mock-codex.js": "95f7481a48a36dd68472afe6ee83fddddb1240e694b22466347fa8467f595ddb",
+    "test/notification-permission.test.js": "d98e90c8018f14ac25633679d3159d8490bb6979b314198edbae46e6dac5b9b6",
+    "test/progress.test.js": "684da6030cf1cbbdae8ecacf9a15c80069031d454d21ba7f9653a0cb56c147f4",
+    "test/queue.test.js": "4789547ef605cd5b32e4f545acf2ed5b3b95d2b824a45699e6832081127f3294",
+    "test/recovery.test.js": "647f036ec49195a1c39b263b845c1f1007d38456f60c7c067ca364edf454d494",
+    "test/roadmap-updates.test.js": "dd5b05fd845c912e0bc532f1b5c7a4356834de048dc0b655a671f23035cb9c66",
+    "test/run-tests.js": "5b7e0778707718c3c517dc0d4e47a371bb08ff5f055b6801ed1d524031ad4a80",
+    "test/runner-regressions.test.js": "b53a6f63f3fe6f62a99b50ef9cd8a817e39d10a72ebffc2cdacf143a4526e4f1",
+    "test/runner.test.js": "538f4cbdba4d95f4a26d663195bd3e38207d5a9ef4698eff7dea802b1b6c8c86",
+    "test/sleep-inhibitor.test.js": "1c7763c1409bc6b0d8a5c0c561231bf764860fe8fd787b0224e2c2179075116d",
+    "test/supervisor.test.js": "8b0b28a8be751412a8a425a3cf117ec5a87d723bfde4f626420825aecc6774e0"
+  },
+  "package_artifact": {
+    "filename": "bpstr-roadmap-runner-0.10.1.tgz",
+    "version": "0.10.1",
+    "size": 119610,
+    "shasum": "25382b591b60c0ef4e6198ac67b993e54bd29003",
+    "integrity": "sha512-4x9Q27+6a3EEwVXtFKkNLyz4kapCWF34j91l1768xv0c3K0RDEcfr9NtWtY4itBDmrnKkIZN5FL5d+F9tJ1u/g==",
+    "sha256": "1c7b989da0bd308b3e4da7dc7ae33bf9d4c73ef6f0a0a2eb206ea8cafb581731"
+  }
+}

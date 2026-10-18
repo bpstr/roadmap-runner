@@ -57,7 +57,7 @@ export const checkConnectivity = (workspace: string, run: typeof spawnSync = spa
     const listed = replies.find(reply => reply.id === 2);
     const names = listed?.result?.tools?.map(tool => tool.name).sort();
     return !check.error && check.status === 0 && !initialized?.error && typeof initialized?.result?.protocolVersion === 'string' &&
-      !listed?.error && JSON.stringify(names) === JSON.stringify(['roadmap_enqueue', 'roadmap_start', 'roadmap_status', 'roadmap_stop'])
+      !listed?.error && JSON.stringify(names) === JSON.stringify(['roadmap_enqueue', 'roadmap_events', 'roadmap_start', 'roadmap_status', 'roadmap_stop'])
       ? 'passed_no_inference' : 'failed_no_inference';
   } catch { return 'failed_no_inference'; }
 };

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { Notifications } from "./notifications.js";
+import { SleepInhibitor } from "./sleep-inhibitor.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
@@ -26,13 +27,14 @@ const PROMPT_REVISION = createHash("sha256").update(PROMPT_TEMPLATE).digest("hex
 
 const fail = (message, code = 1) => { throw Object.assign(new Error(message), { exitCode: code }); };
 
-export const runLifecycle = async (options, { workdir = process.cwd(), signal: suppliedSignal = undefined, onEvent = undefined, onReady = undefined }: any = {}) => {
+export const runLifecycle = async (options, { workdir = process.cwd(), signal: suppliedSignal = undefined, onEvent = undefined, onReady = undefined, managedSleep = false }: any = {}) => {
   const controller = new AbortController();
   const signal = suppliedSignal || controller.signal;
   const interrupt = () => controller.abort();
   if (!suppliedSignal) { process.on("SIGINT", interrupt); process.on("SIGTERM", interrupt); }
   let recovery;
   let notifications;
+  let sleep;
   try {
     options = { ...options, capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
     options.supervision = supervisorSettings(options);
@@ -77,6 +79,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   }
   recovery = new Recovery({ tracking, roadmap, settings: options.recovery, wait: ms => waitForRetry(ms, signal), signal, onEvent, runId: options.runId });
   await recovery.event("runner.started");
+  if (!managedSleep) { sleep = new SleepInhibitor(options.preventSleep); await sleep.start(); }
   await onReady?.(tracking);
   const supervisor = options.supervision.every ? new Supervision({
     ...options.supervision, roadmap, tracking,
@@ -225,6 +228,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!stopped) console.error(`roadmap-runner: ${error.message}`);
     return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : "failed" };
   } finally {
+    await sleep?.close();
     if (notifications) { if (!signal.aborted) await notifications.flush(); await notifications.close(); }
     if (!suppliedSignal) { process.removeListener("SIGINT", interrupt); process.removeListener("SIGTERM", interrupt); }
   }

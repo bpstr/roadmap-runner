@@ -11,6 +11,22 @@ const base = {
   executable: "",
 };
 
+test('sleep prevention is opt-in and CLI flags override the environment', () => {
+  assert.equal(parseArgs(['roadmap.md'], {}).preventSleep, false);
+  assert.equal(parseArgs(['roadmap.md', '--prevent-sleep'], {}).preventSleep, true);
+  for (const value of ['1', 'true']) assert.equal(parseArgs(['roadmap.md'], { ROADMAP_PREVENT_SLEEP: value }).preventSleep, true);
+  assert.equal(parseArgs(['roadmap.md', '--no-prevent-sleep'], { ROADMAP_PREVENT_SLEEP: '1' }).preventSleep, false);
+  assert.equal(parseArgs(['roadmap.md', '--no-prevent-sleep', '--prevent-sleep'], {}).preventSleep, true);
+});
+
+test('desktop notifications default off and require an explicit opt-in', () => {
+  assert.equal(parseArgs(['roadmap.md'], {}).notify, 'off');
+  assert.equal(parseArgs(['roadmap.md', '--notify', 'attention'], {}).notify, 'attention');
+  assert.equal(parseArgs(['roadmap.md'], { ROADMAP_NOTIFY: 'attention' }).notify, 'attention');
+  assert.equal(parseArgs(['roadmap.md', '--notify', 'off'], { ROADMAP_NOTIFY: 'attention' }).notify, 'off');
+  assert.equal(parseArgs(['roadmap.md', '--notify-on', 'runner.stuck'], {}).notify, 'off');
+});
+
 test("Codex adapter preserves accepted unattended invocation", () => {
   const result = buildClientInvocation({ ...base, client: "codex" });
   assert.equal(result.command, "codex");

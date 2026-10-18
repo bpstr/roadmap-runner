@@ -12,7 +12,7 @@ import { setup, checkConnectivity } from '../dist/setup.js';
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 const replies = [
   { jsonrpc: '2.0', id: 1, result: { protocolVersion: '2025-11-25' } },
-  { jsonrpc: '2.0', id: 2, result: { tools: ['roadmap_start', 'roadmap_enqueue', 'roadmap_stop', 'roadmap_status'].map(name => ({ name })) } },
+  { jsonrpc: '2.0', id: 2, result: { tools: ['roadmap_start', 'roadmap_enqueue', 'roadmap_stop', 'roadmap_status', 'roadmap_events'].map(name => ({ name })) } },
 ];
 const prepared = { status: 0, stdout: replies.map(value => JSON.stringify(value)).join('\n') + '\n' };
 const fixture = t => {

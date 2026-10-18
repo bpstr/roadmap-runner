@@ -38,7 +38,7 @@ const timer = setInterval(() => {
     for (const id of runs) { try { await manager.stop(id); await wait(async () => ['exited', 'stopped', 'unknown'].includes((await manager.status(id)).processState)); } catch {} }
     fs.rmSync(dir, { recursive: true, force: true });
   });
-  const start = async (queue, idempotencyKey) => { const r = await manager.start({ workspace, roadmap: roadmaps[0], queue, idempotencyKey, notify: 'off', supervisorEvery: 0 }, { executable: worker }); runs.push(r.id); return r; };
+  const start = async (queue, idempotencyKey, options = {}) => { const r = await manager.start({ workspace, roadmap: roadmaps[0], queue, idempotencyKey, notify: 'off', supervisorEvery: 0, ...options }, { executable: worker }); runs.push(r.id); return r; };
   const release = file => fs.writeFileSync(file + '.release', '');
   const started = file => fs.existsSync(file + '.started');
   const command = async args => {
@@ -73,6 +73,27 @@ test('queued roadmaps advance in FIFO order, preserve separate progress, and kee
   const page = await f.manager.status(run.id, { cursor }); assert.ok(page.events.every(event => event.sequence > cursor));
   for (const file of f.roadmaps) assert.ok(!fs.readFileSync(file, 'utf8').includes('COMPLETE'));
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
+});
+
+test('macOS sleep prevention spans queue handoff and releases at completion', { skip: process.platform !== 'darwin' }, async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  const run = JSON.parse(await f.command(['start', first, '--queue', second, '--prevent-sleep', '--client', 'codex', '--client-bin', f.worker, '--supervisor-every', '0', '--json']));
+  f.runs.push(run.id);
+  assert.equal(run.options.preventSleep, true); assert.equal(run.sleepInhibition.state, 'active');
+  f.release(first); await wait(() => f.started(second));
+  assert.equal((await f.manager.status(run.id)).sleepInhibition.state, 'active');
+  f.release(second);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.sleepInhibition.state, 'released');
+});
+
+test('macOS sleep prevention releases when a queued run is stopped', { skip: process.platform !== 'darwin' }, async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  const run = await f.start([{ roadmap: second }], undefined, { preventSleep: true });
+  await wait(() => f.started(first));
+  await f.manager.stop(run.id);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'stopped' && s; });
+  assert.equal(final.sleepInhibition.state, 'released'); assert.equal(f.started(second), false);
 });
 
 test('CLI queue appends to an active run and rejects duplicates and terminal runs', async t => {

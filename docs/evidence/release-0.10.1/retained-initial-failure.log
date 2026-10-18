@@ -1,0 +1,70 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (633.487542ms)
+✔ simultaneous requests cannot create competing managed workers (144.524917ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (3.205959ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (144.290458ms)
+✔ control rejects unauthenticated ownership and nested worker management (140.909ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (329.661583ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (68.234542ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (36.840625ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (48.772916ms)
+✔ failed notification submission can retry after the backend is repaired (38.328917ms)
+✔ desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends (0.347083ms)
+✔ macOS permission denial is actionable and does not suppress a repaired submission (26.330125ms)
+✔ legacy failed fingerprints do not suppress notifications after an upgrade (27.813458ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (37.024459ms)
+✔ prepared legacy MCP tools, restrictions, resources and subscriptions (1206.992417ms)
+✔ prepared modern MCP tools, restrictions, resources and subscriptions (1204.768334ms)
+✔ prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off (2728.0465ms)
+✔ prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off (2700.584ms)
+✔ roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies (2.618958ms)
+✔ managed stop finishes only after an ignoring descendant is terminated (3520.535166ms)
+✖ setup connectivity checks only initialize/list MCP and never launch a provider (166.740208ms)
+✔ qualified local skills installer is staged and checked before publishing the skill (6.484083ms)
+✔ benign SKIPPED dependency flags do not trigger desktop attention (3.024375ms)
+Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+✔ Linux delivery uses notify-send, and off suppresses explicitly selected events (13.7405ms)
+✔ damaged notification state and thrown transports cannot interrupt runner work (15.72ms)
+✔ managed startup failure reports its run identity without claiming readiness (105.393917ms)
+✔ sleep prevention is opt-in and CLI flags override the environment (0.718959ms)
+✔ desktop notifications default off and require an explicit opt-in (0.117541ms)
+✔ Codex adapter preserves accepted unattended invocation (0.909042ms)
+✔ Claude adapter bypasses permission prompts (0.074292ms)
+✔ Gemini adapter uses current noninteractive YOLO mode (0.068167ms)
+✔ Campfire-compatible secondary adapters are stable (0.068292ms)
+✔ Codex model and effort overrides are applied (0.088125ms)
+✔ duration parsing supports runner units (0.228375ms)
+✔ roadmap completion states are exact line based (0.519583ms)
+✔ client can be selected through args or environment (0.189792ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 35
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13499.892
+
+✖ failing tests:
+
+test at test/agent-integration.test.js:284:1
+✖ setup connectivity checks only initialize/list MCP and never launch a provider (166.740208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'failed_no_inference'
+  - 'passed_no_inference'
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:290:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'failed_no_inference',
+    expected: 'passed_no_inference',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

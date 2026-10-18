@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { timingSafeEqual, randomUUID } from 'node:crypto';
 import { runLifecycle } from './lifecycle.js';
 import { Notifications } from './notifications.js';
+import { SleepInhibitor } from './sleep-inhibitor.js';
 import { appendEvent } from './events.js';
 import { readRun, saveRun, runDir, appendOutput } from './run-state.js';
 import { RunManager } from './run-manager.js';
@@ -42,6 +43,7 @@ for (const stream of [process.stdout, process.stderr]) {
 }
 const notifier = new Notifications(record.options, path.join(dir, 'notifications.json'));
 const persist = () => { record.heartbeat = new Date().toISOString(); saveRun(root, record); };
+const sleep = new SleepInhibitor(record.options.preventSleep, status => { record.sleepInhibition = status; persist(); });
 const stop = () => { const changed = !controller.signal.aborted; if (changed) { record.processState = 'stopping'; persist(); controller.abort(); } return changed; };
 process.on('SIGINT', stop); process.on('SIGTERM', stop);
 const server = net.createServer(socket => {
@@ -67,6 +69,7 @@ const server = net.createServer(socket => {
 });
 let heartbeat;
 try {
+  await sleep.start();
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(record.socket, resolve); });
   if (process.platform !== 'win32') fs.chmodSync(record.socket, 0o600);
   heartbeat = setInterval(persist, 2000);
@@ -84,7 +87,7 @@ try {
       record.childGroups = active ? [...new Set([...(record.childGroups || []), pid])] : (record.childGroups || []).filter(value => value !== pid);
       persist();
     } }, {
-      workdir: record.workspace, signal: controller.signal,
+      workdir: record.workspace, signal: controller.signal, managedSleep: true,
       onReady: tracking => { record.artifacts = { progress: tracking.file, history: tracking.historyDir, output: outputFile, events: path.join(dir, 'events.jsonl'), notifications: path.join(dir, 'notifications.json') }; record.processState = controller.signal.aborted ? 'stopping' : 'running'; record.readyAt = new Date().toISOString(); ready = true; persist(); },
       onEvent: event => {
         event = { ...event, sequence: ++record.sequence };
@@ -112,6 +115,7 @@ try {
   if (controller.signal.aborted) result = { reason: 'stopped', code: 130 };
   if (!controller.signal.aborted) await notifier.flush();
   await notifier.close();
+  await sleep.close();
   record.processState = result.reason === 'stopped' ? 'stopped' : 'exited'; record.reason = result.reason; record.exitCode = result.code; record.endedAt = new Date().toISOString(); record.waitReason = null;
   persist();
 } catch (error) {
@@ -119,7 +123,7 @@ try {
   record.processState = 'unknown'; record.reason = error.message; persist();
 } finally {
   for (const [stream, pending] of pendingOutput) if (pending && !oversizedLines.has(stream)) appendOutput(outputFile, pending);
-  clearInterval(heartbeat); await notifier.close(); for (const socket of sockets) socket.destroy();
+  clearInterval(heartbeat); await sleep.close(); await notifier.close(); for (const socket of sockets) socket.destroy();
   await new Promise<void>(resolve => server.close(() => resolve()));
   if (process.platform !== 'win32') fs.rmSync(record.socket, { force: true });
   manager.release(record);

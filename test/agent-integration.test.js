@@ -10,7 +10,7 @@ import net from 'node:net';
 import { RunManager, startSchema, control } from '../dist/run-manager.js';
 import { readRun, saveRun, runDir, appendOutput, outputTail } from '../dist/run-state.js';
 import { appendEvent, readEvents } from '../dist/events.js';
-import { Notifications } from '../dist/notifications.js';
+import { Notifications, notificationCommand } from '../dist/notifications.js';
 import { setup } from '../dist/setup.js';
 import { parse as parseToml } from 'smol-toml';
 
@@ -95,9 +95,10 @@ test('bounded output and journal retention report truncation, expiry and malform
 
 const fakeTransport = ({ platform = 'darwin', mode = 'success' } = {}) => {
   const calls = []; const children = [];
-  return { calls, children, platform, timeoutMs: 20, env: { DISPLAY: ':1', DBUS_SESSION_BUS_ADDRESS: 'stub' }, spawn(command, args) {
+  return { calls, children, platform, resolveCommand: platform => platform === 'darwin' ? 'terminal-notifier' : 'notify-send', timeoutMs: 20, env: { DISPLAY: ':1', DBUS_SESSION_BUS_ADDRESS: 'stub' }, spawn(command, args) {
     calls.push({ command, args }); const child = new EventEmitter(); child.kill = () => { queueMicrotask(() => child.emit('close', null)); return true; }; children.push(child);
     if (mode === 'success') queueMicrotask(() => child.emit('close', 0));
+    if (mode === 'denied') queueMicrotask(() => child.emit('close', 3));
     if (mode === 'failure') queueMicrotask(() => child.emit('error', Object.assign(new Error('missing'), { code: 'ENOENT' })));
     return child;
   } };
@@ -118,6 +119,16 @@ test('notification timeout, missing backend and headless Linux are best effort a
   const transport = fakeTransport({ platform: 'linux' }); transport.env = {}; const n = new Notifications({ notify: 'attention' }, path.join(f.dir, 'headless'), transport); n.enqueue(event); await n.flush(); assert.equal(transport.calls.length, 0); assert.equal(n.state.deliveries[0].result, 'backend_unavailable');
 });
 
+test('event selection alone cannot enable desktop delivery', async t => {
+  const f = fixture(t); const transport = fakeTransport();
+  const event = { id: 'optional', type: 'runner.failed', attention: true, roadmap: f.roadmap };
+  for (const options of [{}, { notifyOn: ['runner.failed'] }, startSchema.parse({ workspace: f.workspace, roadmap: f.roadmap, notifyOn: ['runner.failed'] })]) {
+    const notifications = new Notifications(options, path.join(f.dir, 'off'), transport);
+    notifications.enqueue(event); await notifications.flush(); assert.deepEqual(notifications.state.deliveries, []);
+  }
+  assert.equal(transport.calls.length, 0);
+});
+
 test('failed notification submission can retry after the backend is repaired', async t => {
   const f = fixture(t); const file = path.join(f.dir, 'notification-retry');
   const event = { id: 'stuck', type: 'runner.stuck', attention: true, unchangedWorkers: 2, roadmap: f.roadmap };
@@ -131,6 +142,31 @@ test('failed notification submission can retry after the backend is repaired', a
   repaired.enqueue({ id: 'resumed', type: 'runner.progress_resumed', roadmap: f.roadmap });
   repaired.enqueue({ ...event, id: 'stuck-again' }); await repaired.flush();
   assert.equal(transport.calls.length, 2);
+});
+
+test('desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends', () => {
+  for (const installed of ['/opt/homebrew/bin/terminal-notifier', '/usr/local/bin/terminal-notifier']) {
+    const access = file => { if (file !== installed) throw Object.assign(new Error('missing'), { code: 'ENOENT' }); };
+    assert.equal(notificationCommand('darwin', { PATH: '/usr/bin:/bin' }, access), installed);
+  }
+  assert.equal(notificationCommand('darwin', { PATH: '/custom/bin:/usr/bin' }, file => {
+    if (file !== '/custom/bin/terminal-notifier') throw new Error('missing');
+  }), '/custom/bin/terminal-notifier');
+  assert.equal(notificationCommand('darwin', {}, () => { throw new Error('missing'); }), 'terminal-notifier');
+});
+
+test('macOS permission denial is actionable and does not suppress a repaired submission', async t => {
+  const f = fixture(t); const file = path.join(f.dir, 'permission-denied');
+  const event = { id: 'denied', type: 'runner.blocked', attention: true, roadmap: f.roadmap };
+  const denied = new Notifications({ notify: 'attention' }, file, fakeTransport({ mode: 'denied' }));
+  const warnings = []; const original = console.warn; console.warn = text => warnings.push(text);
+  try { denied.enqueue(event); await denied.flush(); } finally { console.warn = original; }
+  assert.equal(denied.state.lastError, 'permission_denied'); assert.equal(denied.state.fingerprints.length, 0);
+  assert.match(warnings.join('\n'), /System Settings > Notifications/);
+  const transport = fakeTransport(); const repaired = new Notifications(denied.options, file, transport);
+  repaired.enqueue(event); await repaired.flush();
+  assert.equal(transport.calls.length, 1); assert.equal(repaired.state.lastError, undefined);
+  assert.deepEqual(repaired.state.deliveries.map(item => item.result), ['permission_denied', 'submitted']);
 });
 
 test('legacy failed fingerprints do not suppress notifications after an upgrade', async t => {
@@ -162,18 +198,20 @@ test('setup dry-run, both scopes, TOML comments, idempotency, conflicts and edit
   }
 });
 
-const mcpFixture = async (t, modern = false) => {
-  const f = fixture(t); const child = spawn(process.execPath, [cli, 'mcp', '--workspace', f.workspace], { cwd: f.workspace, env: { ...process.env, PATH: `${f.bin}:/usr/bin:/bin`, ROADMAP_STATE_DIR: f.registry, ROADMAP_NOTIFY: 'off' }, stdio: ['pipe','pipe','pipe'] });
+const mcpFixture = async (t, modern = false, existing) => {
+  const f = existing || fixture(t); const child = spawn(process.execPath, [cli, 'mcp', '--workspace', f.workspace], { cwd: f.workspace, env: { ...process.env, PATH: `${f.bin}:/usr/bin:/bin`, ROADMAP_STATE_DIR: f.registry, ROADMAP_NOTIFY: 'off' }, stdio: ['pipe','pipe','pipe'] });
   const messages = []; let buffer = ''; let stderr = ''; child.stdout.on('data', chunk => { buffer += chunk; while (buffer.includes('\n')) { const index = buffer.indexOf('\n'); messages.push(JSON.parse(buffer.slice(0, index))); buffer = buffer.slice(index + 1); } }); child.stderr.on('data', chunk => stderr += chunk);
-  t.after(async () => { child.stdin.end(); await new Promise(resolve => { if (child.exitCode !== null) resolve(); else { child.once('exit', resolve); setTimeout(() => { child.kill('SIGKILL'); resolve(); }, 3000).unref(); } }); assert.equal(stderr, ''); });
+  const disconnect = async () => { child.stdin.end(); await new Promise(resolve => { if (child.exitCode !== null) resolve(); else { child.once('exit', resolve); setTimeout(() => { child.kill('SIGKILL'); resolve(); }, 3000).unref(); } }); assert.equal(stderr, ''); };
+  t.after(disconnect);
   let id = 0; const request = async (method, params = {}) => { const current = ++id; const p = modern ? { ...params, _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientInfo': { name: 'prepared-client', version: '1' }, 'io.modelcontextprotocol/clientCapabilities': {} } } : params; child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: current, method, params: p }) + '\n'); return wait(() => messages.find(m => m.id === current || (method === 'subscriptions/listen' && m.params?._meta?.['io.modelcontextprotocol/subscriptionId'] === current))); };
   if (!modern) { const init = await request('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'prepared-client', version: '1' } }); assert.equal(init.result.protocolVersion, '2025-11-25'); child.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n'); }
-  return { ...f, child, messages, request };
+  const notify = (method, params) => child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params: modern ? { ...params, _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientInfo': { name: 'prepared-client', version: '1' }, 'io.modelcontextprotocol/clientCapabilities': {} } } : params }) + '\n');
+  return { ...f, child, messages, request, notify, disconnect };
 };
 for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy'} MCP tools, restrictions, resources and subscriptions`, async t => {
-  const f = await mcpFixture(t, modern); const listing = await f.request('tools/list'); assert.deepEqual(listing.result.tools.map(t => t.name), ['roadmap_start','roadmap_enqueue','roadmap_stop','roadmap_status']);
+  const f = await mcpFixture(t, modern); const listing = await f.request('tools/list'); assert.deepEqual(listing.result.tools.map(t => t.name), ['roadmap_start','roadmap_enqueue','roadmap_stop','roadmap_status','roadmap_events']);
   const invalid = await f.request('tools/call', { name: 'roadmap_start', arguments: { ...f.request, workspace: f.workspace, roadmap: f.roadmap, executable: f.worker } }); assert.ok(invalid.error || invalid.result.isError);
-  const started = await f.request('tools/call', { name: 'roadmap_start', arguments: { workspace: f.workspace, roadmap: 'roadmap.md', notify: 'off', supervisorEvery: 0 } }); assert.ok(!started.error && !started.result.isError, JSON.stringify(started)); const r = JSON.parse(started.result.content[0].text); f.runs.push(r.id); assert.equal(r.processState, 'running');
+  const started = await f.request('tools/call', { name: 'roadmap_start', arguments: { workspace: f.workspace, roadmap: 'roadmap.md', supervisorEvery: 0 } }); assert.ok(!started.error && !started.result.isError, JSON.stringify(started)); const r = JSON.parse(started.result.content[0].text); f.runs.push(r.id); assert.equal(r.processState, 'running'); assert.equal(r.options.notify, 'off');
   const uri = `roadmap://${r.id}/state`;
   if (modern) {
     const sub = await f.request('subscriptions/listen', { notifications: { resourceSubscriptions: [uri] } }); assert.ok(sub.result || sub.method === 'notifications/subscriptions/acknowledged', JSON.stringify(sub));
@@ -188,6 +226,47 @@ for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy
   const update = await wait(() => f.messages.find(m => m.method === 'notifications/resources/updated')).catch(() => assert.fail(JSON.stringify(f.messages).slice(-8000))); assert.equal(update.params.uri, uri);
   const stopped = await f.request('tools/call', { name: 'roadmap_stop', arguments: { runId: r.id } }); assert.ok(!stopped.result.isError);
   await wait(async () => (await f.manager.status(r.id)).processState === 'stopped');
+});
+
+for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy'} MCP event subscriptions, cancellation and replay work with desktop alerts off`, async t => {
+  const f = await mcpFixture(t, modern);
+  fs.writeFileSync(f.worker, fs.readFileSync(f.worker, 'utf8').replace('setInterval(()=>{},1000)', 'setInterval(()=> { if (fs.existsSync(progress + ".fail")) process.exit(1); },20)'), { mode: 0o755 });
+  const desktop = path.join(f.dir, 'desktop-called');
+  fs.writeFileSync(path.join(f.bin, 'terminal-notifier'), `#!/usr/bin/env node\nimport fs from 'node:fs'; fs.writeFileSync(${JSON.stringify(desktop)}, 'unexpected desktop notification');\n`, { mode: 0o755 });
+  const started = await f.request('tools/call', { name: 'roadmap_start', arguments: { workspace: f.workspace, roadmap: 'roadmap.md', supervisorEvery: 0 } });
+  assert.ok(!started.error && !started.result.isError); const run = JSON.parse(started.result.content[0].text); f.runs.push(run.id);
+  const read = async (client, cursor) => {
+    const result = await client.request('tools/call', { name: 'roadmap_events', arguments: { runId: run.id, cursor } });
+    assert.ok(!result.error && !result.result.isError, JSON.stringify(result)); return JSON.parse(result.result.content[0].text);
+  };
+  const first = await read(f, 0); assert.ok(first.events.some(event => event.type === 'runner.started'));
+  assert.equal(run.options.notify, 'off'); assert.equal(first.output, undefined); assert.equal(first.malformedRecords, 0);
+  const uri = `roadmap://${run.id}/events?cursor=${first.cursor}`;
+  const subscription = await f.request(modern ? 'subscriptions/listen' : 'resources/subscribe', modern ? { notifications: { resourceSubscriptions: [uri] } } : { uri });
+  assert.ok(!subscription.error);
+  const next = path.join(f.workspace, 'next.md'); fs.writeFileSync(next, '# Next\n- [ ] Prepared task\n');
+  await f.manager.enqueue(run.id, { roadmap: next });
+  const update = await wait(() => f.messages.find(message => message.method === 'notifications/resources/updated' && message.params.uri === uri));
+  assert.equal(update.params.uri, uri); assert.equal(update.params.events, undefined);
+  const resource = await f.request('resources/read', { uri }); assert.ok(!resource.error);
+  const page = JSON.parse(resource.result.contents[0].text); assert.ok(page.events.some(event => event.type === 'runner.queued'));
+  assert.ok(page.events.every(event => event.sequence > first.cursor)); assert.ok(!JSON.stringify(page).includes('fixture output'));
+  const invalid = await f.request('tools/call', { name: 'roadmap_events', arguments: { runId: run.id, cursor: -1 } }); assert.ok(invalid.error || invalid.result.isError);
+  if (modern) f.notify('notifications/cancelled', { requestId: subscription.params._meta['io.modelcontextprotocol/subscriptionId'] });
+  else assert.ok((await f.request('resources/unsubscribe', { uri })).result);
+  await f.request('tools/call', { name: 'roadmap_status', arguments: { runId: run.id, outputBytes: 0 } });
+  const updates = f.messages.filter(message => message.method === 'notifications/resources/updated' && message.params.uri === uri).length;
+  const third = path.join(f.workspace, 'third.md'); fs.writeFileSync(third, '# Third\n- [ ] Prepared task\n');
+  await f.manager.enqueue(run.id, { roadmap: third }); await new Promise(resolve => setTimeout(resolve, 1200));
+  assert.equal(f.messages.filter(message => message.method === 'notifications/resources/updated' && message.params.uri === uri).length, updates);
+  await f.disconnect(); assert.equal((await f.manager.status(run.id)).processState, 'running');
+  fs.writeFileSync(run.progressFile + '.fail', '');
+  await wait(async () => (await f.manager.status(run.id)).processState === 'exited');
+  const reconnected = await mcpFixture(t, modern, f); const replay = await read(reconnected, page.cursor);
+  assert.ok(replay.events.some(event => event.type === 'runner.failed' && event.attention));
+  assert.ok(replay.events.every(event => event.sequence > page.cursor)); assert.equal(fs.existsSync(desktop), false);
+  const empty = await read(reconnected, replay.cursor); assert.deepEqual(empty.events, []); assert.equal(empty.cursor, replay.cursor);
+  await reconnected.disconnect();
 });
 
 test('roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies', async () => {

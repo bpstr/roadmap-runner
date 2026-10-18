@@ -1,0 +1,57 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (525.905541ms)
+✔ simultaneous requests cannot create competing managed workers (208.222ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (16.461667ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (148.770583ms)
+✔ control rejects unauthenticated ownership and nested worker management (142.361167ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (307.067709ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (64.26525ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (35.928333ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (48.69775ms)
+✔ failed notification submission can retry after the backend is repaired (39.527459ms)
+✔ desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends (0.396292ms)
+✔ macOS permission denial is actionable and does not suppress a repaired submission (26.707583ms)
+✔ legacy failed fingerprints do not suppress notifications after an upgrade (25.453209ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (35.28175ms)
+✔ prepared legacy MCP tools, restrictions, resources and subscriptions (1199.322791ms)
+✔ prepared modern MCP tools, restrictions, resources and subscriptions (1197.59875ms)
+✔ prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off (2840.475875ms)
+✔ prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off (2686.98125ms)
+✔ roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies (2.465042ms)
+✔ managed stop finishes only after an ignoring descendant is terminated (3510.224542ms)
+✔ setup connectivity checks only initialize/list MCP and never launch a provider (184.163792ms)
+✔ qualified local skills installer is staged and checked before publishing the skill (6.879542ms)
+✔ benign SKIPPED dependency flags do not trigger desktop attention (3.133292ms)
+Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+✔ Linux delivery uses notify-send, and off suppresses explicitly selected events (13.478833ms)
+✔ damaged notification state and thrown transports cannot interrupt runner work (14.232833ms)
+✔ managed startup failure reports its run identity without claiming readiness (107.400833ms)
+✔ doctor checks installed MCP/skill without modifying configuration or calling tools (20.75325ms)
+✔ doctor refuses conflicting, disabled, missing and malformed MCP entries without executing them (20.446875ms)
+✔ MCP connectivity rejects timeout, malformed replies, initialization errors and wrong tool names (0.306458ms)
+✔ doctor confirms saved hourly registration for the exact workspace and run without exposing prompts (20.40825ms)
+✔ monitor diagnostics reject paused, restricted, malformed and mismatched registrations (71.571917ms)
+✔ doctor validates arguments and reports unsupported monitoring hosts explicitly (15.6165ms)
+✔ setup and doctor agree on user-scoped CODEX_HOME and project-scoped paths for every app (52.420583ms)
+✔ CLI doctor uses only local MCP initialization and creates no managed runs (493.617542ms)
+✔ sleep prevention is opt-in and CLI flags override the environment (0.547625ms)
+✔ desktop notifications default off and require an explicit opt-in (0.091875ms)
+✔ Codex adapter preserves accepted unattended invocation (0.446084ms)
+✔ Claude adapter bypasses permission prompts (0.061709ms)
+✔ Gemini adapter uses current noninteractive YOLO mode (0.063917ms)
+✔ Campfire-compatible secondary adapters are stable (0.061292ms)
+✔ Codex model and effort overrides are applied (0.074958ms)
+✔ duration parsing supports runner units (0.206709ms)
+✔ roadmap completion states are exact line based (0.343833ms)
+✔ client can be selected through args or environment (0.14875ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13493.280792

@@ -107,17 +107,24 @@ source revision, role/iteration, severity, attention and short reason codes.
 
 ## Desktop attention
 
-`--notify attention` is the default; `--notify off` disables built-in delivery.
-`ROADMAP_NOTIFY=off` is an environment equivalent. Alerts cover changed blockers,
+Desktop alerts are off by default. Use `--notify attention`,
+`ROADMAP_NOTIFY=attention`, or MCP `notify: "attention"` to enable delivery.
+`--notify off` overrides an environment opt-in. Alerts cover changed blockers,
 needs-input tasks, terminal failure, capacity exhaustion and quota wait expiry.
 Routine starts, completion, turns and recoverable quota waits remain quiet.
 Benign SKIPPED flags alone do not cause an attention alert.
 
-For quota alerts, add `--notify-on runner.usage_paused`. Turn and capacity limits
+For quota alerts, use `--notify attention --notify-on runner.usage_paused`. Turn and capacity limits
 are separately selectable with `runner.turn_limit_reached` and
 `runner.capacity_exhausted`. MCP starts accept the corresponding `notifyOn` array.
+Selecting events with `notifyOn` does not override `notify: "off"`.
 Preferences persist with the worker after the chat disconnects; changing an
 existing watch is outside this release.
+
+Run `roadmap-runner notifications request-permission` to request macOS
+authorization and submit a confirmation notification before opting a run in.
+Denied permission opens Notifications settings. The command does not change
+the notification preferences of new or existing runs.
 
 macOS uses an already installed `terminal-notifier` with no open/activate/execute
 click action. AppleScript is deliberately excluded from the built-in backend:
@@ -135,7 +142,8 @@ Script Editor attribution if explicitly selected.
 
 ## MCP and protocol support
 
-The tools are `roadmap_start`, `roadmap_enqueue`, `roadmap_stop` and read-only `roadmap_status`.
+The tools are `roadmap_start`, `roadmap_enqueue`, `roadmap_stop`, and read-only
+`roadmap_status` and `roadmap_events`.
 Start accepts an optional ordered `queue` of `{ roadmap, progressFile? }` entries
 after the initial roadmap. Enqueue accepts `{ runId, roadmap, progressFile? }`
 and appends to an active run. Each roadmap starts only after its predecessor
@@ -143,6 +151,13 @@ completes successfully, using the same client settings and separate progress.
 Status includes `queue` entry states and a zero-based `queueIndex`; retain the
 same run ID throughout. Stop ends the whole run and leaves later entries pending.
 Status optionally accepts `runId`, `outputBytes` (0–8192), `cursor` and list `offset`.
+`roadmap_events` accepts a required `runId` and optional nonnegative sequence
+`cursor` (default 0). It returns up to 50 events within the 12 KiB page budget,
+plus `cursor`, `oldestCursor`, `cursorExpired`, `eventsTruncated` and
+`malformedRecords`. Persist the returned cursor after consuming each page;
+continue reading while `eventsTruncated` is true. An expired cursor means older
+records were rotated out; use `oldestCursor` to resume from retained history.
+This read interface excludes worker output and works with desktop alerts off.
 State and event resources are `roadmap://<id>/state` and
 `roadmap://<id>/events?cursor=<sequence>`. Model-controlled starts cannot select
 executables, arbitrary commands or environment variables. Roadmap/progress paths
@@ -153,7 +168,14 @@ worker context that prevents nested launches or control of their parent.
 The pinned SDK negotiates legacy 2025 handshakes and serves modern 2026-07-28
 per-request envelopes. Legacy clients use `resources/subscribe` and unsubscribe;
 modern clients use filtered `subscriptions/listen`, including its acknowledgement
-and subscription ID. Resource updates contain URIs, never model output. Prepared
+and subscription ID. For example, listen with
+`{ "notifications": { "resourceSubscriptions": ["roadmap://<id>/events?cursor=42"] } }`.
+Updates preserve the subscribed URI, including its cursor query. Read the event
+resource or call `roadmap_events` with your latest saved cursor after an update.
+Legacy clients stop a watch with `resources/unsubscribe`; modern clients cancel
+the listen request with `notifications/cancelled`. Reconnect and replay the saved
+cursor to recover changes that occurred while disconnected.
+Resource updates contain URIs, never model output. Prepared
 exchanges validate both paths; actual host UI behavior remains unverified.
 Experimental named events, webhooks, automatic chat wake-up and recovery-agent
 dispatch are intentionally absent: no supported client contract was established.
@@ -176,7 +198,10 @@ check performs only MCP initialization and tools listing; it never starts a runn
 `--dry-run` reports paths, entries and commands without writing them.
 
 The bundled `write-runner-roadmap` skill supports design/revision, dependency graphs,
-session-sized task contracts and a template. A compatible installed `skills` 1.7.1
+session-sized task contracts and a template. Its [splitting and queue guidance](../skills/write-runner-roadmap/references/roadmap-splitting.md)
+keeps large plans in focused milestone files with bounded worker inputs and
+explicit evidence handoffs. Designing a queue does not authorize starting or
+enqueueing a run. A compatible installed `skills` 1.7.1
 binary with copy support can install the local version into a temporary project;
 setup verifies its contents and atomically publishes to the requested scope.
 Unavailable/unqualified installers use an owned local copy in `.agents/skills`,

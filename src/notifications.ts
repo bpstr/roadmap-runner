@@ -5,6 +5,16 @@ import { createHash } from 'node:crypto';
 import { atomicJson, sanitize } from './run-state.js';
 import { eventTypes } from './events.js';
 
+// Desktop apps often launch with a system-only PATH. Discover Homebrew's
+// installed sender without requiring callers to modify their environment.
+export const notificationCommand = (platform: string, env: any, access = fs.accessSync) => {
+  const name = platform === 'darwin' ? 'terminal-notifier' : 'notify-send';
+  const candidates = (env.PATH || '').split(path.delimiter).filter(Boolean).map(dir => path.join(dir, name));
+  if (platform === 'darwin') candidates.push('/opt/homebrew/bin/terminal-notifier', '/usr/local/bin/terminal-notifier');
+  for (const file of candidates) { try { access(file, fs.constants.X_OK); return file; } catch {} }
+  return name;
+};
+
 export class Notifications {
   options: any; file: string; state: any; queue: any[] = []; active: any; draining = false; diagnosed = false; closed = false;
   canPersist = true;
@@ -34,14 +44,17 @@ export class Notifications {
     this.state.lastError = result;
     if (!this.diagnosed) {
       this.diagnosed = true;
-      const hint = result === 'backend_unavailable' && (this.transport.platform || process.platform) === 'darwin'
-        ? ' Install terminal-notifier with brew install terminal-notifier, then restart the runner.' : '';
+      const mac = (this.transport.platform || process.platform) === 'darwin';
+      const hint = result === 'backend_unavailable' && mac
+        ? ' Install terminal-notifier with brew install terminal-notifier, then restart the runner.'
+        : result === 'permission_denied' && mac
+          ? ' Run roadmap-runner notifications request-permission to open System Settings > Notifications and enable terminal-notifier.' : '';
       console.warn(`Desktop notifications: ${result}; inspect status/progress for attention.${hint}`);
     }
   }
   save() { if (this.canPersist) { try { atomicJson(this.file, this.state); } catch { this.diagnostic('notification_state_write_failed'); } } }
   enqueue(event: any) {
-    if (this.closed || this.options.notify === 'off') return;
+    if (this.closed || this.options.notify !== 'attention') return;
     if (['runner.unblocked', 'runner.progress_resumed'].includes(event.type)) {
       const cleared = event.type === 'runner.unblocked' ? ['runner.blocked', 'runner.needs_attention'] : ['runner.stuck'];
       this.state.fingerprints = this.state.fingerprints.filter(key => !cleared.some(type => key.startsWith(type + ':')));
@@ -89,9 +102,9 @@ export class Notifications {
     if (platform === 'darwin') {
       // AppleScript notifications launch Script Editor when clicked. Use the
       // dedicated sender without any activate/open/execute action instead.
-      command = 'terminal-notifier'; args = ['-title', title, '-message', message, '-group', 'roadmap-runner'];
+      command = (this.transport.resolveCommand || notificationCommand)(platform, env); args = ['-title', title, '-message', message, '-group', 'roadmap-runner'];
     }
-    else if (platform === 'linux' && (env.DISPLAY || env.WAYLAND_DISPLAY) && env.DBUS_SESSION_BUS_ADDRESS) { command = 'notify-send'; args = [title, message]; }
+    else if (platform === 'linux' && (env.DISPLAY || env.WAYLAND_DISPLAY) && env.DBUS_SESSION_BUS_ADDRESS) { command = (this.transport.resolveCommand || notificationCommand)(platform, env); args = [title, message]; }
     else return 'backend_unavailable';
     return new Promise(resolve => {
       const child = (this.transport.spawn || spawn)(command, args, { stdio: 'ignore', env }); this.active = child;
@@ -99,7 +112,7 @@ export class Notifications {
       const timer = setTimeout(() => { result = 'delivery_timeout'; child.kill('SIGKILL'); }, this.transport.timeoutMs || 3000);
       const finish = (outcome: string) => { if (settled) return; settled = true; clearTimeout(timer); this.active = null; resolve(outcome); };
       child.once('error', error => finish(error.code === 'ENOENT' ? 'backend_unavailable' : 'delivery_failed'));
-      child.once('close', code => finish(result !== 'submitted' ? result : code === 0 ? 'submitted' : 'delivery_failed'));
+      child.once('close', code => finish(result !== 'submitted' ? result : code === 0 ? 'submitted' : platform === 'darwin' && code === 3 ? 'permission_denied' : 'delivery_failed'));
     });
   }
   async flush() {

@@ -14,6 +14,7 @@ export type RunRecord = {
   endedAt?: string; role?: string; iteration?: number; sourceRevision?: string;
   resetAt?: string; deadline?: string; attentionTasks?: string[]; artifacts?: any;
   childGroups?: number[];
+  sleepInhibition?: { state: 'off' | 'active' | 'unavailable' | 'released'; backend?: string; reason?: string };
   queue?: QueueItem[]; queueIndex?: number;
 };
 export const registryRoot = () => process.env.ROADMAP_STATE_DIR || (process.platform === 'darwin'
