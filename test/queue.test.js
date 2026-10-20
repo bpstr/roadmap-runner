@@ -26,6 +26,10 @@ const source = prompt.match(/Work on this implementation roadmap:\\s*\\n\\s*([^\
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
 fs.appendFileSync(source + '.started', progress + '\\n');
 if (fs.existsSync(source + '.fail')) process.exit(7);
+if (fs.existsSync(source + '.stall')) {
+  fs.writeFileSync(progress, 'Status: BLOCKED\\n## Tasks\\n- [ ] T01 build\\n## Current handoff\\nStill waiting ' + Date.now() + '\\n');
+  process.exit(0);
+}
 if (fs.existsSync(source + '.blocked')) fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'BLOCKED'));
 const timer = setInterval(() => {
   if (!fs.existsSync(source + '.release')) return;
@@ -145,4 +149,31 @@ test('a queued source removed before handoff fails the run and preserves later e
   const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
   assert.equal(final.exitCode, 1); assert.equal(final.queue[1].state, 'failed'); assert.equal(final.queue[2].state, 'pending');
   assert.equal(f.started(third), false);
+});
+
+
+test('no-progress limit is terminal in managed status and preserves the pending queue', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(first + '.stall', '');
+  const settings = { ROADMAP_MAX_IDLE_WORKERS: '3', ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1' };
+  const previous = Object.fromEntries(Object.keys(settings).map(key => [key, process.env[key]]));
+  let run;
+  try {
+    Object.assign(process.env, settings);
+    run = await f.start([{ roadmap: second }]);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 75);
+  assert.equal(final.reason, 'no_progress_limit');
+  assert.deepEqual(final.queue.map(item => item.state), ['failed', 'pending']);
+  assert.equal(f.started(second), false);
+  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
+  assert.match(fs.readFileSync(final.progressFile, 'utf8'), /Status: BLOCKED/);
+  assert.ok(final.events.some(e => e.type === 'runner.stuck' && e.terminal && e.reason === 'no_progress_limit'));
+  assert.equal(final.events.at(-1).reason, 'no_progress_limit');
+  for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });

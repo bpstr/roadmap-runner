@@ -83,7 +83,7 @@ if (supervisor) {
     }
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
     if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace(/Status: (IN_PROGRESS|BLOCKED)/, 'Status: COMPLETE'));
-    else if (mode !== 'noop') fs.appendFileSync(tracking, '\\nWorker ' + n + ' evidence\\n');
+    else if (mode !== 'noop') fs.appendFileSync(tracking, '\\n- [x] W' + n + ' verified fixture unit\\n');
     if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 5000);
     if (mode === 'worker-failure') process.exitCode = 7;
   }
@@ -212,13 +212,23 @@ test('custom cadence and disabled supervision', (t) => {
   assert.equal(events(disabled).filter(x => x.startsWith('S')).length, 0);
 });
 
-test('successful no-op workers are reviewed, not incorrectly blocked by byte equality', (t) => {
+test('an explicit larger idle budget allows supervisor review of no-op workers', (t) => {
   const f = fixture(t, { mode: 'noop', total: 6 });
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '6';
   const result = run(f); assert.equal(result.status, 0, result.stderr);
   const data = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
   assert.equal(data.records.length, 5);
   assert.ok(data.records.every(r => !r.trackingChanged));
   assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
+});
+
+test('the default idle budget stops no-op workers before a later supervisor checkpoint', t => {
+  const f = fixture(t, { mode: 'noop', total: 6 });
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '3';
+  const result = run(f);
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(events(f), ['W1', 'W2', 'W3']);
+  assert.match(result.stderr, /No completed checklist progress for 3 workers/);
 });
 
 test('worker capacity retries are excluded from cadence and counted in review context', (t) => {

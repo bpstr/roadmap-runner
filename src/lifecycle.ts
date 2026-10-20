@@ -124,7 +124,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
     const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
     if (blockedRecovery) {
-      console.warn("Roadmap reported BLOCKED; continuing in recovery mode instead of stopping.");
+      console.warn("Roadmap reported BLOCKED; bounded recovery continues until work advances or the no-progress limit is reached.");
       console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
     }
 
@@ -143,6 +143,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const started = performance.now();
     const output = supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
+    const reconcilingSource = tracking.needsReconciliation;
     const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.compactionContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     await recovery.event("runner.turn_starting", { role: "worker", iteration, sourceRevision });
     const result = await runClient({
@@ -178,7 +179,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (result.timedOut) {
       await recovery.event("runner.turn_limit_reached", { role: "worker", iteration });
       await recovery.attention(after, roadmapStatus(after), iteration);
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
+      await recovery.idle(contents, after, reconcilingSource || sourceRevision !== tracking.sourceRevision);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
       continue;
@@ -213,7 +214,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.finishWorker(sourceRevision, result);
     await recovery.attention(after, roadmapStatus(after), iteration);
     if (roadmapStatus(after) !== "complete" || tracking.needsReconciliation) {
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
+      await recovery.idle(contents, after, reconcilingSource || sourceRevision !== tracking.sourceRevision);
     }
     console.log(`Iteration ${iteration} completed.`);
     console.log();
@@ -221,12 +222,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   } catch (error) {
     const stopped = signal.aborted || error.exitCode === 130;
     const type = stopped ? "runner.stopped" : "runner.failed";
-    const fields = { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "requested_stop" : "terminal_failure" };
+    const fields = { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "requested_stop" : error.reason || "terminal_failure" };
     if (recovery) await recovery.event(type, fields);
     else onEvent?.({ version: 1, id: randomUUID(), runId: options.runId || randomUUID(), sequence: 1, at: new Date().toISOString(), type,
       roadmap: options.roadmap, progressFile: options.progressFile, severity: stopped ? "info" : "warning", attention: !stopped, reasonCode: fields.reason, ...fields });
     if (!stopped) console.error(`roadmap-runner: ${error.message}`);
-    return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : "failed" };
+    return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : error.reason || "failed" };
   } finally {
     await sleep?.close();
     if (notifications) { if (!signal.aborted) await notifications.flush(); await notifications.close(); }

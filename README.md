@@ -384,13 +384,12 @@ session, the worker may set:
 Status: BLOCKED
 ```
 
-`BLOCKED` is **not terminal**. It is a recovery/defer signal: the runner launches
-another fresh worker, which re-evaluates dependency facts, skips unchanged blockers,
+`BLOCKED` requests **bounded recovery**. The runner may launch another fresh worker, which re-evaluates dependency facts, skips unchanged blockers,
 and searches the rest of the roadmap for useful work. Each blocked gate should keep
 its evidence, exact external unblock action and retry trigger so later sessions do
 not repeatedly rediscover or hammer the same stuck action. Only `COMPLETE`, explicit
 user interruption, unrecoverable runner/input corruption, or an ordinary fatal
-client/process failure ends the loop.
+client/process failure, or the no-progress worker limit ends the loop.
 
 Completion remains an agent assertion: the runner reads the header status, not
 independent proof of every acceptance criterion. The three-iteration mock test
@@ -453,7 +452,7 @@ reopens changed criteria, adds new gates, retires removed gates from active work
 and replaces drifted handoffs and outdated supervisor targets.
 
 Old `COMPLETE` state cannot stop the loop while reconciliation is pending.
-`BLOCKED` never stops the loop; it requests a fresh recovery worker. A fresh worker takes precedence over a scheduled review; a review based
+`BLOCKED` requests a fresh recovery worker within the no-progress budget. A fresh worker takes precedence over a scheduled review; a review based
 on superseded requirements cannot stop the new revision with stale status or a
 missing handoff. Pending reconciliation clears only after a successful worker
 session on that same revision. Timeouts, capacity failures, cancellation and old
@@ -754,19 +753,34 @@ A skipped item remains incomplete and cannot unlock its dependent tasks. The
 runner emits attention events for these flags even with `Status: IN_PROGRESS`.
 An unchanged flag set produces one notification across restarts; a changed reason
 or resolved blocker updates the event state. When the entire ready set is blocked,
-`Status: BLOCKED` starts another recovery worker.
+`Status: BLOCKED` starts another recovery worker within the no-progress budget.
 
-A current supervisor review with `Health: STUCK` triggers the same attention alert.
-After two consecutive workers leave progress byte-for-byte unchanged, the runner
-emits `runner.stuck` as an attention event, once per stagnation episode even
-across restarts. Changed progress or a source revision emits `runner.progress_resumed`
-and allows a future stuck episode to alert again. Repeated recovery checks stay quiet.
-Recovery rechecks back off from 60 seconds to a maximum of 15 minutes. Set
-`ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` in integer seconds (1–3600)
-to adjust this. Changed progress or a source revision resets the delay. Timeout
-sessions use this same unchanged-progress guard. This detects unchanged persisted
-state; rewriting notes alone can evade it, so the prompt also forbids repeatedly
-rediscovering unchanged blockers.
+A current supervisor review with `Health: STUCK` triggers an attention alert.
+The runner stops with exit **75** and reason `no_progress_limit` after **three
+consecutive workers without completed checklist progress**, preserving progress,
+receipts, archives and unfinished queued roadmaps. It emits a terminal
+`runner.stuck` event followed by `runner.failed`, so this stop is visible in CLI,
+managed status and MCP even when desktop notifications are disabled. Resolve the
+blocker or revise the source, then explicitly restart; the runner does not schedule
+more provider attempts after the limit.
+
+For a checklist, progress means checking a previously unchecked task, identified
+by its stable ID (or full label when no ID exists). Rewording handoffs, blocker
+reasons or completed task descriptions, adding unchecked preparation tasks, and
+supervisor review edits do not reset the budget. Fenced checklist examples are
+ignored. A source revision also resets the budget. This is a checklist-based
+orchestration guard, not independent validation that claimed implementation is
+correct. Workers should record validated implementation units as completed
+children rather than stretching one unchecked unit across many sessions.
+
+The counter persists across process restarts. An explicit restart permits a fresh
+worker to verify changed external inputs; another no-progress result still uses
+the retained counter. `ROADMAP_MAX_IDLE_WORKERS` adjusts the limit (1–100; default
+3). After two idle workers, an attention alert and bounded backoff precede the
+remaining attempt. `ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY`
+control that delay in seconds (defaults 60 and 900; range 1–3600). Prose-only
+handoffs also consume the budget; initialize a checklist and record validated
+units rather than relying on narrative changes as progress.
 
 Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
 to an executable's absolute path to receive each event's JSON on stdin. It is

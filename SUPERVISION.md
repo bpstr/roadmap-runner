@@ -37,8 +37,10 @@ numbers in the terminal can exceed the counted work sessions when capacity retri
 occur. Ordinary fatal failures and user cancellation still stop execution.
 
 Only COMPLETE is a normal terminal tracking status. BLOCKED is a non-terminal
-recovery signal: the runner continues with another fresh worker (after any due
+bounded recovery signal: the runner may continue with another fresh worker (after any due
 supervisor checkpoint) so stuck gates can be deferred and other work can advance.
+Three workers without completed checklist progress stop the runner with exit 75;
+notes and supervisor edits do not reset that budget.
 If worker 5 writes COMPLETE and no controller edit needs reconciliation, the runner
 exits without launching a review. A three-task
 smoke test still takes three workers and no supervisor. This is not a final
@@ -101,7 +103,7 @@ it to consume that review and test its next-run expectation.
 
 One stuck gate is not a global block. The supervisor must consider other useful
 authorized work, defer unchanged blockers, and retarget another gate before setting
-BLOCKED. Even BLOCKED does not terminate the runner; it records that no useful work
+BLOCKED. BLOCKED alone does not immediately terminate the runner; it records that no useful work
 was found in this review window and hands recovery to a fresh worker. It must not complete implementation tasks
 or set COMPLETE; the runner rejects a supervisor-written COMPLETE in the current
 invocation. A unique Review ID must be persisted before the checkpoint succeeds.
@@ -163,4 +165,5 @@ quota waits share the durable recovery checkpoint and maximum one-day incident
 wait. Timed-out reviews and reviews without their written Review ID keep captured
 evidence, emit `runner.supervisor_deferred`, and yield to the next worker. Ordinary
 CLI failures and false completion claims remain errors. BLOCKED is always a
-recovery signal; a supervisor must retarget independent work, not halt the runner.
+bounded recovery signal; a supervisor must retarget independent work rather than
+claim completion. The runner enforces its no-progress stop independently.

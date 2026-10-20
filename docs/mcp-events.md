@@ -30,7 +30,7 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.usage_resumed` | Reset wait ended; next session may run |
 | `runner.usage_wait_expired` | Incident wait ceiling reached; exit 75 |
 | `runner.supervisor_deferred` | Timed-out/incomplete review preserved; worker continues |
-| `runner.failed` | Ordinary worker CLI failure; partial work preserved |
+| `runner.failed` | Worker CLI failure or `no_progress_limit` (exit 75); partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |
 | `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |
 | `runner.completed` | The final roadmap completed; the managed queue is finished |
@@ -121,3 +121,8 @@ Assign MCP search (which did not contain these script resources):
 - `codex-roadmap-loop.sh`: capacity backoff and signal handling; its terminal global-BLOCKED behavior is superseded by this runner's recovery loop.
 
 No Assign data was modified. No live model or notification was dispatched during validation.
+
+Stagnation stops after three workers without completed checklist progress (configurable
+with `ROADMAP_MAX_IDLE_WORKERS`). A terminal `runner.stuck` event has `terminal: true`,
+`reason: "no_progress_limit"`, `unchangedWorkers` and `maxIdleWorkers`, followed by
+`runner.failed` with the same reason and code 75. No further workers are scheduled.

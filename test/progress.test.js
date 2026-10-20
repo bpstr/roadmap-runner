@@ -273,7 +273,7 @@ test("progress BLOCKED is non-terminal and launches a recovery worker", (t) => {
   const f = run(t, { evidence });
   assert.equal(f.result.status, 0, f.result.stderr);
   assert.equal(f.calls, 3);
-  assert.match(f.result.stdout + f.result.stderr, /continuing in recovery mode/);
+  assert.match(f.result.stdout + f.result.stderr, /bounded recovery continues/);
   assert.equal(roadmapStatus(fs.readFileSync(f.file, "utf8")), "complete");
 });
 

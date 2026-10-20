@@ -110,8 +110,8 @@ Persist the review and return:
   is non-terminal and means only that this review found no currently actionable
   gate after inspecting ALL remaining gates/prerequisites. If used, record why each
   remaining gate cannot advance, its exact external unblock action and retry trigger.
-  The runner will continue with a fresh recovery worker; never use BLOCKED as a
-  request to terminate the long-running executor.
+  The runner may continue within its bounded no-progress worker budget, then stops
+  with partial work preserved. Review prose does not reset that budget.
 - Keep exactly one status in the tracking file's opening header before its first
   ## (or deeper) heading, outside code fences. Print a short evidence-backed
   conclusion and the next delivery target, then stop this supervisor invocation.

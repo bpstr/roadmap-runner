@@ -209,8 +209,8 @@ Update the tracking file and stop this invocation:
 - Status: BLOCKED is a **non-terminal recovery signal**. Use it only when this
   session finds no materially useful authorized action after scanning ALL remaining
   gates and prerequisites. Record every blocking dependency and exact external
-  unblock action. The runner will start another fresh recovery worker rather than
-  exit. Prefer Status: IN_PROGRESS whenever any useful work can advance.
+  unblock action. The runner permits bounded recovery, then stops after its no-progress worker
+  limit (default three). Rewriting handoff notes does not reset that budget. Prefer Status: IN_PROGRESS whenever any useful work can advance.
 - Set Status: COMPLETE only when every original gate and its required in-scope
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.
