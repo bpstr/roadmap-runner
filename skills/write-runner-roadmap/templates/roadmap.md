@@ -7,8 +7,9 @@ Status: IN_PROGRESS
 Deliver a usable local report exporter. Keep existing reports working. Use prepared
 provider transports for automated checks. This example describes the task structure;
 replace its paths, commands and criteria with those of the target repository.
-The source roadmap is controller-owned; workers track evidence/checkmarks in the
-runner's progress file. COMPLETE requires every required task below to be validated.
+The controller defines roadmap requirements; workers update verified checkmarks in
+the live roadmap and track evidence/handoff in the runner's progress file.
+COMPLETE requires every required task below to be validated.
 
 ## Execution rules
 
@@ -16,6 +17,13 @@ Pick the first ready task whose named dependencies are implemented and validated
 Independent tasks in later epics are eligible immediately. Defer an external blocker,
 leave its checkbox unchecked, record why/what unblocks it/when to retry, and select
 another ready task. Preserve required acceptance criteria and stable task IDs.
+Use bounded, focused checks during functional delivery and reuse compatible passing
+evidence. Record each selector, result, expected cost and any reason to widen or
+repeat a check in progress. Put test development and comprehensive cases in the
+final testing epic; for split plans, move that epic after all functional roadmaps
+and reference its owning file instead of copying it into every roadmap. Final
+testing is required for overall completion; functional tasks depend only on their
+own focused checks and true prerequisites. Preserve explicit applicable gates.
 
 ## Epic EXP-1 — Export implementation
 
@@ -27,8 +35,9 @@ Purpose: Users can export existing report rows without losing quoted or multilin
 Context: Report model and current serializer; inspect their actual symbols before editing.
 Dependencies: none.
 Session scope: One serializer boundary; target 30 minutes plus local validation.
-Acceptance: Export has the required columns in documented order; quoted, empty and
-multiline fields round-trip through a standards-compatible CSV parser.
+Acceptance: Export has the required columns in documented order; a prepared quoted
+field round-trips through a standards-compatible CSV parser. Comprehensive edge
+cases belong to EXP-3.1.
 
 Implementation:
 
@@ -37,8 +46,7 @@ Implementation:
 
 Validation:
 
-- [ ] EXP-1.1-V1 Run deterministic round-trip checks for quotes, newlines, empty fields and Unicode.
-- [ ] EXP-1.1-V2 Run the existing serializer regressions; record command and executed/passed/failed/skipped counts.
+- [ ] EXP-1.1-V1 Run one existing targeted round-trip fixture for the changed encoder; record its selector, result and executed/passed/failed/skipped counts. Budget: 1 minute.
 
 Evidence: Progress file links to changed files and validation results.
 Handoff: Remaining substep, relevant symbol, failing case and next precise action.
@@ -61,8 +69,7 @@ Implementation:
 
 Validation:
 
-- [ ] EXP-1.2-V1 Run a prepared command fixture and compare the output to its expected CSV.
-- [ ] EXP-1.2-V2 Exercise destination failure and the existing command behavior.
+- [ ] EXP-1.2-V1 Run a prepared CSV command fixture and a targeted invalid-destination check; record selectors and results. Budget: 2 minutes. Reuse EXP-1.1 evidence for unchanged encoding behavior.
 
 Evidence: Fixture result, error behavior and focused regression command/results.
 Handoff: Next unresolved integration step and the exact input that reproduces it.
@@ -86,32 +93,34 @@ Implementation:
 
 Validation:
 
-- [ ] EXP-2.1-V1 Compare documented syntax to the argument parser and planned CLI contract; run the help-output check.
+- [ ] EXP-2.1-V1 Compare documented syntax to the argument parser and planned CLI contract. Budget: 1 minute; no application suite is needed for this text change.
 
 Evidence: Updated help and syntax validation result.
 Handoff: Any syntax mismatch requiring a controller decision.
 Blocked behavior: Flag `NEEDS_INFO EXP-2.1` only for a concrete missing decision; continue EXP-1.1 if ready.
 
-## Epic EXP-3 — Final local integration
+## Epic EXP-3 — Final testing after all functionality
 
-### Task EXP-3.1 — Validate the complete export flow
+### Task EXP-3.1 — Add remaining coverage and validate the export flow
 
-- [ ] EXP-3.1 Validate export and help together.
+- [ ] EXP-3.1 Complete remaining export coverage and validate export and help together.
 
-Purpose: Ensure the implemented command and user instructions agree.
+Purpose: Cover remaining export cases once and ensure the command and user instructions agree.
 Context: EXP-1.1, EXP-1.2 and EXP-2.1 evidence.
 Dependencies: EXP-1.2, EXP-2.1.
-Session scope: One end-to-end local fixture; target 20 minutes.
-Acceptance: A prepared report is exported using the documented command; parsed output matches the input rows.
+Session scope: Remaining regression cases and one local integration fixture; target 30 minutes including checks.
+Acceptance: Quotes, newlines, empty fields and Unicode round-trip correctly;
+existing formats still work; a report exported using the documented command
+matches its input rows. Compatible delivery evidence counts toward these criteria.
 
 Implementation:
 
-- [ ] EXP-3.1-I1 Assemble the existing prepared report fixture and command invocation.
+- [ ] EXP-3.1-I1 Review retained EXP-1 and EXP-2 evidence; extend existing fixtures only for uncovered acceptance cases and assemble the documented command invocation.
 
 Validation:
 
-- [ ] EXP-3.1-V1 Run the complete local flow; record comparison and exit status.
-- [ ] EXP-3.1-V2 Run required repository checks; resolve relevant failures before ticking the parent.
+- [ ] EXP-3.1-V1 Run the added cases and one complete local flow; record selectors, comparison, counts and exit status. Budget: 3 minutes.
+- [ ] EXP-3.1-V2 Identify any explicit repository or release gate and run only its outstanding required checks; otherwise close with focused results and retained evidence. Record the reason and expected cost before any wider run; resolve relevant failures before ticking the parent.
 
 Evidence: Local integration results and remaining limitations.
 Handoff: Exact failed boundary if incomplete.

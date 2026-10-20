@@ -90,11 +90,11 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
   console.log(`Roadmap:   ${roadmap}`);
-  console.log(`Progress:  ${tracking.file} (bounded active state; source roadmap preserved)`);
+  console.log(`Progress:  ${tracking.file} (bounded handoff/evidence; task states in roadmap)`);
   console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
   console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
-  console.log(`Prompt:    ${PROMPT_REVISION} (30-minute implementation batches)`);
+  console.log(`Prompt:    ${PROMPT_REVISION} (60-minute implementation batches)`);
   console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
@@ -111,7 +111,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.refreshSource(iteration);
     tracking.assertBounded();
     const contents = fs.readFileSync(tracking.file, "utf8");
-    const status = roadmapStatus(contents);
+    const status = tracking.deliveryStatus(roadmapStatus(contents));
 
     if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       recovery.success();
@@ -177,7 +177,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
     if (result.timedOut) {
       await recovery.event("runner.turn_limit_reached", { role: "worker", iteration });
-      await recovery.attention(after, roadmapStatus(after), iteration);
+      await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
       await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
@@ -211,8 +211,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
     recovery.success({ worker: true });
     tracking.finishWorker(sourceRevision, result);
-    await recovery.attention(after, roadmapStatus(after), iteration);
-    if (roadmapStatus(after) !== "complete" || tracking.needsReconciliation) {
+    await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
+    if (tracking.deliveryStatus(roadmapStatus(after)) !== "complete" || tracking.needsReconciliation) {
       await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
     }
     console.log(`Iteration ${iteration} completed.`);

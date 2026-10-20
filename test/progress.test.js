@@ -6,7 +6,9 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { parseArgs, roadmapStatus } from "../lib/runner.js";
-import { COMPACT_TRACKING_BYTES, MAX_SOURCE_BYTES, MAX_TRACKING_BYTES, prepareTracking, renderPrompt } from "../lib/tracking.js";
+import { COMPACT_TRACKING_BYTES, MAX_SOURCE_BYTES, MAX_TRACKING_BYTES, hasOpenRoadmapTasks, prepareTracking, renderPrompt } from "../lib/tracking.js";
+
+const withoutMarks = value => value.toString().replace(/^(\s*- \[)[ xX](\])/gm, "$1 $2");
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const template = fs.readFileSync(path.join(root, "prompt.md"), "utf8");
@@ -42,7 +44,7 @@ test("default mode preserves the roadmap and creates bounded internal progress s
   assert.doesNotThrow(() => tracking.refreshSource());
   assert.doesNotThrow(() => tracking.assertBounded());
   const prompt = renderPrompt(template, roadmap, tracking.file, tracking.historyDir);
-  assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
+  assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
   assert.match(prompt, /immutable authority/);
   assert.match(prompt, /do not bulk-load/);
 });
@@ -115,12 +117,12 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   const prompt = renderPrompt(template, roadmap, file);
   assert.ok(prompt.includes(`Work on this implementation roadmap:\n\n${roadmap}\n`));
   assert.ok(prompt.includes(`Tracking file (progress / delivery evidence):\n\n${file}\n`));
-  assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
-  assert.match(prompt, /Never edit, reformat, replace, rename or delete the\s+source roadmap/);
-  assert.match(prompt, /Write progress changes only to the tracking file/);
+  assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
+  assert.match(prompt, /Tick verified tasks directly in the live roadmap/);
+  assert.match(prompt, /Keep detailed evidence\s+and handoffs in the separate tracking file/);
   assert.match(prompt, /one concrete outcome/);
   assert.match(prompt, /canonical harness first/);
-  assert.match(prompt, /roughly 30 minutes of\s+implementation/);
+  assert.match(prompt, /roughly 60 minutes of\s+implementation/);
   assert.match(prompt, /loaded prompt\s+revision/);
   assert.match(prompt, /each run may process only one checkbox/);
   assert.match(prompt, /original gate IDs and criteria/);
@@ -183,7 +185,7 @@ function run(t, { sourceStatus = "IN_PROGRESS", evidence, mode = "normal", useEn
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const prompt = process.argv.at(-1);
-assert.match(prompt, /Tracking mode: PRESERVE_ROADMAP/);
+assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
 assert.match(prompt, /Loaded prompt revision: [a-f0-9]{12}/);
 const source = prompt.match(/Work on this implementation roadmap:\\s*\\n\\s*([^\\n]+)/)[1];
 const file = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1];
@@ -211,6 +213,9 @@ if (!/- \\[[ x]\\] EX-/.test(text)) {
 const task = text.match(/- \\[ \\] (EX-[123])/);
 assert.ok(task, 'must resume an unfinished gate');
 text = text.replace('- [ ] ' + task[1], '- [x] ' + task[1]);
+let live = fs.readFileSync(source, 'utf8');
+for (const match of text.matchAll(/- \\[[xX]\\] (EX-[123])/g)) live = live.replace('- [ ] ' + match[1], '- [x] ' + match[1]);
+fs.writeFileSync(source, live);
 fs.writeFileSync(task[1] + '.txt', 'verified\\n');
 text += '- Verified ' + task[1] + '\\n';
 if (!/- \\[ \\] EX-/.test(text)) text = text.replace('Status: IN_PROGRESS', 'Status: COMPLETE');
@@ -238,11 +243,11 @@ if (mode === 'edit-capacity' && count === 1) {
 }
 
 for (const sourceStatus of ["IN_PROGRESS", "COMPLETE", "BLOCKED"]) {
-  test(`three separate-file iterations preserve source bytes, ignoring source ${sourceStatus}`, (t) => {
+  test(`three iterations update roadmap checkboxes and preserve requirements, ignoring source ${sourceStatus}`, (t) => {
     const f = run(t, { sourceStatus, useEnv: sourceStatus === "BLOCKED" });
     assert.equal(f.result.status, 0, f.result.stderr);
     assert.equal(f.calls, 3);
-    assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+    assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
     const evidence = fs.readFileSync(f.file, "utf8");
     assert.equal(roadmapStatus(evidence), "complete");
     assert.equal((evidence.match(/- \[x\] EX-/g) || []).length, 3);
@@ -256,16 +261,16 @@ test("resume skips previously checked tasks and preserves prior delivery evidenc
   assert.equal(f.calls, 2);
   assert.equal(fs.existsSync(path.join(f.dir, "EX-1.txt")), false);
   assert.match(fs.readFileSync(f.file, "utf8"), /Prior proof preserved/);
-  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+  assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
-test("progress COMPLETE stops without launching or changing either file", (t) => {
+test("stale progress COMPLETE cannot finish with open roadmap tasks", (t) => {
   const evidence = "# Evidence\nStatus: COMPLETE\n\n## Evidence\nPrior proof.\n";
   const f = run(t, { evidence });
   assert.equal(f.result.status, 0, f.result.stderr);
-  assert.equal(f.calls, 0);
-  assert.equal(fs.readFileSync(f.file, "utf8"), evidence);
-  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+  assert.equal(f.calls, 3);
+  assert.equal((fs.readFileSync(f.roadmap, "utf8").match(/- \[x\] EX-/g) || []).length, 3);
+  assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
 test("progress BLOCKED is non-terminal and launches a recovery worker", (t) => {
@@ -289,7 +294,7 @@ for (const mode of ["edit-source", "edit-capacity"]) {
     const f = run(t, { mode });
     assert.equal(f.result.status, 0, f.result.stderr);
     assert.equal(f.calls, 3);
-    assert.match(f.result.stdout, /Roadmap changed/);
+    assert.match(f.result.stdout, /Roadmap requirements changed/);
     assert.match(fs.readFileSync(f.roadmap, "utf8"), /CONTROLLER EDIT/);
     assert.match(fs.readFileSync(f.file, "utf8"), /Verified EX-1/);
     if (mode === "edit-capacity") assert.match(f.result.stdout, /retry 1\/1/);
@@ -312,7 +317,7 @@ test("capacity retry retains progress and source protection", (t) => {
   assert.equal(f.calls, 4);
   assert.match(f.result.stdout, /retry 1\/1/);
   assert.match(fs.readFileSync(f.file, "utf8"), /Capacity attempt preserved/);
-  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+  assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
 test("worker receives the compaction directive before continuing a large handoff", t => {
@@ -320,6 +325,36 @@ test("worker receives the compaction directive before continuing a large handoff
   const f = run(t, { mode: "compact", evidence });
   assert.equal(f.result.status, 0, f.result.stderr);
   assert.equal(f.calls, 3);
-  assert.deepEqual(fs.readFileSync(f.roadmap), f.before);
+  assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
   assert.ok(fs.statSync(f.file).size < COMPACT_TRACKING_BYTES);
+});
+
+
+test("roadmap completion ignores fenced examples and rejects stale handoff completion", t => {
+  const { roadmap, file } = workspace(t);
+  const tracking = prepareTracking(roadmap, file);
+  assert.equal(tracking.deliveryStatus("complete"), "in-progress");
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replaceAll("- [ ] EX-", "- [x] EX-"));
+  assert.equal(tracking.deliveryStatus("complete"), "complete");
+  assert.equal(hasOpenRoadmapTasks("```md\n- [ ] example\n```\n- [x] real"), false);
+  assert.equal(hasOpenRoadmapTasks("~~~md\n- [ ] example\n~~~\n  - [ ] real"), true);
+});
+
+test("checkbox updates retain the source snapshot without requiring scope reconciliation", t => {
+  const { roadmap, file } = workspace(t);
+  const tracking = prepareTracking(roadmap, file);
+  const revision = tracking.sourceRevision;
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace("- [ ] EX-1", "- [x] EX-1"));
+  tracking.refreshSource(1);
+  assert.notEqual(tracking.sourceRevision, revision);
+  assert.equal(tracking.needsReconciliation, false);
+  assert.match(fs.readFileSync(tracking.sourceSnapshot, "utf8"), /- \[x\] EX-1/);
+  fs.appendFileSync(roadmap, "\nNew acceptance criterion.\n");
+  tracking.refreshSource(2);
+  assert.equal(tracking.needsReconciliation, true);
+  const changedRevision = tracking.sourceRevision;
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace("- [ ] EX-2", "- [x] EX-2"));
+  tracking.refreshSource(3);
+  tracking.finishWorker(changedRevision, { code: 0 });
+  assert.equal(tracking.needsReconciliation, false);
 });

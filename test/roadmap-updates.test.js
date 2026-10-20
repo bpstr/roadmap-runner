@@ -183,6 +183,7 @@ if (role === 'S') {
   assert.equal(text, revised);
   assert.equal(pending, true);
   if (n > 1 && mode !== 'capacity-wait') assert.match(fs.readFileSync(progress, 'utf8'), /Prior proof/);
+  fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('- [ ] NEW', '- [x] NEW'));
   fs.writeFileSync(progress, '# State\\nStatus: COMPLETE\\n\\n## Evidence\\nPrior proof.\\nNEW verified against corrected requirements.\\n');
 }
 `);
@@ -217,9 +218,9 @@ for (const staleStatus of ["COMPLETE", "BLOCKED", "IN_PROGRESS"]) {
     assert.equal(seen[0].text, original);
     assert.equal(seen[1].text, revised);
     assert.equal(seen[1].pending, true);
-    assert.match(result.stdout, /Roadmap changed/);
+    assert.match(result.stdout, /Roadmap requirements changed/);
     assert.match(fs.readFileSync(f.progress, "utf8"), /NEW verified/);
-    assert.equal(fs.readFileSync(f.roadmap, "utf8"), revised);
+    assert.equal(fs.readFileSync(f.roadmap, "utf8"), revised.replace("- [ ] NEW", "- [x] NEW"));
     assert.equal(prepareTracking(f.roadmap, f.progress, f.dir).needsReconciliation, false);
   });
 }

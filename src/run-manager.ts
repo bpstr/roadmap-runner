@@ -17,7 +17,7 @@ export const queueItemSchema = z.object({ roadmap: z.string().min(1), progressFi
 export const startSchema = z.object({
   workspace: z.string().min(1), roadmap: z.string().min(1), progressFile: z.string().optional(),
   client: z.enum(['codex', 'claude', 'gemini', 'grok', 'kimi', 'muse']).default('codex'),
-  timeout: z.string().default('2h'), supervisorEvery: z.number().int().min(0).max(20).default(5),
+  timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).default(5),
   supervisorTimeout: z.string().default('10m'), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
   notify: z.enum(['attention', 'off']).default('off'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),

@@ -6,7 +6,7 @@ Run a long Markdown implementation roadmap through fresh coding-agent CLI sessio
 
 The goal is to start one command, let it keep working for **8–10 hours or longer** on a large roadmap without human approval prompts, and have it stop automatically when the roadmap is finished.
 
-Each implementation batch gets a fresh CLI session. Workers never edit the source roadmap, but external controllers may revise it between sessions; a bounded progress file plus the filesystem form the hot handoff. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
+Each implementation batch gets a fresh CLI session. Workers update verified task checkboxes and concise status directly in the roadmap. A separate bounded progress file holds evidence and handoffs. Controller changes to requirements are adopted between sessions. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
 
 ## Install
 
@@ -115,7 +115,7 @@ Kimi is exposed because Campfire already has a working adapter, but its current 
 
 ## Batch size
 
-The worker targets roughly 30 minutes of implementation per session, followed by
+The worker targets roughly 60 minutes of implementation per session, followed by
 verification and the roadmap handoff. Discovery and verification time are separate
 from that target; the per-run hard timeout still applies.
 
@@ -142,39 +142,39 @@ the batch outcome and an explicit exit reason, particularly when ending early.
 
 The dated handoff records approximate discovery, implementation and verification
 durations so repeated bootstrap overhead can be assessed. The target is prompt
-guidance; the runner does not impose a 30-minute forced termination.
+guidance; the runner does not impose a 60-minute forced termination.
 
-### Recommended session limit for larger roadmaps
+### Default session limit
 
-For larger roadmaps, **1 hour per worker session** is the recommended starting
-point. The intent is to allow enough uninterrupted time to deliver a meaningful
-feature or coherent milestone, rather than repeatedly paying for discovery and
+The default is **90 minutes per worker session**. The intent is to allow enough
+uninterrupted time to deliver a meaningful feature or coherent milestone, rather
+than repeatedly paying for discovery and
 handoff after tiny fragments of work. This is a practical tuning recommendation,
 not a measured universal optimum.
 
 ```sh
-roadmap-runner docs/roadmap.md --timeout 1h
+roadmap-runner docs/roadmap.md --timeout 90m
 # Equivalent environment setting:
-ROADMAP_TIMEOUT=1h roadmap-runner docs/roadmap.md
+ROADMAP_TIMEOUT=90m roadmap-runner docs/roadmap.md
 ```
 
 This is the **total worker-session budget**, including discovery, implementation,
-feature verification and the compact handoff—not one hour of coding plus those
-steps. The approximate 30-minute implementation target above is a planning aid
-within that budget, not a mandatory stopping point. Continue related work toward
+feature verification and the compact handoff. The approximate 60-minute
+implementation target above is a planning aid within that budget, not a mandatory
+stopping point. Continue related work toward
 the declared outcome while leaving time for verification and handoff before the
 configured timeout. If the feature cannot fit, leave an honest partial handoff;
 do not weaken its acceptance criteria or label unverified work complete.
 
-One hour is an allowance, **not a minimum duration**. Finish earlier when the
+Ninety minutes is an allowance, **not a minimum duration**. Finish earlier when the
 planned outcome is delivered, no related authorized work can advance, or a stricter
 roadmap rule applies. Do not pad the session with repeated tests, unrelated work,
 or verbose delivery logs. The one-checkbox smoke-test exception remains unchanged.
 
-The CLI default remains **2h** unless `--timeout` or `ROADMAP_TIMEOUT` is supplied;
-this recommendation does not silently change existing commands or detect roadmap
-size automatically. Timeout cleanup grace is additional. Supervisor cadence and
-its separate timeout are unchanged: every five workers is not an hourly review.
+CLI and managed starts default to **90m**; `--timeout`, `ROADMAP_TIMEOUT`, or an
+explicit managed timeout can override it. Timeout cleanup grace is additional.
+Supervisor cadence and its separate timeout are unchanged: every five workers is
+not an hourly review.
 
 ## Roadmap queues
 
@@ -254,10 +254,10 @@ Status: COMPLETE
 runner exits
 ```
 
-The default execution limit is **2 hours per individual client session**, not two hours for the whole roadmap:
+The default execution limit is **90 minutes per individual client session**:
 
 ```sh
-roadmap-runner roadmap.md --timeout 2h
+roadmap-runner roadmap.md --timeout 90m
 ```
 
 Examples:
@@ -302,7 +302,7 @@ The supervisor compares bounded run outputs and progress snapshots with actual
 delivery evidence. It diagnoses healthy, slow, stuck or uncertain progress and
 may adjust the next batch's target, order or prerequisite work—not original
 requirements or acceptance criteria. The next worker consumes the review from
-the tracking file. Source-preservation rules apply to both roles.
+the tracking file. Workers maintain roadmap task states; supervisors flag state/evidence discrepancies without checking implementation tasks.
 
 See [periodic supervision](SUPERVISION.md) for cadence/restart semantics, the
 review contract, output retention/privacy and failure behavior. Reviews reuse
@@ -310,9 +310,7 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 ## Roadmap progress tracking
 
-The source roadmap is **requirements-only and read-only to workers and the built-in
-supervisor**. An external controller may revise it to correct drift; updates are
-adopted between sessions. A source larger than **128 KiB** is rejected at every
+The source roadmap owns **task checkboxes, acceptance criteria and concise delivery status**. Workers tick tasks only after their original criteria pass, reopen tasks invalidated by concrete evidence, and preserve unrelated controller edits. A fixed read-only snapshot binds each session to its acceptance criteria; controller requirement changes are adopted between sessions. Checkbox/status updates alone do not trigger scope reconciliation. A tracking-file COMPLETE cannot finish a run while live roadmap tasks remain unchecked. A source larger than **128 KiB** is rejected at every
 boundary as a likely polluted context file; restore or prepare a compact requirements-
 only roadmap instead of feeding historical delivery logs back into the model.
 
@@ -327,8 +325,7 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
   history/*.md.gz
 ```
 
-`progress.md` is bounded hot state. It contains the current checklist, handoff,
-concise evidence references, deferred gates and latest supervisor review. It is
+`progress.md` is bounded hot state. It contains the current handoff, concise evidence references, deferred gates and latest supervisor review. It refers to roadmap task IDs instead of duplicating the checklist. It is
 capped at **128 KiB**. At **96 KiB**, the next worker or supervisor is instructed
 to compact superseded handoff/review prose and repeated evidence before implementation,
 while preserving criteria, checkbox states, blockers and current evidence references.
@@ -344,8 +341,8 @@ snapshot only when current evidence requires it.
 
 The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
 
-- stable acceptance-gate checkboxes;
-- child checkboxes when a gate is too large for one invocation;
+- stable acceptance-gate checkboxes in the live roadmap;
+- bounded child checkboxes in the owning roadmap when needed;
 - a compact Current handoff;
 - checked-item implementation / verification / deployment evidence;
 - deferred gates and unblock conditions;
@@ -518,7 +515,7 @@ roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
 --progress-file <path> override bounded progress-state path; workers never edit source
---timeout <duration>   default: 2h
+--timeout <duration>   default: 90m
 --supervisor-every <n>  review every n workers (1-20); default 5, 0 disables
 --supervisor-timeout <duration> review timeout; default 10m
 --model <model>        optional model override
@@ -692,7 +689,7 @@ quota pause below. Other worker errors stop without retrying. Capacity recovery
 applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.
-The two-hour per-run execution timeout remains separate from the retry wait.
+The 90-minute per-run execution timeout remains separate from the retry wait.
 
 Settings use integer seconds and a consecutive-failure retry count:
 

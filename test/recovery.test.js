@@ -162,6 +162,7 @@ function cliFixture(t, client, mode) {
   fs.writeFileSync(mock, `#!/usr/bin/env node
 const fs = require('node:fs');
 const prompt = process.argv.at(-1);
+const source = ${JSON.stringify(f.config.roadmap)};
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
 const count = fs.existsSync('count') ? Number(fs.readFileSync('count')) + 1 : 1;
 fs.writeFileSync('count', String(count));
@@ -181,7 +182,10 @@ if (count === 1) {
   if (${JSON.stringify(mode)} === 'blocked') {
     fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('BLOCKED', 'IN_PROGRESS'));
     process.exitCode = 9; // End this prepared scenario with A still unfinished.
-  } else fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'COMPLETE'));
+  } else {
+    fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replaceAll('- [ ]', '- [x]'));
+    fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'COMPLETE'));
+  }
 }
 `);
   fs.chmodSync(mock, 0o755);

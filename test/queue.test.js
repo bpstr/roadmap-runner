@@ -29,6 +29,7 @@ if (fs.existsSync(source + '.fail')) process.exit(7);
 if (fs.existsSync(source + '.blocked')) fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'BLOCKED'));
 const timer = setInterval(() => {
   if (!fs.existsSync(source + '.release')) return;
+  fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('- [ ] Implement fixture', '- [x] Implement fixture'));
   fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace(/IN_PROGRESS|BLOCKED/, 'COMPLETE'));
   clearInterval(timer);
 }, 20);

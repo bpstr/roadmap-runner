@@ -38,7 +38,7 @@ const tasks = [
 if (!/- \[[ x]\] EX-/.test(contents)) {
   const gates = source.match(/^- \[ \] EX-[^\r\n]+/gm) || [];
   contents = contents.replace(
-    "No gates recorded yet; this is not completion evidence.",
+    "Task states and acceptance criteria live in the source roadmap; link to them without duplicating its checklist.",
     gates.join("\n"),
   );
 }
@@ -51,6 +51,7 @@ if (!current) {
 
 fs.writeFileSync(path.join(outputDir, current.file), current.text, "utf8");
 contents = contents.replace(`- [ ] ${current.id} —`, `- [x] ${current.id} —`);
+fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace(`- [ ] ${current.id} —`, `- [x] ${current.id} —`));
 
 const remaining = tasks.filter((task) => contents.includes(`- [ ] ${task.id} —`));
 contents = contents.replace(
