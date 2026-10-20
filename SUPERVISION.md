@@ -36,11 +36,12 @@ Supervisors never consume worker iteration numbers. Consequently, worker attempt
 numbers in the terminal can exceed the counted work sessions when capacity retries
 occur. Ordinary fatal failures and user cancellation still stop execution.
 
-Only COMPLETE is a normal terminal tracking status. BLOCKED is a non-terminal
-bounded recovery signal: the runner may continue with another fresh worker (after any due
-supervisor checkpoint) so stuck gates can be deferred and other work can advance.
-Three workers without completed checklist progress stop the runner with exit 75;
-notes and supervisor edits do not reset that budget.
+COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
+`blocked`, without another worker or supervisor; use it only when no authorized
+work remains ready. Independent work continues under IN_PROGRESS with task-local
+deferrals. Three workers without checklist progress also stop with exit 75 and
+`no_progress_limit`. Unchanged notes and reviews do not reset that budget.
+Explicit --recover-blocked permits one recovery worker after changed inputs.
 If worker 5 writes COMPLETE and no controller edit needs reconciliation, the runner
 exits without launching a review. A three-task
 smoke test still takes three workers and no supervisor. This is not a final
@@ -103,8 +104,8 @@ it to consume that review and test its next-run expectation.
 
 One stuck gate is not a global block. The supervisor must consider other useful
 authorized work, defer unchanged blockers, and retarget another gate before setting
-BLOCKED. BLOCKED alone does not immediately terminate the runner; it records that no useful work
-was found in this review window and hands recovery to a fresh worker. It must not complete implementation tasks
+BLOCKED. Global BLOCKED stops execution; it records that no useful work remains
+until a concrete unblock input changes. It must not complete implementation tasks
 or set COMPLETE; the runner rejects a supervisor-written COMPLETE in the current
 invocation. A unique Review ID must be persisted before the checkpoint succeeds.
 That ID verifies that a handoff was written, not that its reasoning is correct.
@@ -164,6 +165,6 @@ Quota-only attempts do not count toward review cadence; worker and supervisor
 quota waits share the durable recovery checkpoint and maximum one-day incident
 wait. Timed-out reviews and reviews without their written Review ID keep captured
 evidence, emit `runner.supervisor_deferred`, and yield to the next worker. Ordinary
-CLI failures and false completion claims remain errors. BLOCKED is always a
-bounded recovery signal; a supervisor must retarget independent work rather than
-claim completion. The runner enforces its no-progress stop independently.
+CLI failures and false completion claims remain errors. BLOCKED stops the run when no independent work remains. Explicit recovery after
+changed inputs is a separate controller action. Never repeat scans of unchanged
+repositories, caches or receipts to fill recovery sessions.

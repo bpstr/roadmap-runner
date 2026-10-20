@@ -284,12 +284,12 @@ for (const mode of ['missing-report', 'supervisor-timeout', 'supervisor-usage'])
   });
 }
 
-test('a supervisor blocker retargets a fresh worker instead of stopping delivery', t => {
+test('a supervisor global blocker stops before another worker', t => {
   const f = fixture(t, { mode: 'global-block', total: 6 });
   const result = run(f);
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6']);
-  assert.match(fs.readFileSync(path.join(f.dir, 'W6.prompt'), 'utf8'), /Blocked recovery mode: YES/);
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1']);
+  assert.equal(fs.existsSync(path.join(f.dir, 'W6.prompt')), false);
 });
 
 test('controller edit during a supervisor review continues with a fresh worker', (t) => {

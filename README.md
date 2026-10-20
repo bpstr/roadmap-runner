@@ -384,12 +384,21 @@ session, the worker may set:
 Status: BLOCKED
 ```
 
-`BLOCKED` requests **bounded recovery**. The runner may launch another fresh worker, which re-evaluates dependency facts, skips unchanged blockers,
-and searches the rest of the roadmap for useful work. Each blocked gate should keep
-its evidence, exact external unblock action and retry trigger so later sessions do
-not repeatedly rediscover or hammer the same stuck action. Only `COMPLETE`, explicit
-user interruption, unrecoverable runner/input corruption, or an ordinary fatal
-client/process failure, or the no-progress worker limit ends the loop.
+`BLOCKED` is a terminal execution state: the runner preserves progress and stops
+with exit 75 and reason `blocked`, without launching another worker or supervisor.
+Use it only when no authorized work remains ready. A task-local blocker belongs in
+Deferred gates while independent work continues under `IN_PROGRESS`.
+
+After a recorded unblock input changes, request one recovery worker explicitly:
+
+```sh
+roadmap-runner start roadmap.md --recover-blocked --json
+```
+
+MCP uses `recoverBlocked: true`. If that worker remains blocked, the run stops
+again; the option never starts an automatic recovery loop. A required verification
+worker after an interrupted/quota session, or a changed source revision requiring
+reconciliation, may still inspect stale terminal state before trusting it.
 
 Completion remains an agent assertion: the runner reads the header status, not
 independent proof of every acceptance criterion. The three-iteration mock test
@@ -426,8 +435,8 @@ being truncated or reset. Restart with the same roadmap/path to resume. The 128 
 hot-state cap applies to custom progress files too.
 
 The progress file's opening-header status controls continuation when no source
-revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` starts
-a recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
+revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` stops
+with exit 75; `--recover-blocked` explicitly permits one recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
 worker to verify any terminal status it left before trusting completion. The roadmap's
 own status/checkboxes are ignored as runtime state and may stay unchanged even
 when delivery is finished. The same header format rules apply. To unblock work,
@@ -452,7 +461,7 @@ reopens changed criteria, adds new gates, retires removed gates from active work
 and replaces drifted handoffs and outdated supervisor targets.
 
 Old `COMPLETE` state cannot stop the loop while reconciliation is pending.
-`BLOCKED` requests a fresh recovery worker within the no-progress budget. A fresh worker takes precedence over a scheduled review; a review based
+`BLOCKED` stops execution after any required source reconciliation. A fresh worker takes precedence over a scheduled review; a review based
 on superseded requirements cannot stop the new revision with stale status or a
 missing handoff. Pending reconciliation clears only after a successful worker
 session on that same revision. Timeouts, capacity failures, cancellation and old
@@ -523,7 +532,7 @@ roadmap-runner <roadmap-file> [options]
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
 --client-bin <path>    override selected client executable
---notify attention|off desktop alerts; default off
+--notify attention|off desktop alerts; default attention
 --notify-on <events>   extra desktop alerts; requires --notify attention
 --prevent-sleep        prevent idle system sleep for the entire run
 --no-prevent-sleep     override ROADMAP_PREVENT_SLEEP
@@ -542,7 +551,7 @@ ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
 ROADMAP_CLIENT_BIN
-ROADMAP_NOTIFY        off (default) or attention
+ROADMAP_NOTIFY        attention (default) or off
 ROADMAP_PREVENT_SLEEP  set to 1 or true to prevent idle system sleep
 ```
 
@@ -753,7 +762,9 @@ A skipped item remains incomplete and cannot unlock its dependent tasks. The
 runner emits attention events for these flags even with `Status: IN_PROGRESS`.
 An unchanged flag set produces one notification across restarts; a changed reason
 or resolved blocker updates the event state. When the entire ready set is blocked,
-`Status: BLOCKED` starts another recovery worker within the no-progress budget.
+`Status: BLOCKED` stops without another worker or supervisor, preserving the queue.
+Its final `runner.blocked` event has `terminal: true`, and managed status retains
+`roadmapState: blocked`, reason `blocked` and exit 75.
 
 A current supervisor review with `Health: STUCK` triggers an attention alert.
 The runner stops with exit **75** and reason `no_progress_limit` after **three
@@ -789,11 +800,10 @@ failure is logged and does not halt roadmap work. Task IDs/statuses are included
 blocker reasons, model output and credentials are not included in event payloads.
 Hooks should filter event types and avoid repeated alerts for recheck records.
 
-Desktop alerts are optional and off by default. For CLI runs, enable them with
-`--notify attention` or `ROADMAP_NOTIFY=attention`; MCP starts use `notify: "attention"`.
-The permission command configures macOS authorization; each roadmap run still
-needs this explicit opt-in. `--notify-on` selects extra event types but does not
-enable desktop delivery by itself.
+Desktop attention alerts are on by default for CLI and MCP starts. Explicit
+`--notify off`, `ROADMAP_NOTIFY=off`, or MCP `notify: "off"` disables them.
+The permission command configures macOS authorization; it is separate from the
+run preference. `--notify-on` selects extra event types and respects explicit off.
 
 Runner events remain available with desktop alerts off. MCP clients can call
 `roadmap_events` with `{ "runId": "<run-id>", "cursor": 0 }`, then persist the

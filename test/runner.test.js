@@ -19,12 +19,12 @@ test('sleep prevention is opt-in and CLI flags override the environment', () => 
   assert.equal(parseArgs(['roadmap.md', '--no-prevent-sleep', '--prevent-sleep'], {}).preventSleep, true);
 });
 
-test('desktop notifications default off and require an explicit opt-in', () => {
-  assert.equal(parseArgs(['roadmap.md'], {}).notify, 'off');
+test('desktop notifications default on and explicit off overrides defaults', () => {
+  assert.equal(parseArgs(['roadmap.md'], {}).notify, 'attention');
   assert.equal(parseArgs(['roadmap.md', '--notify', 'attention'], {}).notify, 'attention');
   assert.equal(parseArgs(['roadmap.md'], { ROADMAP_NOTIFY: 'attention' }).notify, 'attention');
   assert.equal(parseArgs(['roadmap.md', '--notify', 'off'], { ROADMAP_NOTIFY: 'attention' }).notify, 'off');
-  assert.equal(parseArgs(['roadmap.md', '--notify-on', 'runner.stuck'], {}).notify, 'off');
+  assert.equal(parseArgs(['roadmap.md', '--notify-on', 'runner.stuck'], {}).notify, 'attention');
 });
 
 test("Codex adapter preserves accepted unattended invocation", () => {
@@ -105,4 +105,9 @@ test("client can be selected through args or environment", () => {
   assert.equal(parseArgs(["roadmap.md", "--client", "claude"], {}).client, "claude");
   assert.equal(parseArgs(["roadmap.md"], { ROADMAP_CLIENT: "gemini" }).client, "gemini");
   assert.throws(() => parseArgs(["roadmap.md", "--client", "unknown"], {}));
+});
+
+test('blocked recovery requires explicit opt-in', () => {
+  assert.equal(parseArgs(['r.md'], {}).recoverBlocked, false);
+  assert.equal(parseArgs(['r.md', '--recover-blocked'], {}).recoverBlocked, true);
 });

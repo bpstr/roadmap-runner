@@ -106,12 +106,15 @@ Persist the review and return:
   concise evidence references, but do not retain superseded plans, raw logs, copied
   diffs or dated review narratives in active state. Historical snapshots are
   already preserved outside hot context.
-- Keep Status: IN_PROGRESS whenever useful authorized work remains. Status: BLOCKED
-  is non-terminal and means only that this review found no currently actionable
-  gate after inspecting ALL remaining gates/prerequisites. If used, record why each
-  remaining gate cannot advance, its exact external unblock action and retry trigger.
-  The runner may continue within its bounded no-progress worker budget, then stops
-  with partial work preserved. Review prose does not reset that budget.
+- Keep Status: IN_PROGRESS while useful authorized work remains. Use global
+  Status: BLOCKED only after considering ALL remaining gates using the existing
+  dependency audit and ready alternatives; it stops the runner, without another
+  worker or review. Record the
+  exact external unblock action and retry trigger. Task-local blocker flags alone
+  do not stop independent work. Do not repeat repository/cache inventories or
+  rewrite unchanged blocker notes. Review only concrete changes since the prior
+  audit. A controller may request one recovery attempt after changed inputs;
+  a timer or the same missing input does not justify fresh model sessions.
 - Keep exactly one status in the tracking file's opening header before its first
   ## (or deeper) heading, outside code fences. Print a short evidence-backed
   conclusion and the next delivery target, then stop this supervisor invocation.

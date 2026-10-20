@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Enable desktop attention notifications by default, retaining explicit CLI/environment/MCP off switches and durable events when OS delivery is unavailable.
+- Make global BLOCKED stop immediately (exit 75/reason blocked), preserving blocked status and pending queue entries. Permit one explicitly requested recovery worker after changed inputs with --recover-blocked or recoverBlocked; task-local deferrals still allow independent work.
+- Instruct workers/supervisors to reuse dependency audits and avoid repeated repository/cache/receipt scans on unchanged blockers.
+
 - Stop after three workers without completed checklist progress (configurable with `ROADMAP_MAX_IDLE_WORKERS`), preserving partial work and queued roadmaps. Exit 75 and expose `no_progress_limit` in terminal events and managed status.
 - Ignore handoff/blocker prose churn when detecting checklist progress, so recovery workers and supervisor edits cannot indefinitely renew the budget. Preserve source-revision resets and bounded recovery for independent work.
 

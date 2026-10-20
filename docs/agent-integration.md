@@ -107,9 +107,9 @@ source revision, role/iteration, severity, attention and short reason codes.
 
 ## Desktop attention
 
-Desktop alerts are off by default. Use `--notify attention`,
-`ROADMAP_NOTIFY=attention`, or MCP `notify: "attention"` to enable delivery.
-`--notify off` overrides an environment opt-in. Alerts cover changed blockers,
+Desktop alerts are on by default for CLI and MCP starts. Use `--notify off`,
+`ROADMAP_NOTIFY=off`, or MCP `notify: "off"` to disable delivery. An explicit
+CLI/MCP choice overrides the default. Alerts cover changed blockers,
 needs-input tasks, terminal failure, capacity exhaustion and quota wait expiry.
 Routine starts, completion, turns and recoverable quota waits remain quiet.
 Benign SKIPPED flags alone do not cause an attention alert.
@@ -122,7 +122,7 @@ Preferences persist with the worker after the chat disconnects; changing an
 existing watch is outside this release.
 
 Run `roadmap-runner notifications request-permission` to request macOS
-authorization and submit a confirmation notification before opting a run in.
+authorization and submit a confirmation notification when macOS authorization is needed.
 Denied permission opens Notifications settings. The command does not change
 the notification preferences of new or existing runs.
 
@@ -220,3 +220,18 @@ Protocol/configuration sources: [MCP SDK](https://github.com/modelcontextprotoco
 [Claude MCP](https://code.claude.com/docs/en/mcp),
 [Grok Build MCP](https://docs.x.ai/build/features/mcp-servers), and
 [skills CLI](https://github.com/vercel-labs/skills).
+
+
+## Blocked runs and explicit recovery
+
+Global `Status: BLOCKED` stops execution (exit 75, reason `blocked`); task-local
+flags do not stop independent work. Managed state retains `roadmapState: blocked`
+and a `blocked` queue item; later entries stay pending. No supervisor or worker
+is automatically scheduled against the unchanged blocker.
+
+After a concrete unblock input changes, a controller may start with
+`--recover-blocked` or MCP `recoverBlocked: true` to permit one worker. If still
+blocked, it stops again. Use a new idempotency key for a genuinely new recovery
+attempt; reusing the old key returns the original run. Existing workspace
+reservations prevent overlapping runs. A scheduler must deduplicate by source,
+blocker and changed-input identity before spending another model session.

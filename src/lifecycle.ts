@@ -105,6 +105,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let iteration = 0;
   let capacityFailures = 0;
   let retryDelay = options.capacity.delayMs;
+  let recoveryRequested = options.recoverBlocked === true;
 
   while (true) {
     if (signal.aborted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
@@ -120,12 +121,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       return { code: 0, reason: "complete" };
     }
 
-    await recovery.attention(contents, status, iteration);
-
     const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
-    if (blockedRecovery) {
-      console.warn("Roadmap reported BLOCKED; bounded recovery continues until work advances or the no-progress limit is reached.");
-      console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
+    const terminalBlocked = blockedRecovery && !recovery.state.requiresWorker && !recovery.state.quota && !recoveryRequested;
+    await recovery.attention(contents, status, iteration, terminalBlocked);
+    if (terminalBlocked) {
+      console.warn("Roadmap is BLOCKED; stopping without another worker or supervisor. Resolve the recorded unblock condition, then use --recover-blocked for one explicit recovery attempt.");
+      return { code: 75, reason: "blocked" };
     }
 
     // Reconcile a controller revision before trusting terminal state or old reviews.
@@ -144,6 +145,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const output = supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
     const reconcilingSource = tracking.needsReconciliation;
+    recoveryRequested = false; // Explicit recovery authorizes one worker, not a retry loop.
     const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.compactionContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     await recovery.event("runner.turn_starting", { role: "worker", iteration, sourceRevision });
     const result = await runClient({
@@ -212,8 +214,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
     recovery.success({ worker: true });
     tracking.finishWorker(sourceRevision, result);
-    await recovery.attention(after, roadmapStatus(after), iteration);
-    if (roadmapStatus(after) !== "complete" || tracking.needsReconciliation) {
+    if (roadmapStatus(after) !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, roadmapStatus(after), iteration);
+    if (roadmapStatus(after) !== "blocked" && (roadmapStatus(after) !== "complete" || tracking.needsReconciliation)) {
       await recovery.idle(contents, after, reconcilingSource || sourceRevision !== tracking.sourceRevision);
     }
     console.log(`Iteration ${iteration} completed.`);

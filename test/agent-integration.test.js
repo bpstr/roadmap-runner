@@ -119,14 +119,23 @@ test('notification timeout, missing backend and headless Linux are best effort a
   const transport = fakeTransport({ platform: 'linux' }); transport.env = {}; const n = new Notifications({ notify: 'attention' }, path.join(f.dir, 'headless'), transport); n.enqueue(event); await n.flush(); assert.equal(transport.calls.length, 0); assert.equal(n.state.deliveries[0].result, 'backend_unavailable');
 });
 
-test('event selection alone cannot enable desktop delivery', async t => {
-  const f = fixture(t); const transport = fakeTransport();
-  const event = { id: 'optional', type: 'runner.failed', attention: true, roadmap: f.roadmap };
-  for (const options of [{}, { notifyOn: ['runner.failed'] }, startSchema.parse({ workspace: f.workspace, roadmap: f.roadmap, notifyOn: ['runner.failed'] })]) {
-    const notifications = new Notifications(options, path.join(f.dir, 'off'), transport);
-    notifications.enqueue(event); await notifications.flush(); assert.deepEqual(notifications.state.deliveries, []);
+test('desktop attention defaults on and explicit off suppresses selected events', async t => {
+  const f = fixture(t); const event = { id: 'optional', type: 'runner.failed', attention: true, roadmap: f.roadmap };
+  for (const [i, options] of [{}, { notifyOn: ['runner.failed'] }].entries()) {
+    const transport = fakeTransport();
+    const notifications = new Notifications(options, path.join(f.dir, 'default-' + i), transport);
+    notifications.enqueue(event); await notifications.flush(); assert.equal(transport.calls.length, 1);
   }
-  assert.equal(transport.calls.length, 0);
+  const transport = fakeTransport();
+  const disabled = new Notifications({ notify: 'off', notifyOn: ['runner.failed'] }, path.join(f.dir, 'off'), transport);
+  disabled.enqueue(event); await disabled.flush(); assert.equal(transport.calls.length, 0);
+  const previous = process.env.ROADMAP_NOTIFY;
+  try {
+    delete process.env.ROADMAP_NOTIFY;
+    assert.equal(startSchema.parse({ workspace: f.workspace, roadmap: f.roadmap }).notify, 'attention');
+    process.env.ROADMAP_NOTIFY = 'off';
+    assert.equal(startSchema.parse({ workspace: f.workspace, roadmap: f.roadmap }).notify, 'off');
+  } finally { if (previous === undefined) delete process.env.ROADMAP_NOTIFY; else process.env.ROADMAP_NOTIFY = previous; }
 });
 
 test('failed notification submission can retry after the backend is repaired', async t => {

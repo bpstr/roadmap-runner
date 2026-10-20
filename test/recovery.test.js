@@ -275,15 +275,18 @@ test("weekly CLI quota expires at the configured ceiling without another provide
   assert.equal(f.events().at(-1).type, "runner.failed");
 });
 
-test("blocked CLI emits notification and executes the next worker for independent work", t => {
+test("blocked CLI emits notification and stops before a repeated worker", t => {
   const f = cliFixture(t, "codex", "blocked");
   const hook = path.join(f.dir, "notify.cjs");
   fs.writeFileSync(hook, "#!/usr/bin/env node\nlet input=''; process.stdin.on('data', c => input+=c); process.stdin.on('end', () => { require('node:fs').appendFileSync('notifications', JSON.parse(input).type + '\\n'); process.exitCode=1; });\n");
   fs.chmodSync(hook, 0o755);
   f.options.env.ROADMAP_NOTIFY_BIN = hook;
   const result = spawnSync(process.execPath, f.args, f.options);
-  assert.equal(result.status, 9, result.stderr);
-  assert.ok(fs.existsSync(path.join(f.dir, "independent-built")));
+  assert.equal(result.status, 75, result.stderr);
+  assert.equal(fs.existsSync(path.join(f.dir, "independent-built")), false);
+  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
+  assert.equal(f.events().at(-1).type, "runner.blocked");
+  assert.equal(f.events().at(-1).terminal, true);
   assert.match(fs.readFileSync(path.join(f.dir, "notifications"), "utf8"), /runner.blocked/);
 });
 
@@ -305,7 +308,7 @@ test("SIGINT during a real quota wait exits promptly and keeps state for restart
 });
 
 
-test("CLI stops note-rewriting blocked workers with exit 75 before another provider attempt", t => {
+test("CLI stops note-rewriting workers avoiding BLOCKED with exit 75 before another provider attempt", t => {
   const f = cliFixture(t, "codex", "blocked");
   const mock = path.join(f.dir, "worker.cjs");
   fs.writeFileSync(mock, String.raw`#!/usr/bin/env node
@@ -314,7 +317,7 @@ const prompt = process.argv.at(-1);
 const progress = prompt.split('Tracking file (progress / delivery evidence):')[1].trim().split('\n')[0].trim();
 const count = fs.existsSync('count') ? Number(fs.readFileSync('count')) + 1 : 1;
 fs.writeFileSync('count', String(count));
-fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Current handoff\nStill missing dependency, inspection ' + count + '\n');
+fs.writeFileSync(progress, 'Status: IN_PROGRESS\n## Tasks\n- [ ] T01 build\n## Current handoff\nStill missing dependency, inspection ' + count + '\n');
 `);
   f.options.env.ROADMAP_RECOVERY_DELAY = "1";
   f.options.env.ROADMAP_RECOVERY_MAX_DELAY = "1";
@@ -325,5 +328,24 @@ fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Curre
   assert.equal(f.events().at(-1).type, "runner.failed");
   assert.equal(f.events().at(-1).reason, "no_progress_limit");
   assert.ok(f.events().some(e => e.type === "runner.stuck" && e.terminal));
-  assert.match(fs.readFileSync(f.config.tracking.file, "utf8"), /Status: BLOCKED/);
+  assert.match(fs.readFileSync(f.config.tracking.file, "utf8"), /Status: IN_PROGRESS/);
+});
+
+
+test("explicit blocked recovery runs one worker and stops again if unchanged", t => {
+  const f = cliFixture(t, "codex", "blocked");
+  fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
+  const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
+  assert.equal(result.status, 75, result.stderr);
+  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
+  assert.equal(f.events().at(-1).type, "runner.blocked");
+});
+
+test("explicit recovery can continue after the changed input resolves the blocker", t => {
+  const f = cliFixture(t, "codex", "blocked");
+  fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
+  fs.writeFileSync(path.join(f.dir, "count"), "1"); // Prepared changed-input recovery branch.
+  const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
+  assert.equal(result.status, 9, result.stderr); // Fixture deliberately ends independent work.
+  assert.ok(fs.existsSync(path.join(f.dir, "independent-built")));
 });

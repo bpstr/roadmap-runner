@@ -27,7 +27,7 @@ const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\
 fs.appendFileSync(source + '.started', progress + '\\n');
 if (fs.existsSync(source + '.fail')) process.exit(7);
 if (fs.existsSync(source + '.stall')) {
-  fs.writeFileSync(progress, 'Status: BLOCKED\\n## Tasks\\n- [ ] T01 build\\n## Current handoff\\nStill waiting ' + Date.now() + '\\n');
+  fs.writeFileSync(progress, 'Status: IN_PROGRESS\\n## Tasks\\n- [ ] T01 build\\n## Current handoff\\nStill waiting ' + Date.now() + '\\n');
   process.exit(0);
 }
 if (fs.existsSync(source + '.blocked')) fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'BLOCKED'));
@@ -172,8 +172,30 @@ test('no-progress limit is terminal in managed status and preserves the pending 
   assert.deepEqual(final.queue.map(item => item.state), ['failed', 'pending']);
   assert.equal(f.started(second), false);
   assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
-  assert.match(fs.readFileSync(final.progressFile, 'utf8'), /Status: BLOCKED/);
+  assert.match(fs.readFileSync(final.progressFile, 'utf8'), /Status: IN_PROGRESS/);
   assert.ok(final.events.some(e => e.type === 'runner.stuck' && e.terminal && e.reason === 'no_progress_limit'));
   assert.equal(final.events.at(-1).reason, 'no_progress_limit');
+  for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
+});
+
+
+test('fully blocked managed runs stop once, retain blocked status, and leave the queue pending', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(f.worker, String.raw`#!/usr/bin/env node
+import fs from 'node:fs';
+const prompt = process.argv.at(-1);
+const progress = prompt.split('Tracking file (progress / delivery evidence):')[1].trim().split('\n')[0];
+fs.appendFileSync('attempts', 'worker\n');
+fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Deferred gates\n- BLOCKED T01: native input | Unblock: supplied | Retry: input changed\n');
+`);
+  const run = await f.start([{ roadmap: second }]);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 75); assert.equal(final.reason, 'blocked');
+  assert.equal(final.roadmapState, 'blocked');
+  assert.deepEqual(final.queue.map(item => item.state), ['blocked', 'pending']);
+  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\n');
+  assert.equal(f.started(second), false);
+  assert.equal(final.events.at(-1).type, 'runner.blocked');
+  assert.equal(final.events.at(-1).terminal, true);
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });

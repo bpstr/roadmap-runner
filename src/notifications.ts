@@ -21,7 +21,7 @@ export class Notifications {
   pendingKeys = new Set<string>();
   constructor(options: any, file: string, private transport: any = {}) {
     if ((options.notifyOn || []).some(type => !eventTypes.includes(type))) throw new Error('Unknown notification event');
-    this.options = options; this.file = file; this.state = { version: 2, fingerprints: [], deliveries: [] };
+    this.options = { ...options, notify: options.notify ?? 'attention' }; this.file = file; this.state = { version: 2, fingerprints: [], deliveries: [] };
     try {
       if (fs.statSync(file).size > 32768) throw new Error('State exceeds budget');
       const state = JSON.parse(fs.readFileSync(file, 'utf8'));
