@@ -772,6 +772,17 @@ managed status and MCP even when desktop notifications are disabled. Resolve the
 blocker or revise the source, then explicitly restart; the runner does not schedule
 more provider attempts after the limit.
 
+With supervision enabled, two idle workers also trigger one small LLM loop check
+before the next worker, including during repeated source reconciliation. It reuses
+bounded recent source/progress snapshots, worker outcomes and the prior review,
+with a maximum 60-second timeout. A current `Loop: DETECTED` verdict must cite at
+least two observed iterations and concrete evidence; it immediately blocks the
+runner (exit 75, terminal `runner.blocked`, reason `loop_detected`). Pending queue
+entries remain untouched. An unchanged restart stays blocked; a controller
+requirement amendment or explicit `--recover-blocked` permits recovery after repair.
+`CLEAR`, `UNCERTAIN`, missing or invalid reports never renew the deterministic
+budget. `--supervisor-every 0` disables LLM reviews while keeping the hard stop.
+
 Progress means increasing the number of completed tasks in the authoritative
 live roadmap, above the persisted high-water mark. Stable task IDs (or full labels
 when no ID exists) identify distinct tasks. For a source without checkboxes, the

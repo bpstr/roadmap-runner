@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4 — 2026-10-23
+
+- Add a small supervisor LLM loop check after two idle workers. Compare bounded prior progress, source snapshots and worker outcomes; block immediately on a current, evidenced loop verdict. Keep the deterministic stop budget, pending queues and blocked state across unchanged restarts. Cap the extra check at 60 seconds and one per stagnation episode; supervision-off still disables model reviews.
+
 ## 0.10.3 — 2026-10-23
 
 - Stop source-hash reconciliation loops: measure live-roadmap task completion, persist its high-water count, and prevent worker/supervisor source rewrites from renewing the stagnation budget. Controller requirement amendments adopted between sessions still grant one fresh budget. Preserve exhausted budgets across restarts and pending queues. Fixes #6.

@@ -114,6 +114,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = tracking.deliveryStatus(roadmapStatus(contents));
 
+    if (recovery.state.loopBlockedRevision === tracking.requirementsRevision) {
+      if (!recoveryRequested) {
+        await recovery.event("runner.blocked", { terminal: true, reason: "loop_detected", iteration });
+        return { code: 75, reason: "blocked" };
+      }
+      delete recovery.state.loopBlockedRevision;
+      recovery.save();
+    }
+
     if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       recovery.success();
       await recovery.event("runner.completed", { iteration });
@@ -129,11 +138,22 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       return { code: 75, reason: "blocked" };
     }
 
-    // Reconcile a controller revision before trusting terminal state or old reviews.
-    if (supervisor?.due && !tracking.needsReconciliation) {
+    if (supervisor && recovery.state.idle < 2) supervisor.loopChecked = false;
+    const loopCheck = supervisor && !supervisor.loopChecked && supervisor.records.length >= 2 &&
+      recovery.state.idle >= 2 && recovery.state.progressRevision === tracking.requirementsRevision;
+    // A small early review inspects repeated reconciliation before the hard stop.
+    if (supervisor && (loopCheck || (supervisor.due && !tracking.needsReconciliation))) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
-      await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery });
+      if (loopCheck) supervisor.loopChecked = true;
+      const review = await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery, loopCheck });
+      if (review?.loop) {
+        recovery.state.loopBlockedRevision = tracking.requirementsRevision;
+        recovery.save();
+        await recovery.event("runner.blocked", { terminal: true, reason: "loop_detected", role: "supervisor",
+          iteration, loopIterations: review.loop.iterations, loopEvidence: review.loop.evidence });
+        return { code: 75, reason: "blocked" };
+      }
       continue; // Re-read the supervisor's handoff/status before another worker.
     }
 
@@ -179,6 +199,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     supervisor?.record({
       iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, result, output,
       before: contents, after,
+      sourceBefore: sourceContents, sourceAfter: afterSource,
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });

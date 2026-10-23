@@ -1,6 +1,6 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {

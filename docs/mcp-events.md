@@ -131,3 +131,11 @@ Global `BLOCKED` emits a terminal `runner.blocked` event and exits 75 with reaso
 `blocked`; it does not emit `runner.failed`. Managed state and queue items retain
 blocked status. `recoverBlocked: true` starts one explicitly requested recovery
 worker after changed inputs; remaining blocked stops again without polling.
+
+A current supervisor `Loop: DETECTED` verdict also blocks execution, requiring
+at least two observed worker iterations and concrete evidence. The terminal
+`runner.blocked` event carries `reason: "loop_detected"`, `loopIterations` and a
+bounded `loopEvidence` summary. Managed execution exits 75, marks the current queue
+item blocked and preserves later entries as pending. An unchanged restart remains
+blocked without a model call; changed requirements or explicit `recoverBlocked`
+permit recovery. Missing/uncertain loop reports do not reset the deterministic limit.

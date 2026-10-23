@@ -68,7 +68,7 @@ if (mode === 'productive') {
   Object.assign(env, { ROADMAP_STATE_DIR: path.join(dir, 'registry'), ROADMAP_NOTIFY: 'off',
     ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1', ROADMAP_MAX_IDLE_WORKERS: String(limit) });
   const args = [cli, source, '--progress-file', progress, '--client-bin', client,
-    '--supervisor-every', supervisor ? '1' : '0', '--timeout', mode === 'timeout-churn' ? '500ms' : '5s'];
+    '--supervisor-every', supervisor ? '1' : '0', '--timeout', mode === 'timeout-churn' ? '2s' : '5s'];
   const options = { cwd: dir, env, encoding: 'utf8', timeout: 20_000 };
   const count = () => Number(fs.readFileSync(path.join(dir, 'workers'), 'utf8'));
   const events = () => fs.readFileSync(progress + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
