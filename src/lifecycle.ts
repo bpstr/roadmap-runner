@@ -7,7 +7,8 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { Recovery, recoverySettings } from "../lib/recovery.js";
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
-import { prepareTracking, renderPrompt } from "../lib/tracking.js";
+import { prepareTracking, renderPrompt, TARGET_TRACKING_BYTES } from "../lib/tracking.js";
+import { sessionMetrics } from "../lib/telemetry.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
   capacityRetrySettings,
@@ -23,6 +24,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
 const PROMPT_TEMPLATE = fs.readFileSync(path.join(ROOT, "prompt.md"), "utf8");
 const PROMPT_REVISION = createHash("sha256").update(PROMPT_TEMPLATE).digest("hex").slice(0, 12);
+const COMPACT_TEMPLATE = fs.readFileSync(path.join(ROOT, "compact.md"), "utf8");
+const COMPACT_REVISION = createHash("sha256").update(COMPACT_TEMPLATE).digest("hex").slice(0, 12);
 
 
 const fail = (message, code = 1) => { throw Object.assign(new Error(message), { exitCode: code }); };
@@ -128,23 +131,32 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
     }
 
-    // Reconcile a controller revision before trusting terminal state or old reviews.
-    if (supervisor?.due && !tracking.needsReconciliation) {
+    const compacting = tracking.needsCompaction;
+    // Compact before either role reads the handoff. Reconcile actual scope changes
+    // before supervision; explicitly marked delivery notes do not postpone it.
+    if (supervisor?.due && !tracking.needsReconciliation && !compacting) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
       await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery });
       continue; // Re-read the supervisor's handoff/status before another worker.
     }
 
-    iteration += 1;
-    console.log(`===== iteration ${iteration} | ${new Date().toISOString()} =====`);
+    if (!compacting) iteration += 1;
+    const role = compacting ? "compactor" : "worker";
+    const sessionId = randomUUID();
+    const promptRevision = compacting ? COMPACT_REVISION : PROMPT_REVISION;
+    console.log(`===== ${compacting ? "compaction before next worker; after iteration" : "iteration"} ${iteration} | ${new Date().toISOString()} =====`);
 
     const startedAt = new Date().toISOString();
     const started = performance.now();
-    const output = supervisor?.capture();
+    const output = compacting ? undefined : supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
-    const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.compactionContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
-    await recovery.event("runner.turn_starting", { role: "worker", iteration, sourceRevision });
+    const snapshot = compacting ? tracking.archive({ kind: "before-compaction", iteration }) : null;
+    const iterationPrompt = compacting
+      ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
+      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+    const before = tracking.contextBytes(iterationPrompt);
+    await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, contextBytes: before });
     const result = await runClient({
       signal,
       onProcess: options.onProcess,
@@ -154,21 +166,26 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       workdir,
       model: options.model,
       effort: options.effort,
-      timeoutMs,
+      timeoutMs: compacting ? Math.min(timeoutMs, parseDuration(options.supervisorTimeout)) : timeoutMs,
       onOutput: output?.write,
     });
 
-    await recovery.event("runner.turn_finished", { role: "worker", iteration, code: result.code, timedOut: result.timedOut, interrupted: result.interrupted });
-    tracking.refreshSource(iteration);
     const elapsedMs = Math.round(performance.now() - started);
+    const metrics = sessionMetrics(result, { client: options.client, effort: options.effort, startedAt, elapsedMs,
+      before, after: tracking.contextBytes(iterationPrompt) });
+    const receipt = { sessionId, role, iteration, sourceRevision, promptRevision, code: result.code,
+      timedOut: result.timedOut, interrupted: result.interrupted, ...metrics };
+    tracking.recordSession({ runId: recovery.runId, ...receipt });
+    await recovery.event("runner.turn_finished", receipt);
+    tracking.refreshSource(iteration);
     const after = fs.readFileSync(tracking.file, "utf8");
-    tracking.archive({ kind: "worker", iteration, metadata: {
-      startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, code: result.code,
+    tracking.archive({ kind: role, iteration, metadata: {
+      ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
     tracking.assertBounded();
-    supervisor?.record({
-      iteration, startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, result, output,
+    if (!compacting) supervisor?.record({
+      iteration, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
       before: contents, after,
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
@@ -176,7 +193,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
 
     if (result.timedOut) {
-      await recovery.event("runner.turn_limit_reached", { role: "worker", iteration });
+      await recovery.event("runner.turn_limit_reached", { role, iteration });
+      if (compacting) fail(`handoff compaction timed out; original state preserved at ${snapshot}`);
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
       await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
@@ -185,7 +203,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
 
     if (result.usageLimit) {
-      await recovery.pause(result.usageLimit, "worker");
+      await recovery.pause(result.usageLimit, role);
       continue;
     }
 
@@ -195,7 +213,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
         fail("model capacity retry limit reached; partial work preserved.", 75);
       }
       capacityFailures += 1;
-      await recovery.event("runner.capacity_wait", { role: "worker", iteration, delayMs: retryDelay });
+      await recovery.event("runner.capacity_wait", { role, iteration, delayMs: retryDelay });
       const waiting = waitForRetry(retryDelay, signal);
       console.log(`Model at capacity; retry ${capacityFailures}/${options.capacity.retries} in ${retryDelay / 1000}s (same model).`);
       if (await waiting) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
@@ -209,6 +227,17 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       fail(`${options.client} exited with code ${result.code}; stopping.`, result.code || 1);
     }
 
+    if (compacting) {
+      if (Buffer.byteLength(after) >= TARGET_TRACKING_BYTES || roadmapStatus(after) !== roadmapStatus(contents)) {
+        recovery.requireWorker();
+        const reason = Buffer.byteLength(after) >= TARGET_TRACKING_BYTES
+          ? `did not reach the ${TARGET_TRACKING_BYTES}-byte target` : "changed the opening status";
+        fail(`handoff compaction ${reason}; original state preserved at ${snapshot}`);
+      }
+      recovery.success();
+      console.log(`Handoff compacted from ${Buffer.byteLength(contents)} to ${Buffer.byteLength(after)} bytes; evidence remains available on demand.`);
+      continue;
+    }
     recovery.success({ worker: true });
     tracking.finishWorker(sourceRevision, result);
     await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);

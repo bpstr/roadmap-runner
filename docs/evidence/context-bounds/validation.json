@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-23",
+  "inference": "Prepared executable clients only; no provider calls or credential loading.",
+  "selection": {
+    "changed_inputs": "Tracking thresholds, compaction lifecycle, delivery-note reconciliation, usage parsing and worker/supervisor session metrics.",
+    "development": [
+      "TypeScript build",
+      "test/context-budget.test.js",
+      "test/telemetry.test.js"
+    ],
+    "acceptance": [
+      "test/progress.test.js",
+      "test/roadmap-updates.test.js",
+      "test/supervisor.test.js",
+      "test/runner.test.js",
+      "test/recovery.test.js"
+    ],
+    "reason": "Exercise the changed boundaries and their existing reconciliation, quota/failure recovery, supervision and client-adapter contracts. No full-suite run is needed.",
+    "packaging": "Verify the compaction prompt and telemetry module are in the package; check extracted CLI help/version.",
+    "expected_cost": "Two focused prepared batches, approximately two minutes total; build/package checks under 30 seconds. New tests cover distinct preservation, scheduling and accounting risks.",
+    "reuse": "Carry each passing batch forward unless its code or dependencies change. Keep failures and rerun only affected checks.",
+    "release_gate": "Existing release CI remains required before publication. This task does not publish a release.",
+    "follow_up": {
+      "changed_input": "Delivery-marker parsing now treats malformed/nested blocks conservatively; timeout fixture uses 1s instead of 200ms.",
+      "selectors": [
+        "test/context-budget.test.js",
+        "test/progress.test.js",
+        "test/roadmap-updates.test.js"
+      ],
+      "reason": "Recheck the modified scope classifier and failed timeout case. Retain passing supervisor, adapter, recovery and telemetry evidence. No TypeScript changes since packaged build."
+    },
+    "managed_check": {
+      "selector": "test/agent-integration.test.js: managed start is ready",
+      "reason": "Verify the changed managed artifact publication and interrupted-session journal through the existing lifecycle fixture. The direct CLI tests do not exercise src/worker.ts."
+    }
+  },
+  "results": {
+    "development": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "log": "context-tests-1.log"
+    },
+    "initial_affected": {
+      "passed": 122,
+      "failed": 1,
+      "skipped": 0,
+      "log": "affected-tests-1.log",
+      "failure": "New 200ms timeout fixture could expire before process startup; changed only the fixture timeout to 1s."
+    },
+    "follow_up": {
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "log": "context-tests-2.log",
+      "scope": "Changed conservative marker classifier and timeout fixture; context/progress/roadmap-update checks."
+    },
+    "managed": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "managed-test.log"
+    },
+    "retained": "Reuse passing supervisor, adapter, recovery and telemetry checks. Final unique selected coverage: 128 tests passed; initial failed timeout evidence retained. No full suite run.",
+    "build": "passed; package validation also built the changed TypeScript",
+    "package": "passed; 63 files, extracted CLI version/help, compact.md and lib/telemetry.js included. Packaging layout unchanged by later JS classifier/test-only fixes.",
+    "whitespace": "passed"
+  },
+  "iterations": [
+    {
+      "check": "initial new behavior tests",
+      "result": "11 passed; 0 failed",
+      "log": "context-tests-1.log"
+    },
+    {
+      "check": "affected acceptance batch",
+      "result": "All existing affected tests passed; new compaction timeout fixture failed before its startup marker. Full original log retained.",
+      "log": "affected-tests-1.log"
+    }
+  ],
+  "source_sha256": {
+    "lib/tracking.js": "026af4cafdea44ce6ad97dc5b497b56bc38e5299f79b28b763e68554fea0d30a",
+    "lib/runner.js": "95f02c9a6eba202b92cb81ca3b3b6919954c0146cc472393ae3bddeaac18164d",
+    "lib/telemetry.js": "18bbdfa5954f5fac0cf967865e53af13e36411652018229a820d6b769dae539b",
+    "lib/supervision.js": "e205a43cb3cd5e3692f179868c6acfcf1f1f5cd90e0c828ea3b6f41b2a3e6df0",
+    "src/lifecycle.ts": "f42241431eecfaadb4cbb0135037559b11d3362044df8217b5b5fea5420e3280",
+    "src/worker.ts": "b7337598bd97b984b0f345788e268c37a33cfbaa5ab876d12d933017bc15c717",
+    "prompt.md": "e1948a96e5e3b105e3ea04b18a40d04c9e1bddebc0ea5c36e7c858b3e1e6f80b",
+    "compact.md": "3bf542cf2664b744732354be122658856b10a371cf1e4810875af94e2439e750",
+    "supervisor.md": "a740c8cab7f893a68885b1f9838066dc530f8d888de80253b043b1a4a57c34ec"
+  },
+  "cleanup": {
+    "remaining_test_processes": 0,
+    "browsers_or_servers_started": 0,
+    "data_volume_free_gib": 43.09,
+    "session_artifacts_bytes": 725250,
+    "note": "Removed only inactive prepared-test registry state after validating ownership and process exit. Kept all validation logs and build outputs. No unrelated cleanup.",
+    "removed": [
+      "/tmp/runner-context-implementation/registry"
+    ],
+    "reclaimed_file_bytes": 498486
+  }
+}

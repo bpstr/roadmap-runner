@@ -16,16 +16,21 @@ This is one fresh-context iteration. The live roadmap owns task checkbox states
 and concise delivery status. The source roadmap snapshot named in Runner context
 is the immutable authority for this session's goal, scope, constraints and
 acceptance criteria. Preserve that snapshot. Controller requirement changes take
-effect on the next iteration. The separate tracking file holds bounded evidence,
-blockers, progress notes and handoffs, with references to roadmap task IDs rather
-than a competing checklist. Prior tracking snapshots remain in cold history.
+effect on the next iteration. The separate tracking file holds the current handoff,
+blockers and short evidence pointers by task ID. Detailed evidence and prior
+tracking snapshots are retrieved on demand from the locations in Runner context.
 Read repository instructions and preserve unrelated changes.
 
 - Tick verified tasks directly in the live roadmap, and reopen tasks when concrete
   evidence invalidates acceptance. Update its concise status at each batch boundary.
   Read the current live file before each targeted edit; preserve concurrent controller
-  edits, original task IDs, criteria, dependencies and scope. Keep detailed evidence
-  and handoffs in the separate tracking file. Never edit runner-owned snapshots.
+  edits, original task IDs, criteria, dependencies and scope. Keep the current
+  handoff in the tracking file and detailed evidence in the evidence directory.
+  If concise delivery prose is needed in the roadmap, enclose it between standalone
+  `<!-- roadmap-runner:delivery:start -->` and `<!-- roadmap-runner:delivery:end -->`
+  lines. Keep all requirements, task checkboxes, priorities and dependencies outside
+  these blocks; only delivery notes are excluded from requirements reconciliation.
+  Never edit runner-owned snapshots.
 - At the start of EVERY iteration, re-read the source roadmap before trusting the
   current handoff. Map the active gate and every proposed child back to an original
   requirement. If tracking text conflicts with the source, the source wins. Remove
@@ -37,13 +42,16 @@ Read repository instructions and preserve unrelated changes.
   Do not treat old COMPLETE/BLOCKED as valid for revised requirements. Set status
   anew after reconciliation, even when no implementation is needed. This authorizes only live roadmap task-state/status updates; keep snapshots,
   acceptance criteria, scope, side-effect permissions and budgets unchanged.
-- Keep the tracking file as bounded working memory, not an append-only journal.
-  Replace Current handoff, Batch plan, Latest supervisor review and current evidence
-  summaries in place. Do not paste raw CLI output, diffs, test logs, repeated prose,
-  old handoffs or completed iteration narratives into it.
-- Historical snapshots live under the archive directory above. Do not read the
-  archive by default. Consult one specific older snapshot only when current state
-  references it or when evidence is genuinely needed to resolve uncertainty.
+- Target a handoff below 16 KiB; at 24 KiB the runner starts a separate compaction
+  session before more implementation. Replace Current handoff, Batch plan and
+  Latest supervisor review in place. Keep current blockers, retry conditions and
+  validation obligations with short references. Store completed-task details and
+  older failures in evidence files by task ID; keep pointers, not repeated narratives.
+- Retrieve the specific evidence file or archived snapshot needed to verify a
+  gate, resolve conflicting state or investigate a failed attempt. Search the
+  history index by iteration/time and decompress the selected `.md.gz` file.
+  Preserve prior passing checks and failed evidence; history remains available
+  without loading it wholesale at every session start.
 - Put any necessary bounded child checkboxes in the owning live roadmap under
   their original parent, preserving the original acceptance bar. Use stable task
   IDs in the handoff rather than a second checklist.
@@ -171,7 +179,9 @@ Update the roadmap and handoff, then stop this invocation:
   completions against their receipts before ticking the corresponding roadmap task.
   Keep original parents open until every original criterion passes. Record evidence
   references and unresolved criteria in the handoff; remove duplicate tracking checklists.
-- Keep active progress below 96 KiB, with a hard runner limit of 128 KiB. When Runner context requests compaction, compact before implementation; preserve all gate IDs, criteria, checkbox states, unresolved blockers and current evidence references. Never put removed iteration prose into the source roadmap. If required state cannot fit, report the context blocker rather than deleting requirements.
+- Preserve requirements in the roadmap and detailed proof in referenced evidence.
+  Follow the handoff size target above; preserve unresolved obligations and usable
+  evidence pointers when replacing old prose.
 - Maintain compact Checked-item evidence only for acceptance gates whose current
   state matters: ID, implemented/verified/deployed state, a short evidence reference,
   and last relevant change. Do not accumulate one prose log entry per iteration.

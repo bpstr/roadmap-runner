@@ -109,7 +109,12 @@ That ID verifies that a handoff was written, not that its reasoning is correct.
 
 ## Output retention, context bounds and privacy
 
-The active progress file is capped at 128 KiB. A source snapshot is refreshed
+The handoff targets less than 16 KiB. At 24 KiB, a separate compaction session
+archives and reduces it before a worker or supervisor starts; 128 KiB remains the
+emergency read limit. Detailed evidence stays available through per-task files and
+specific historical snapshots. Compaction does not count toward the review cadence.
+Explicitly marked delivery-only roadmap notes do not postpone supervision; actual
+scope changes still require reconciliation. A source snapshot is refreshed
 between sessions and remains the authority when a handoff or proposed
 workflow change drifts from the original scope. Full progress snapshots are archived
 under the workspace-local `.roadmap-runner/.../history/` directory at worker and

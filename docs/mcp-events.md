@@ -20,6 +20,8 @@ This is a local executable interface; remote delivery is the hook's responsibili
 
 | Event | Meaning |
 | --- | --- |
+| `runner.turn_starting` | Worker, supervisor or compactor starts; includes `sessionId` and initial `contextBytes` |
+| `runner.turn_finished` | Session result, elapsed time, model attribution, reported usage and before/after context-file sizes |
 | `runner.blocked` | Current ready set exhausted; recovery continues |
 | `runner.needs_attention` | Task blocked, skipped, problematic or needs an answer while other work can continue |
 | `runner.unblocked` | Previously flagged attention cleared |
@@ -38,6 +40,19 @@ This is a local executable interface; remote delivery is the hook's responsibili
 Managed run journals keep event sequences increasing across roadmap handoffs.
 Each roadmap's progress-local journal retains its own sequence and completion
 event. Use the managed run journal when monitoring the whole queue.
+
+Session roles are `worker`, `supervisor` and `compactor`. Compactors use the last
+worker iteration number (zero before the first worker) and a unique `sessionId`.
+Each attempt also has a durable row in the tracking directory's `sessions.jsonl`;
+managed artifacts expose it as `sessions`, and detailed evidence as `evidence`.
+Finished events include `usage` (nullable), `usageReports`, `usageComplete`,
+`model`, `modelSource` (`client`, `configured` or null), `configuredEffort`,
+`startedAt`, `elapsedMs`, and `contextBytes.before/after` with `prompt`, `source`
+and `progress` byte sizes. Usage fields are `inputTokens`, `cachedInputTokens`,
+`outputTokens`, `reasoningOutputTokens` and `cacheCreationInputTokens`; unreported
+fields remain null. Codex input includes cached tokens; Claude cache fields are
+separate from input. Failed attempts retain available receipts with
+`usageComplete: false`. These fields do not estimate monetary cost or peak context.
 
 Repeated unchanged task attention is suppressed across restarts. A changed reason,
 set of tasks or global status creates a new event. Hooks are best effort: the event

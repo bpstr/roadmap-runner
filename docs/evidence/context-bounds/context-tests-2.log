@@ -1,0 +1,88 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ legacy large handoffs compact separately while detailed evidence remains available (505.484334ms)
+✔ compaction noop stops before implementation and retains the original archive (350.852708ms)
+✔ compaction status stops before implementation and retains the original archive (340.786125ms)
+✔ compaction failure stops before implementation and retains the original archive (332.662875ms)
+✔ compaction timeout stops before implementation and retains the original archive (1139.053ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (470.548875ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (391.927625ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.935958ms)
+Roadmap requirements changed; revision 31a7cb3d71d8 will be reconciled by the next worker.
+Roadmap requirements changed; revision d76106bc0d0f will be reconciled by the next worker.
+✔ progress-file argument and environment are opt-in, with CLI precedence (0.7795ms)
+✔ default mode preserves the roadmap and creates bounded internal progress state (3.819875ms)
+✔ new nested evidence gets an incomplete scaffold without touching the source (2.669666ms)
+✔ existing evidence is never truncated or reset by initialization (2.671625ms)
+✔ reject source alias: same path (0.555583ms)
+✔ reject source alias: normalized path (0.665417ms)
+✔ reject source alias: symlink (0.554875ms)
+✔ reject source alias: hard link (0.913667ms)
+✔ non-file progress targets are rejected without altering the source (0.814958ms)
+✔ source edits and deletion are detected without automatic restoration (4.323ms)
+✔ progress replaced with a source alias is rejected at the next boundary (2.183083ms)
+✔ prompt keeps literal paths and the latest batching and evidence instructions (0.223625ms)
+✔ source/history pollution is rejected before a worker sees it (0.912583ms)
+✔ a 350 KB source is rejected unchanged even though older versions accepted it (0.786417ms)
+✔ progress compaction is requested before the hard limit without discarding state (2.767542ms)
+✔ active progress is capped while archived snapshots preserve prior state (2.317667ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source IN_PROGRESS (416.617084ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source COMPLETE (399.094709ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source BLOCKED (429.024333ms)
+✔ resume skips previously checked tasks and preserves prior delivery evidence (381.32025ms)
+✔ stale progress COMPLETE cannot finish with open roadmap tasks (423.260667ms)
+✔ progress BLOCKED is non-terminal and launches a recovery worker (431.167042ms)
+✔ conflicting progress statuses fail before launching (107.122416ms)
+✔ continue after edit-source, preserving controller edits and prior evidence (421.91575ms)
+✔ continue after edit-capacity, preserving controller edits and prior evidence (1446.965334ms)
+✔ stop after delete-source, without another worker or automatic restoration (349.06275ms)
+✔ stop after delete-progress, without another worker or automatic restoration (368.972625ms)
+✔ capacity retry retains progress and source protection (1488.757875ms)
+✔ a separate compactor reduces a large handoff before implementation (458.677166ms)
+✔ roadmap completion ignores fenced examples and rejects stale handoff completion (2.511125ms)
+✔ checkbox updates retain the source snapshot without requiring scope reconciliation (5.208833ms)
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision e89d2cfe0a67 will be reconciled by the next worker.
+✔ edits are adopted only at a boundary; snapshots and evidence stay intact during a run (6.976416ms)
+✔ pending reconciliation and source/progress binding survive restarts (5.851875ms)
+✔ timeout does not acknowledge a pending source revision (3.7455ms)
+✔ interrupt does not acknowledge a pending source revision (3.401542ms)
+✔ failure does not acknowledge a pending source revision (3.580417ms)
+✔ spawn error does not acknowledge a pending source revision (3.245708ms)
+✔ capacity does not acknowledge a pending source revision (3.41875ms)
+✔ quota with zero exit does not acknowledge a pending source revision (3.234708ms)
+✔ a successful old worker cannot acknowledge a newer revision (2.970875ms)
+✔ multiple edits coalesce to the newest complete publication (3.212083ms)
+✔ unreadable, non-file and oversized replacement sources remain errors (2.572958ms)
+✔ corrupt revision metadata is not silently treated as a new baseline (2.363792ms)
+✔ revision metadata cannot be reused for another source or progress file (1.959208ms)
+✔ live edit overrides stale COMPLETE and runs corrected requirements next (508.476334ms)
+✔ live edit overrides stale BLOCKED and runs corrected requirements next (509.42875ms)
+✔ live edit overrides stale IN_PROGRESS and runs corrected requirements next (499.468291ms)
+✔ edit between invocations reopens persisted COMPLETE without erasing evidence (456.85775ms)
+✔ edit between invocations reopens persisted BLOCKED without erasing evidence (476.669083ms)
+✔ capacity-edit preserves the revision through recovery (1548.660708ms)
+✔ timeout-edit preserves the revision through recovery (668.434958ms)
+✔ supervisor-edit defers obsolete review results to a new worker (529.149125ms)
+✔ supervisor-capacity-edit defers obsolete review results to a new worker (1569.575417ms)
+✔ real external controller edit during capacity backoff is adopted by the next attempt (1511.705458ms)
+✔ source changes do not swallow an independent fatal client failure (451.419958ms)
+ℹ tests 63
+ℹ suites 0
+ℹ pass 63
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19644.367833

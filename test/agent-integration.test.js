@@ -46,6 +46,14 @@ test('managed start is ready, exclusive by canonical workspace, idempotent and s
   const stopped = await reconnect.stop(r.id); assert.equal(stopped.changed, true); assert.equal(stopped.processState, 'stopping');
   const final = await wait(async () => { const s = await reconnect.status(r.id); return s.processState === 'stopped' && s; });
   assert.equal(final.events.at(-1).type, 'runner.stopped'); assert.equal((await reconnect.stop(r.id)).changed, false);
+  assert.ok(fs.statSync(final.artifacts.evidence).isDirectory());
+  const sessions = fs.readFileSync(final.artifacts.sessions, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.equal(sessions.length, 1);
+  assert.equal(sessions[0].role, 'worker');
+  assert.equal(sessions[0].interrupted, true);
+  assert.equal(sessions[0].usage, null);
+  assert.equal(sessions[0].usageComplete, false);
+  assert.ok(sessions[0].contextBytes.before.prompt > 0);
 });
 
 test('simultaneous requests cannot create competing managed workers', async t => {

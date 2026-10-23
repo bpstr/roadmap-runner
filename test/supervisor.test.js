@@ -344,7 +344,7 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(worker, /Read the Latest supervisor review/);
   assert.match(worker, /Keep the declared batch outcome stable/);
   assert.match(worker, /canonical harness/);
-  assert.match(worker, /bounded working memory/);
+  assert.match(worker, /Target a handoff below 16 KiB/);
   assert.match(worker, /source wins/);
   assert.match(worker, /Implementation before feature verification/);
   assert.match(worker, /do not rerun the same failed feature check until/);

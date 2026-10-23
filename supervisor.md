@@ -123,4 +123,11 @@ using the worker's `- STATUS TASK-ID: reason | Unblock: condition | Retry: trigg
 format. Retarget independent ready work. Preserve unchecked acceptance criteria for
 all deferred tasks; a skipped prerequisite cannot unlock its dependent tasks.
 
-When Runner context requests progress compaction, compact superseded review/handoff prose and repeated evidence before recording this review. Preserve gate IDs, acceptance criteria, checkbox states, unresolved blockers and current evidence references. Target below 96 KiB; the hard limit is 128 KiB. Earlier full snapshots remain in cold history. Never move removed prose into the source roadmap or weaken requirements to fit.
+Keep the handoff below 16 KiB where possible. At 24 KiB the runner starts a separate
+compaction session before another worker or review. Replace the current review in
+place; store detailed findings in the evidence directory and keep short pointers.
+Retrieve specific evidence files, session metrics or compressed historical snapshots
+when needed to verify progress, resolve conflicting state or investigate failures.
+Preserve unresolved blockers, retry conditions and validation obligations. Keep
+requirements and task checkboxes in the roadmap, and delivery history in referenced
+evidence files. Never weaken requirements to make the handoff fit.

@@ -42,6 +42,7 @@
     "bin",
     "lib",
     "prompt.md",
+    "compact.md",
     "supervisor.md",
     "SUPERVISION.md",
     "README.md",

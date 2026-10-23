@@ -323,21 +323,63 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
   source-<progress-path-id>.md    # fixed requirements snapshot for the active session
   history.jsonl
   history/*.md.gz
+  evidence/                     # detailed evidence, retrieved by task ID
+  sessions.jsonl                # usage receipts and context sizes; cold history
 ```
 
-`progress.md` is bounded hot state. It contains the current handoff, concise evidence references, deferred gates and latest supervisor review. It refers to roadmap task IDs instead of duplicating the checklist. It is
-capped at **128 KiB**. At **96 KiB**, the next worker or supervisor is instructed
-to compact superseded handoff/review prose and repeated evidence before implementation,
-while preserving criteria, checkbox states, blockers and current evidence references.
-Compaction is performed by the agent; the runner never silently truncates requirements.
-If a worker makes it larger, the runner first archives the
-boundary snapshot and then stops instead of feeding the oversized file into another
-fresh context.
+`progress.md` holds current work, blockers, next steps, the latest supervisor target
+and short evidence pointers. Its target is **below 16 KiB**. At **24 KiB**, the runner
+archives the original and starts a separate compaction session before the next
+worker or supervisor. The compactor moves detailed evidence to files by task ID or
+links to specific archived snapshots, preserving unresolved obligations and prior
+validation. It must leave the status unchanged and reduce the handoff below 16 KiB.
+If it fails that check, the runner stops with the original archive preserved.
+Compaction does not count as an implementation iteration or supervisor review.
+It uses the shorter of the worker and supervisor timeouts; an expired compaction
+stops the run with its original snapshot available for recovery.
+
+Existing large handoffs receive the same compaction step on their next run. The
+**128 KiB** emergency read limit remains: files above it stop the runner for manual
+repair. No requirements are automatically truncated, and no Codex token-window,
+tool-output or auto-compaction settings are changed.
 
 `history/*.md.gz` preserves full boundary snapshots outside the default model
 context. `history.jsonl` is a runner-owned index. Workers and supervisors must not
 bulk-load history merely to reconstruct chronology; they retrieve a specific older
 snapshot only when current evidence requires it.
+
+Workers and supervisors can retrieve files in `evidence/` or search `history.jsonl`
+by iteration/time and decompress the selected `.md.gz` snapshot. This supports gate
+verification, conflicting-state investigation and failed-attempt diagnosis without
+reloading completed-task narratives on every iteration.
+
+`sessions.jsonl` records each worker, supervisor and compactor attempt, including
+failed attempts: session/run IDs, role, iteration, elapsed time, configured or
+client-reported model, and prompt/source/progress byte sizes before and after.
+Codex completed-turn usage and Claude aggregate-result usage are retained as
+reported. Missing usage is `null`; `usageComplete: false` marks missing receipts or
+unsuccessful/interrupted sessions. Cached input is separate, and provider field
+semantics are preserved: Codex includes cached input in input tokens, while Claude
+reports cache reads/creation separately. These are usage receipts, not billed cost
+or peak-context measurements. The same metrics appear in `runner.turn_finished`
+events; managed run artifacts expose the evidence directory and session journal.
+
+Keep delivery history out of requirements. When a short delivery note belongs in
+the roadmap, delimit it explicitly:
+
+```markdown
+<!-- roadmap-runner:delivery:start -->
+API-02.4: verified; detailed receipt in evidence/API-02.4.md.
+<!-- roadmap-runner:delivery:end -->
+```
+
+Only prose inside valid, standalone blocks is excluded from scope reconciliation.
+Keep criteria, priorities, dependencies and all task checkboxes outside them.
+Malformed blocks, fenced examples and blocks containing checkboxes remain
+scope-sensitive. Delivery-only updates can therefore preserve the supervisor
+cadence; genuine requirements changes still require worker reconciliation.
+Split large roadmaps into focused queue items rather than accumulating delivery
+history in their requirements.
 
 The accepted worker prompt is stored separately in `prompt.md` and asks the worker to maintain:
 
@@ -420,15 +462,16 @@ instructions to update progress are redirected to this separate file.
 A missing progress file (and its parent directories) is created with an
 `IN_PROGRESS` scaffold. The worker derives its checklist from the source; the
 scaffold is not proof of completion. An existing progress file is reused without
-being truncated or reset. Restart with the same roadmap/path to resume. The 128 KiB
-hot-state cap applies to custom progress files too.
+being truncated or reset. Restart with the same roadmap/path to resume. The same
+16 KiB target, 24 KiB compaction trigger and 128 KiB emergency limit apply to custom
+progress files.
 
 The progress file's opening-header status controls continuation when no source
 revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` starts
 a recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
 worker to verify any terminal status it left before trusting completion. The roadmap's
-own status/checkboxes are ignored as runtime state and may stay unchanged even
-when delivery is finished. The same header format rules apply. To unblock work,
+open checkboxes prevent completion even if the handoff says COMPLETE. The same
+header format rules apply. To unblock work,
 update the progress file; controller changes to the source trigger reconciliation instead.
 
 The runner rejects a progress path that resolves to the source itself, including

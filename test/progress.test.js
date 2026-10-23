@@ -119,7 +119,7 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.ok(prompt.includes(`Tracking file (progress / delivery evidence):\n\n${file}\n`));
   assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
   assert.match(prompt, /Tick verified tasks directly in the live roadmap/);
-  assert.match(prompt, /Keep detailed evidence\s+and handoffs in the separate tracking file/);
+  assert.match(prompt, /handoff in the tracking file and detailed evidence in the evidence directory/);
   assert.match(prompt, /one concrete outcome/);
   assert.match(prompt, /canonical harness first/);
   assert.match(prompt, /roughly 60 minutes of\s+implementation/);
@@ -202,7 +202,10 @@ if (mode === 'delete-progress') { fs.unlinkSync(file); process.exit(0); }
 let text = fs.readFileSync(file, 'utf8');
 if (mode === 'compact' && count === 1) {
   assert.match(prompt, /Progress compaction required/);
+  assert.match(prompt, /Runner role: COMPACTOR/);
   text = text.split('## Padding')[0];
+  fs.writeFileSync(file, text);
+  process.exit(0);
 }
 if (prompt.includes('Roadmap reconciliation required: YES')) text = text.replace('Status: COMPLETE', 'Status: IN_PROGRESS');
 if (prompt.includes('Blocked recovery mode: YES')) text = text.replace('Status: BLOCKED', 'Status: IN_PROGRESS');
@@ -320,11 +323,11 @@ test("capacity retry retains progress and source protection", (t) => {
   assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
-test("worker receives the compaction directive before continuing a large handoff", t => {
+test("a separate compactor reduces a large handoff before implementation", t => {
   const evidence = "# State\nStatus: IN_PROGRESS\n\n## Padding\n".padEnd(COMPACT_TRACKING_BYTES, "x");
   const f = run(t, { mode: "compact", evidence });
   assert.equal(f.result.status, 0, f.result.stderr);
-  assert.equal(f.calls, 3);
+  assert.equal(f.calls, 4);
   assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
   assert.ok(fs.statSync(f.file).size < COMPACT_TRACKING_BYTES);
 });

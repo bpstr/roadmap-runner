@@ -1,0 +1,23 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ legacy large handoffs compact separately while detailed evidence remains available (711.53425ms)
+✔ compaction noop stops before implementation and retains the original archive (336.944125ms)
+✔ compaction status stops before implementation and retains the original archive (394.312542ms)
+✔ compaction failure stops before implementation and retains the original archive (421.686417ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (870.535792ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (540.090458ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.215792ms)
+✔ Codex usage sums completed-turn receipts and leaves missing fields unknown (0.724041ms)
+✔ Claude uses aggregate result usage without double counting assistant receipts (0.089125ms)
+✔ missing, invalid and unsupported usage cannot become zero-cost receipts (0.073833ms)
+✔ runClient retains split JSON usage on failure without claiming complete accounting (375.884541ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3796.116625

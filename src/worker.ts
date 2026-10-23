@@ -88,7 +88,7 @@ try {
       persist();
     } }, {
       workdir: record.workspace, signal: controller.signal, managedSleep: true,
-      onReady: tracking => { record.artifacts = { progress: tracking.file, history: tracking.historyDir, output: outputFile, events: path.join(dir, 'events.jsonl'), notifications: path.join(dir, 'notifications.json') }; record.processState = controller.signal.aborted ? 'stopping' : 'running'; record.readyAt = new Date().toISOString(); ready = true; persist(); },
+      onReady: tracking => { record.artifacts = { progress: tracking.file, history: tracking.historyDir, evidence: tracking.evidenceDir, sessions: tracking.sessionsFile, output: outputFile, events: path.join(dir, 'events.jsonl'), notifications: path.join(dir, 'notifications.json') }; record.processState = controller.signal.aborted ? 'stopping' : 'running'; record.readyAt = new Date().toISOString(); ready = true; persist(); },
       onEvent: event => {
         event = { ...event, sequence: ++record.sequence };
         if (event.type === 'runner.completed' && record.queueIndex + 1 < record.queue.length) event.type = 'runner.roadmap_completed';
