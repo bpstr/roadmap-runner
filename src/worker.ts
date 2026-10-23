@@ -83,6 +83,7 @@ try {
     persist();
     result = await runLifecycle({ ...record.options,
       roadmap: record.queueIndex === 0 ? record.options.roadmap : item.roadmap,
+      recoverBlocked: record.queueIndex === 0 && record.options.recoverBlocked,
       progressFile: record.queueIndex === 0 ? record.options.progressFile : item.progressFile, runId: id, onProcess: ({ pid, active }) => {
       record.childGroups = active ? [...new Set([...(record.childGroups || []), pid])] : (record.childGroups || []).filter(value => value !== pid);
       persist();
@@ -105,7 +106,8 @@ try {
         appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
       },
     });
-    item.state = result.reason === 'complete' ? 'complete' : result.reason === 'stopped' ? 'stopped' : 'failed';
+    item.state = result.reason === 'complete' ? 'complete' : result.reason === 'stopped' ? 'stopped' : result.reason === 'blocked' ? 'blocked' : 'failed';
+    if (result.reason === 'blocked') record.roadmapState = 'blocked';
     persist();
     if (result.reason !== 'complete' || controller.signal.aborted || record.queueIndex + 1 === record.queue.length) break;
     record.queueIndex += 1;

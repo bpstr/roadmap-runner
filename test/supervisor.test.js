@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { boundedText, currentReviewIsStuck, OUTPUT_BYTES, Supervision, supervisorSettings } from "../lib/supervision.js";
+import { boundedText, currentReviewIsStuck, currentReviewLoop, OUTPUT_BYTES, Supervision, supervisorSettings } from "../lib/supervision.js";
 import { parseArgs, runClient } from "../lib/runner.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,7 +22,8 @@ function fixture(t, { mode = "normal", total = 11, preserved = true, client = "c
   const dir = workspace(t);
   const roadmap = path.join(dir, "roadmap.md");
   const tracking = preserved ? path.join(dir, "delivery.md") : roadmap;
-  const source = "# Roadmap\n\nStatus: IN_PROGRESS\n\n## Original requirements\n- [ ] Gate A: integrate the real transport.\n";
+  const source = "# Roadmap\n\nStatus: IN_PROGRESS\n\n## Original requirements\n- [ ] Gate A: integrate the real transport.\n" +
+    Array.from({ length: total - 1 }, (_, i) => `- [ ] UNIT-${i + 1} Prepared acceptance unit ${i + 1}.\n`).join('');
   fs.writeFileSync(roadmap, source);
   const worker = path.join(dir, "mock.cjs");
   fs.writeFileSync(worker, `#!/usr/bin/env node
@@ -54,6 +55,15 @@ if (supervisor) {
   fs.writeFileSync('evidence-path', evidence);
   fs.copyFileSync(evidence, 'evidence-' + n + '.json');
   const reviewId = prompt.match(/^Review ID: (.+)$/m)[1];
+  if (mode.startsWith('loop-')) {
+    const data = JSON.parse(fs.readFileSync(evidence));
+    const cited = data.records.slice(-2).map(r => r.iteration).join(', ');
+    const decision = mode === 'loop-clear' ? 'CLEAR' : mode === 'loop-uncertain' ? 'UNCERTAIN' : 'DETECTED';
+    const id = mode === 'loop-stale' ? 'obsolete' : reviewId;
+    const iterations = mode === 'loop-invalid' ? '998, 999' : cited;
+    fs.appendFileSync(tracking, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nHealth: STUCK\\nLoop: ' + decision + '\\nLoop iterations: ' + iterations + '\\nLoop evidence: Same dependency was rechecked without a changed prerequisite or implementation.\\n');
+    process.exit(0);
+  }
   if (mode === 'supervisor-usage' && n === 1) {
     console.log(JSON.stringify({type:'error',message: "You've hit your limit · resets at " + new Date(Date.now() + 1000).toISOString()}));
     process.exitCode = 1;
@@ -82,9 +92,14 @@ if (supervisor) {
       fs.writeFileSync('consumed-supervisor-target', String(n));
     }
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
-    if (target >= ${total}) fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replace('- [ ] Gate A', '- [x] Gate A'));
+    if (mode.startsWith('loop-') && mode !== 'loop-periodic') {
+      if (mode === 'loop-source-churn') fs.appendFileSync(roadmap, '\\nCurrent delivery: source reconciliation ' + n + '.\\n');
+      process.exit(0);
+    }
+    if (target >= ${total}) fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replaceAll('- [ ]', '- [x]'));
+    else if (mode !== 'noop') fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replace('- [ ] UNIT-' + target + ' ', '- [x] UNIT-' + target + ' '));
     if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace(/Status: (IN_PROGRESS|BLOCKED)/, 'Status: COMPLETE'));
-    else if (mode !== 'noop') fs.appendFileSync(tracking, '\\nWorker ' + n + ' evidence\\n');
+    else if (mode !== 'noop') fs.appendFileSync(tracking, '\\n- [x] W' + n + ' verified fixture unit\\n');
     if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 5000);
     if (mode === 'worker-failure') process.exitCode = 7;
   }
@@ -120,6 +135,45 @@ test('only the current supervisor review can report stuck, excluding examples an
   assert.equal(currentReviewIsStuck(report + '## Latest supervisor review\nReview ID: newer\nHealth: HEALTHY\n', 'current'), false);
   assert.equal(currentReviewIsStuck('## History\nReview ID: current\nHealth: STUCK\n', 'current'), false);
 });
+
+test('loop decisions require a current review, two observed turns and concrete evidence', () => {
+  const records = [{ iteration: 1, code: 0 }, { iteration: 2, code: 0 }];
+  const report = '## Latest supervisor review\nReview ID: current\nLoop: DETECTED\nLoop iterations: 1, 2\nLoop evidence: Same unchanged blocker, no implementation.\n';
+  assert.deepEqual(currentReviewLoop(report, 'current', records).iterations, [1, 2]);
+  for (const text of [report.replace('current', 'stale'), '```md\n' + report + '```\n',
+    report.replace('1, 2', '1, 1'), report.replace('1, 2', '1, 99'),
+    report.replace('Loop evidence: Same unchanged blocker, no implementation.', ''),
+    report + 'Loop: CLEAR\n', report + '## Latest supervisor review\nReview ID: newer\nLoop: CLEAR\n']) {
+    assert.equal(currentReviewLoop(text, 'current', records), null);
+  }
+});
+
+for (const mode of ['loop-detected', 'loop-source-churn', 'loop-periodic']) {
+  test(`${mode} blocks immediately and preserves the decision on restart`, t => {
+    const f = fixture(t, { mode, total: 6, every: mode === 'loop-periodic' ? 2 : 5 });
+    const result = run(f);
+    assert.equal(result.status, 75, result.stderr);
+    assert.deepEqual(events(f), ['W1', 'W2', 'S1']);
+    const journal = fs.readFileSync(f.tracking + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(journal.at(-1).type, 'runner.blocked');
+    assert.equal(journal.at(-1).reason, 'loop_detected');
+    assert.deepEqual(journal.at(-1).loopIterations, [1, 2]);
+    const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
+    assert.ok(evidence.records.every(r => r.sourceBefore.sha256 && r.sourceAfter.sha256 && r.trackingBefore.sha256));
+    assert.equal(run(f).status, 75);
+    assert.deepEqual(events(f), ['W1', 'W2', 'S1'], 'unchanged restart launches no worker or model review');
+  });
+}
+
+for (const mode of ['loop-clear', 'loop-uncertain', 'loop-invalid', 'loop-stale']) {
+  test(`${mode} cannot override the deterministic stop`, t => {
+    const f = fixture(t, { mode, total: 6 });
+    const result = run(f);
+    assert.equal(result.status, 75, result.stderr);
+    assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
+    assert.match(result.stderr, /No completed checklist progress for 3 workers/);
+  });
+}
 
 test('supervision defaults to five; supports CLI/env overrides and disable', () => {
   assert.deepEqual(supervisorSettings(parseArgs(['r.md'], {})), { every: 5, timeoutMs: 600000 });
@@ -177,7 +231,7 @@ for (const preserved of [true]) {
     assert.ok(stuck.every(event => event.attention && event.reasonCode === "supervisor_stuck"));
     assert.match(fs.readFileSync(f.tracking, 'utf8'), /Next delivery target: repair the canonical transport harness/);
     assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
-    if (preserved) assert.equal(fs.readFileSync(f.roadmap, 'utf8'), f.source.replace('- [ ] Gate A', '- [x] Gate A'));
+    if (preserved) assert.equal(fs.readFileSync(f.roadmap, 'utf8'), f.source.replaceAll('- [ ]', '- [x]'));
     for (const review of [1, 2]) {
       const data = JSON.parse(fs.readFileSync(path.join(f.dir, `evidence-${review}.json`), 'utf8'));
       assert.deepEqual(data.records.map(r => r.iteration), review === 1 ? [1,2,3,4,5] : [6,7,8,9,10]);
@@ -213,13 +267,23 @@ test('custom cadence and disabled supervision', (t) => {
   assert.equal(events(disabled).filter(x => x.startsWith('S')).length, 0);
 });
 
-test('successful no-op workers are reviewed, not incorrectly blocked by byte equality', (t) => {
+test('an explicit larger idle budget allows supervisor review of no-op workers', (t) => {
   const f = fixture(t, { mode: 'noop', total: 6 });
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '6';
   const result = run(f); assert.equal(result.status, 0, result.stderr);
   const data = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
-  assert.equal(data.records.length, 5);
+  assert.equal(data.records.length, 2);
   assert.ok(data.records.every(r => !r.trackingChanged));
   assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
+});
+
+test('the default idle budget stops no-op workers before a later supervisor checkpoint', t => {
+  const f = fixture(t, { mode: 'noop', total: 6 });
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '3';
+  const result = run(f);
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
+  assert.match(result.stderr, /No completed checklist progress for 3 workers/);
 });
 
 test('worker capacity retries are excluded from cadence and counted in review context', (t) => {
@@ -275,12 +339,12 @@ for (const mode of ['missing-report', 'supervisor-timeout', 'supervisor-usage'])
   });
 }
 
-test('a supervisor blocker retargets a fresh worker instead of stopping delivery', t => {
+test('a supervisor global blocker stops before another worker', t => {
   const f = fixture(t, { mode: 'global-block', total: 6 });
   const result = run(f);
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6']);
-  assert.match(fs.readFileSync(path.join(f.dir, 'W6.prompt'), 'utf8'), /Blocked recovery mode: YES/);
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1']);
+  assert.equal(fs.existsSync(path.join(f.dir, 'W6.prompt')), false);
 });
 
 test('controller edit during a supervisor review continues with a fresh worker', (t) => {

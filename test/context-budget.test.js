@@ -19,15 +19,16 @@ function fixture(t, mode = "compact", reconcile = false) {
   fs.writeFileSync(roadmap, `# Requirements\n- [ ] GATE-1: first criterion\n- [ ] GATE-2: second criterion\n\n${notes("No delivery yet.")}\n`);
   const tracking = prepareTracking(roadmap, path.join(dir, "progress.md"), dir);
   const initial = "# Handoff\nStatus: IN_PROGRESS\n\n## Deferred gates\nGATE-2: preserve the release receipt.\n".padEnd(97 * 1024, "e");
-  if (mode !== "grow") fs.writeFileSync(tracking.file, initial);
+  if (mode !== "grow" && !mode.startsWith("loop")) fs.writeFileSync(tracking.file, initial);
   if (reconcile) fs.appendFileSync(roadmap, "\nController criterion added.\n");
   const worker = path.join(dir, "prepared.cjs");
   fs.copyFileSync(new URL("./fixtures/context-client.cjs", import.meta.url), worker);
   fs.chmodSync(worker, 0o755);
   const result = spawnSync(process.execPath, [cli, roadmap, "--client", "codex", "--client-bin", worker,
-    "--progress-file", tracking.file, "--supervisor-every", "1", ...(mode === "timeout" ? ["--timeout", "1s"] : [])], {
+    "--progress-file", tracking.file, "--supervisor-every", mode.startsWith("loop") ? "5" : "1", ...(mode === "timeout" ? ["--timeout", "1s"] : [])], {
     cwd: dir, encoding: "utf8", timeout: 10_000,
     env: { ...process.env, ROADMAP_NOTIFY: "off", ROADMAP_PREVENT_SLEEP: "off",
+      ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1", ROADMAP_MAX_IDLE_WORKERS: "3",
       CONTEXT_TEST_MODE: mode, CONTEXT_TEST_PROGRESS: tracking.file, CONTEXT_TEST_ROADMAP: roadmap,
       CONTEXT_TEST_RECONCILE: reconcile ? "yes" : "no" },
   });
@@ -84,6 +85,22 @@ test("compaction cannot acknowledge pending requirements before the worker sees 
   assert.equal(f.result.status, 0, f.result.stderr);
   assert.match(fs.readFileSync(path.join(f.dir, "prompt-2"), "utf8"), /Roadmap reconciliation required: YES/);
 });
+
+for (const mode of ["loop-detected", "loop-clear"]) {
+  test(`compaction preserves ${mode === "loop-detected" ? "the early loop verdict" : "the deterministic worker limit"}`, t => {
+    const f = fixture(t, mode);
+    assert.equal(f.result.status, 75, f.result.stderr);
+    assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "WORKER", "COMPACTOR", "SUPERVISOR",
+      ...(mode === "loop-clear" ? ["WORKER"] : [])]);
+    const events = jsonLines(`${f.tracking.file}.events.jsonl`);
+    assert.equal(events.at(-1).reason, mode === "loop-detected" ? "loop_detected" : "no_progress_limit");
+    assert.equal(jsonLines(f.tracking.sessionsFile).filter(s => s.role === "worker").length,
+      mode === "loop-detected" ? 2 : 3);
+    assert.equal(JSON.parse(fs.readFileSync(`${f.tracking.file}.recovery.json`)).idle,
+      mode === "loop-detected" ? 2 : 3);
+    assert.match(fs.readFileSync(f.roadmap, "utf8"), /- \[ \] GATE-1/);
+  });
+}
 
 test("only valid delivery notes are excluded from scope reconciliation", t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-notes-"));

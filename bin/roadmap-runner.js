@@ -31,7 +31,8 @@ Management options:
   --queue <path>        Run another roadmap after completion; repeat for FIFO order
   --prevent-sleep        Prevent idle system sleep for the entire run
   --no-prevent-sleep     Override ROADMAP_PREVENT_SLEEP
-  --notify attention|off Desktop notification mode (default off)
+  --recover-blocked     Authorize one explicit recovery worker after inputs change
+  --notify attention|off Desktop notification mode (default attention)
   --notify-on <events>   Extra desktop event types; requires --notify attention
   --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration
   --run-id <id>          Doctor: require that monitor to name this managed run
@@ -57,10 +58,11 @@ Environment:
   ROADMAP_MODEL
   ROADMAP_EFFORT
   ROADMAP_CLIENT_BIN
-  ROADMAP_NOTIFY            Desktop mode: off (default) or attention
+  ROADMAP_NOTIFY            Desktop mode: attention (default) or off
   ROADMAP_PREVENT_SLEEP      Set to 1 or true to prevent idle system sleep
   ROADMAP_NOTIFY_BIN         Notification executable; receives event JSON on stdin
   ROADMAP_USAGE_MAX_WAIT     Quota wait ceiling in seconds; default/max 86400
+  ROADMAP_MAX_IDLE_WORKERS   Stop after workers without checklist progress; default 3
   ROADMAP_RECOVERY_DELAY     No-progress recheck delay in seconds; default 60
   ROADMAP_RECOVERY_MAX_DELAY Maximum no-progress delay in seconds; default 900
   ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
@@ -125,7 +127,7 @@ const main = async () => {
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

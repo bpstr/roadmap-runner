@@ -50,6 +50,23 @@ Sources and authority:
 
 Diagnose the window:
 
+When `Review purpose: LOOP_CHECK` is supplied, perform only a small comparison of
+the recent worker window, prior review and current handoff. Compare source and
+tracking before/after snapshots, outcomes and verification artifacts. Detect
+repeated rediscovery, unchanged blockers, repeated validation and source-hash
+reconciliation without meaningful progress. Source/output excerpts are bounded;
+missing evidence means uncertainty, not proof of a loop. Do not rerun tests,
+rescan repositories, load older archives or replan delivery for this small check.
+
+Every review includes `Loop: DETECTED`, `Loop: CLEAR` or `Loop: UNCERTAIN` in its
+current Latest supervisor review. DETECTED requires `Loop iterations: 1, 2`
+(use at least two actual iteration numbers from Run evidence JSON) and one concise
+`Loop evidence: ...` line explaining the repeated action and lack of progress.
+Only DETECTED blocks the runner immediately; CLEAR/UNCERTAIN never reset its
+deterministic no-progress budget. Set Status: BLOCKED on detection and record the
+concrete changed input needed before recovery. Do not call useful prerequisite
+implementation a loop merely because no parent checkbox closed.
+
 1. Compare planned outcomes with delivered and verified outcomes, not just the
    number of checked boxes. A prerequisite can be genuine progress without closing
    its parent. An exit code of zero or a changed file hash is not delivery evidence.
@@ -108,12 +125,15 @@ Persist the review and return:
   concise evidence references, but do not retain superseded plans, raw logs, copied
   diffs or dated review narratives in active state. Historical snapshots are
   already preserved outside hot context.
-- Keep Status: IN_PROGRESS whenever useful authorized work remains. Status: BLOCKED
-  is non-terminal and means only that this review found no currently actionable
-  gate after inspecting ALL remaining gates/prerequisites. If used, record why each
-  remaining gate cannot advance, its exact external unblock action and retry trigger.
-  The runner will continue with a fresh recovery worker; never use BLOCKED as a
-  request to terminate the long-running executor.
+- Keep Status: IN_PROGRESS while useful authorized work remains. Use global
+  Status: BLOCKED only after considering ALL remaining gates using the existing
+  dependency audit and ready alternatives; it stops the runner, without another
+  worker or review. Record the
+  exact external unblock action and retry trigger. Task-local blocker flags alone
+  do not stop independent work. Do not repeat repository/cache inventories or
+  rewrite unchanged blocker notes. Review only concrete changes since the prior
+  audit. A controller may request one recovery attempt after changed inputs;
+  a timer or the same missing input does not justify fresh model sessions.
 - Keep exactly one status in the tracking file's opening header before its first
   ## (or deeper) heading, outside code fences. Print a short evidence-backed
   conclusion and the next delivery target, then stop this supervisor invocation.

@@ -1,0 +1,31 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ legacy large handoffs compact separately while detailed evidence remains available (914.23075ms)
+✔ compaction noop stops before implementation and retains the original archive (503.176125ms)
+✔ compaction status stops before implementation and retains the original archive (404.83325ms)
+✔ compaction failure stops before implementation and retains the original archive (371.385125ms)
+✔ compaction timeout stops before implementation and retains the original archive (1136.928833ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (505.968458ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (423.729291ms)
+✔ compaction preserves the early loop verdict (1563.726208ms)
+✔ compaction preserves the deterministic worker limit (1684.098916ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.888333ms)
+✔ complete-churn cannot renew the no-progress budget with source hashes (1857.13625ms)
+✔ open-churn cannot renew the no-progress budget with source hashes (1577.977084ms)
+✔ blocked-churn cannot renew the no-progress budget with source hashes (1583.040458ms)
+✔ timeout-churn cannot renew the no-progress budget with source hashes (7171.7175ms)
+✔ supervisor-churn cannot renew the no-progress budget with source hashes (1658.667375ms)
+✔ only task completion in the live roadmap renews the budget (633.73625ms)
+✔ reopening and rechecking the same task cannot repeat progress forever (1623.769584ms)
+✔ a controller acceptance amendment between sessions grants one fresh budget (2732.55375ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26463.110375

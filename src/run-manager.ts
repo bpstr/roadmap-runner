@@ -19,8 +19,9 @@ export const startSchema = z.object({
   client: z.enum(['codex', 'claude', 'gemini', 'grok', 'kimi', 'muse']).default('codex'),
   timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).default(5),
   supervisorTimeout: z.string().default('10m'), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
-  notify: z.enum(['attention', 'off']).default('off'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
+  notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),
+  recoverBlocked: z.boolean().default(false),
   idempotencyKey: z.string().min(1).max(128).optional(),
   queue: z.array(queueItemSchema).max(99).default([]),
 }).strict();

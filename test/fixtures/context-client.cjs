@@ -30,17 +30,19 @@ if (role === 'COMPACTOR') {
 } else if (role === 'SUPERVISOR') {
   const review = prompt.match(/^Review ID: (.+)$/m)[1];
   fs.appendFileSync(progress, '\n## Latest supervisor review\nReview ID: ' + review + '\nHealth: HEALTHY\nNext: GATE-2.\n');
+  if (mode.startsWith('loop')) fs.appendFileSync(progress, 'Loop: ' + (mode === 'loop-detected' ? 'DETECTED' : 'CLEAR') +
+    '\nLoop iterations: 1, 2\nLoop evidence: Both workers only rewrote delivery receipts; GATE-1 and GATE-2 remain open.\n');
 } else {
   assert.ok(fs.statSync(progress).size < 24 * 1024);
   if (process.env.CONTEXT_TEST_RECONCILE === 'yes') assert.match(prompt, /Roadmap reconciliation required: YES/);
   const n = calls.filter(r => r === 'WORKER').length;
   let source = fs.readFileSync(roadmap, 'utf8');
-  source = source.replace('- [ ] GATE-' + n, '- [x] GATE-' + n);
+  if (!mode.startsWith('loop')) source = source.replace('- [ ] GATE-' + n, '- [x] GATE-' + n);
   source = source.replace(/<!-- roadmap-runner:delivery:start -->[\s\S]*?<!-- roadmap-runner:delivery:end -->/,
     '<!-- roadmap-runner:delivery:start -->\nReceipt ' + n + '\n<!-- roadmap-runner:delivery:end -->');
-  if (mode !== 'grow') source = source.replaceAll('- [ ]', '- [x]');
+  if (mode !== 'grow' && !mode.startsWith('loop')) source = source.replaceAll('- [ ]', '- [x]');
   fs.writeFileSync(roadmap, source);
-  const complete = mode !== 'grow' || n === 2;
+  const complete = !mode.startsWith('loop') && (mode !== 'grow' || n === 2);
   let handoff = '# Handoff\nStatus: ' + (complete ? 'COMPLETE' : 'IN_PROGRESS') + '\n\n## Current handoff\nGATE-2: release receipt required.\n';
   if (!complete) handoff = handoff.padEnd(24 * 1024 + 100, 'e');
   fs.writeFileSync(progress, handoff);

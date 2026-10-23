@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync, spawn } from "node:child_process";
-import { Recovery, recoverySettings, resetFromText, usageObserver, usageLimitFromMessage } from "../lib/recovery.js";
+import { Recovery, recoverySettings, checklistProgress, resetFromText, usageObserver, usageLimitFromMessage } from "../lib/recovery.js";
 
 const cli = fileURLToPath(new URL("../bin/roadmap-runner.js", import.meta.url));
 const DAY = 86400000;
@@ -107,17 +107,17 @@ test("changed attention flags notify once, remain unfinished, and clear on recov
 });
 
 test("unchanged workers back off with a bounded delay and reset after changed evidence", async t => {
-  const f = fixture(t, { delayMs: 10, maxDelayMs: 20 });
+  const f = fixture(t, { delayMs: 10, maxDelayMs: 20, maxIdleWorkers: 10 });
   for (let i = 0; i < 5; i++) await f.recovery.idle("unchanged", "unchanged");
   assert.deepEqual(f.waits, [10, 20, 20, 20]);
-  await f.recovery.idle("before", "after");
+  await f.recovery.idle("- [ ] T01 build", "- [x] T01 build");
   assert.equal(f.recovery.state.idle, 0);
   await f.recovery.idle("same", "same", true);
   assert.equal(f.recovery.state.idle, 0);
 });
 
 test("stuck attention is emitted once across restarts and rearmed after progress resumes", async t => {
-  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1, maxIdleWorkers: 10 });
   await f.recovery.idle("private progress", "private progress");
   assert.equal(fs.existsSync(f.recovery.eventsFile), false);
   await f.recovery.idle("private progress", "private progress");
@@ -129,7 +129,7 @@ test("stuck attention is emitted once across restarts and rearmed after progress
   const restarted = new Recovery(f.config);
   await restarted.idle("private progress", "private progress");
   assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 1);
-  await restarted.idle("before", "after");
+  await restarted.idle("- [ ] T01 build", "- [x] T01 build");
   assert.equal(f.events().at(-1).type, "runner.progress_resumed");
   await restarted.idle("private progress", "private progress");
   await restarted.idle("private progress", "private progress");
@@ -139,19 +139,78 @@ test("stuck attention is emitted once across restarts and rearmed after progress
 });
 
 test("a supervisor stuck report stays active until a worker changes progress", async t => {
-  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1, maxIdleWorkers: 10 });
   await f.recovery.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });
   await f.recovery.idle("same", "same");
   assert.equal(f.recovery.state.stuck, true);
   const restarted = new Recovery(f.config);
   await restarted.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });
   assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 1);
-  await restarted.idle("before", "after");
+  await restarted.idle("- [ ] T01 build", "- [x] T01 build");
   assert.equal(f.events().at(-1).type, "runner.progress_resumed");
+});
+
+test("handoff churn exhausts the persisted no-progress budget", async t => {
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  const progress = n => `Status: BLOCKED\n## Tasks\n- [x] T00 existing\n- [ ] T01 build\n## Handoff\nInspection ${n}\n- BLOCKED T01: rewritten reason ${n}\n`;
+  await f.recovery.idle(progress(0), progress(1));
+  await f.recovery.reportStuck({ reason: "supervisor_stuck" });
+  const restarted = new Recovery(f.config);
+  await restarted.idle(progress(1), progress(2));
+  await assert.rejects(restarted.idle(progress(2), progress(3)), e => e.exitCode === 75 && e.reason === "no_progress_limit");
+  assert.equal(restarted.state.idle, 3);
+  assert.deepEqual(f.waits, [1]); // No sleep or fourth worker after the bound.
+  const terminal = f.events().at(-1);
+  assert.equal(terminal.type, "runner.stuck");
+  assert.equal(terminal.terminal, true);
+  assert.equal(terminal.reasonCode, "no_progress_limit");
+  assert.ok(!JSON.stringify(terminal).includes("rewritten reason"));
+});
+
+test("checked task IDs and source revisions reset stagnation; notes and new open tasks do not", async t => {
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  const initial = "Status: IN_PROGRESS\n- [x] T00 old label\n- [ ] T01 build\n";
+  const churn = initial.replace("old label", "rewritten label") + "- [ ] T02 new preparation\n";
+  await f.recovery.idle(initial, churn);
+  assert.equal(f.recovery.state.idle, 1);
+  const completed = churn.replace("[ ] T01", "[x] T01");
+  await f.recovery.idle(churn, completed);
+  assert.equal(f.recovery.state.idle, 0);
+  await f.recovery.idle(completed, churn); // Reopening is not completed work.
+  assert.equal(f.recovery.state.idle, 1);
+  await f.recovery.idle(churn, churn, true);
+  assert.equal(f.recovery.state.idle, 0);
+});
+
+test("fenced checkbox examples cannot reset progress detection", () => {
+  const parsed = checklistProgress("```md\n- [x] T99 example\n```\n- [x] T01 real\n~~~\n- [x] T98 example\n~~~\n");
+  assert.deepEqual([...parsed.checked], ["T01"]);
+});
+
+test("pending source reconciliation resets the budget only once per revision", async t => {
+  const f = fixture(t, { delayMs: 1, maxDelayMs: 1 });
+  const progress = "Status: BLOCKED\n- [ ] T01 build\n";
+  f.config.tracking.sourceRevision = "revision-one";
+  await f.recovery.idle(progress, progress, true);
+  assert.equal(f.recovery.state.idle, 0);
+  await f.recovery.idle(progress, progress, true);
+  assert.equal(f.recovery.state.idle, 1);
+  const restarted = new Recovery(f.config);
+  await restarted.idle(progress, progress, true);
+  assert.equal(restarted.state.idle, 2);
+  f.config.tracking.sourceRevision = "revision-two";
+  await restarted.idle(progress, progress, true);
+  assert.equal(restarted.state.idle, 0);
+});
+
+test("prose-only handoffs are bounded too", async t => {
+  const f = fixture(t, { maxIdleWorkers: 1 });
+  await assert.rejects(f.recovery.idle("Status: IN_PROGRESS\nold note", "Status: IN_PROGRESS\nnew note"), e => e.exitCode === 75);
 });
 
 test("wait settings reject zero, invalid input and values above one day", () => {
   for (const value of ["0", "86401", "NaN", "Infinity", "-1"]) assert.throws(() => recoverySettings({ ROADMAP_USAGE_MAX_WAIT: value }));
+  for (const value of ["0", "101", "NaN", "-1", "1.5"]) assert.throws(() => recoverySettings({ ROADMAP_MAX_IDLE_WORKERS: value }));
   assert.throws(() => recoverySettings({ ROADMAP_RECOVERY_DELAY: "20", ROADMAP_RECOVERY_MAX_DELAY: "10" }));
 });
 
@@ -220,15 +279,18 @@ test("weekly CLI quota expires at the configured ceiling without another provide
   assert.equal(f.events().at(-1).type, "runner.failed");
 });
 
-test("blocked CLI emits notification and executes the next worker for independent work", t => {
+test("blocked CLI emits notification and stops before a repeated worker", t => {
   const f = cliFixture(t, "codex", "blocked");
   const hook = path.join(f.dir, "notify.cjs");
   fs.writeFileSync(hook, "#!/usr/bin/env node\nlet input=''; process.stdin.on('data', c => input+=c); process.stdin.on('end', () => { require('node:fs').appendFileSync('notifications', JSON.parse(input).type + '\\n'); process.exitCode=1; });\n");
   fs.chmodSync(hook, 0o755);
   f.options.env.ROADMAP_NOTIFY_BIN = hook;
   const result = spawnSync(process.execPath, f.args, f.options);
-  assert.equal(result.status, 9, result.stderr);
-  assert.ok(fs.existsSync(path.join(f.dir, "independent-built")));
+  assert.equal(result.status, 75, result.stderr);
+  assert.equal(fs.existsSync(path.join(f.dir, "independent-built")), false);
+  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
+  assert.equal(f.events().at(-1).type, "runner.blocked");
+  assert.equal(f.events().at(-1).terminal, true);
   assert.match(fs.readFileSync(path.join(f.dir, "notifications"), "utf8"), /runner.blocked/);
 });
 
@@ -247,4 +309,47 @@ test("SIGINT during a real quota wait exits promptly and keeps state for restart
   assert.equal(await exited, 130);
   assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
   assert.ok(JSON.parse(fs.readFileSync(f.recovery.stateFile, "utf8")).quota);
+});
+
+
+test("CLI stops note-rewriting workers avoiding BLOCKED with exit 75 before another provider attempt", t => {
+  const f = cliFixture(t, "codex", "blocked");
+  const mock = path.join(f.dir, "worker.cjs");
+  fs.writeFileSync(mock, String.raw`#!/usr/bin/env node
+const fs = require('node:fs');
+const prompt = process.argv.at(-1);
+const progress = prompt.split('Tracking file (progress / delivery evidence):')[1].trim().split('\n')[0].trim();
+const count = fs.existsSync('count') ? Number(fs.readFileSync('count')) + 1 : 1;
+fs.writeFileSync('count', String(count));
+fs.writeFileSync(progress, 'Status: IN_PROGRESS\n## Tasks\n- [ ] T01 build\n## Current handoff\nStill missing dependency, inspection ' + count + '\n');
+`);
+  f.options.env.ROADMAP_RECOVERY_DELAY = "1";
+  f.options.env.ROADMAP_RECOVERY_MAX_DELAY = "1";
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = "3";
+  const result = spawnSync(process.execPath, f.args, f.options);
+  assert.equal(result.status, 75, result.stderr);
+  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "3");
+  assert.equal(f.events().at(-1).type, "runner.failed");
+  assert.equal(f.events().at(-1).reason, "no_progress_limit");
+  assert.ok(f.events().some(e => e.type === "runner.stuck" && e.terminal));
+  assert.match(fs.readFileSync(f.config.tracking.file, "utf8"), /Status: IN_PROGRESS/);
+});
+
+
+test("explicit blocked recovery runs one worker and stops again if unchanged", t => {
+  const f = cliFixture(t, "codex", "blocked");
+  fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
+  const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
+  assert.equal(result.status, 75, result.stderr);
+  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
+  assert.equal(f.events().at(-1).type, "runner.blocked");
+});
+
+test("explicit recovery can continue after the changed input resolves the blocker", t => {
+  const f = cliFixture(t, "codex", "blocked");
+  fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
+  fs.writeFileSync(path.join(f.dir, "count"), "1"); // Prepared changed-input recovery branch.
+  const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
+  assert.equal(result.status, 9, result.stderr); // Fixture deliberately ends independent work.
+  assert.ok(fs.existsSync(path.join(f.dir, "independent-built")));
 });

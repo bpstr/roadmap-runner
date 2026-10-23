@@ -22,10 +22,22 @@ const fixture = t => {
   fs.writeFileSync(worker, `#!${process.execPath}
 import fs from 'node:fs';
 const prompt = process.argv.at(-1);
-const source = prompt.match(/Work on this implementation roadmap:\\s*\\n\\s*([^\\n]+)/)[1].trim();
+const source = JSON.parse(prompt.match(/^Live roadmap[^:]*: (.+)$/m)[1]);
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
+if (prompt.includes('Runner role: SUPERVISOR') && fs.existsSync(source + '.loop')) {
+  const evidence = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
+  fs.writeFileSync(source + '.reviewdir', new URL('.', 'file://' + evidence).pathname);
+  const records = JSON.parse(fs.readFileSync(evidence)).records;
+  const id = prompt.match(/^Review ID: (.+)$/m)[1];
+  fs.appendFileSync(progress, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nLoop: DETECTED\\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\\nLoop evidence: Repeated blocked dependency, no progress.\\n');
+  process.exit(0);
+}
 fs.appendFileSync(source + '.started', progress + '\\n');
 if (fs.existsSync(source + '.fail')) process.exit(7);
+if (fs.existsSync(source + '.stall')) {
+  fs.writeFileSync(progress, 'Status: IN_PROGRESS\\n## Tasks\\n- [ ] T01 build\\n## Current handoff\\nStill waiting ' + Date.now() + '\\n');
+  process.exit(0);
+}
 if (fs.existsSync(source + '.blocked')) fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'BLOCKED'));
 const timer = setInterval(() => {
   if (!fs.existsSync(source + '.release')) return;
@@ -37,6 +49,7 @@ const timer = setInterval(() => {
   const manager = new RunManager(workspace, registry); const runs = [];
   t.after(async () => {
     for (const id of runs) { try { await manager.stop(id); await wait(async () => ['exited', 'stopped', 'unknown'].includes((await manager.status(id)).processState)); } catch {} }
+    for (const source of roadmaps) if (fs.existsSync(source + '.reviewdir')) fs.rmSync(fs.readFileSync(source + '.reviewdir', 'utf8'), { recursive: true, force: true });
     fs.rmSync(dir, { recursive: true, force: true });
   });
   const start = async (queue, idempotencyKey, options = {}) => { const r = await manager.start({ workspace, roadmap: roadmaps[0], queue, idempotencyKey, notify: 'off', supervisorEvery: 0, ...options }, { executable: worker }); runs.push(r.id); return r; };
@@ -146,4 +159,72 @@ test('a queued source removed before handoff fails the run and preserves later e
   const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
   assert.equal(final.exitCode, 1); assert.equal(final.queue[1].state, 'failed'); assert.equal(final.queue[2].state, 'pending');
   assert.equal(f.started(third), false);
+});
+
+
+test('no-progress limit is terminal in managed status and preserves the pending queue', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(first + '.stall', '');
+  const settings = { ROADMAP_MAX_IDLE_WORKERS: '3', ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1' };
+  const previous = Object.fromEntries(Object.keys(settings).map(key => [key, process.env[key]]));
+  let run;
+  try {
+    Object.assign(process.env, settings);
+    run = await f.start([{ roadmap: second }]);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key]; else process.env[key] = value;
+    }
+  }
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 75);
+  assert.equal(final.reason, 'no_progress_limit');
+  assert.deepEqual(final.queue.map(item => item.state), ['failed', 'pending']);
+  assert.equal(f.started(second), false);
+  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
+  assert.match(fs.readFileSync(final.progressFile, 'utf8'), /Status: IN_PROGRESS/);
+  assert.ok(final.events.some(e => e.type === 'runner.stuck' && e.terminal && e.reason === 'no_progress_limit'));
+  assert.equal(final.events.at(-1).reason, 'no_progress_limit');
+  for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
+});
+
+test('LLM loop detection blocks managed execution and leaves queued work pending', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(first + '.stall', ''); fs.writeFileSync(first + '.loop', '');
+  const previous = process.env.ROADMAP_RECOVERY_DELAY;
+  let run;
+  try {
+    process.env.ROADMAP_RECOVERY_DELAY = '1';
+    run = await f.start([{ roadmap: second }], undefined, { supervisorEvery: 5 });
+  } finally {
+    if (previous === undefined) delete process.env.ROADMAP_RECOVERY_DELAY; else process.env.ROADMAP_RECOVERY_DELAY = previous;
+  }
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 75, final.output || final.reason); assert.equal(final.roadmapState, 'blocked');
+  assert.deepEqual(final.queue.map(item => item.state), ['blocked', 'pending']);
+  assert.equal(f.started(second), false);
+  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 2);
+  assert.ok(final.events.some(e => e.type === 'runner.blocked' && e.terminal && e.reason === 'loop_detected'));
+});
+
+
+test('fully blocked managed runs stop once, retain blocked status, and leave the queue pending', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(f.worker, String.raw`#!/usr/bin/env node
+import fs from 'node:fs';
+const prompt = process.argv.at(-1);
+const progress = prompt.split('Tracking file (progress / delivery evidence):')[1].trim().split('\n')[0];
+fs.appendFileSync('attempts', 'worker\n');
+fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Deferred gates\n- BLOCKED T01: native input | Unblock: supplied | Retry: input changed\n');
+`);
+  const run = await f.start([{ roadmap: second }]);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 75); assert.equal(final.reason, 'blocked');
+  assert.equal(final.roadmapState, 'blocked');
+  assert.deepEqual(final.queue.map(item => item.state), ['blocked', 'pending']);
+  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\n');
+  assert.equal(f.started(second), false);
+  assert.equal(final.events.at(-1).type, 'runner.blocked');
+  assert.equal(final.events.at(-1).terminal, true);
+  for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });

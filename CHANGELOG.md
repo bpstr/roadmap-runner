@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.4 — 2026-10-23
+
+- Add a small supervisor LLM loop check after two idle workers. Compare bounded prior progress, source snapshots and worker outcomes; block immediately on a current, evidenced loop verdict. Keep the deterministic stop budget, pending queues and blocked state across unchanged restarts. Cap the extra check at 60 seconds and one per stagnation episode; supervision-off still disables model reviews.
+- Preserve the exhausted deterministic worker budget across unchanged restarts without launching another session. Allow one explicit recovery worker or a new bounded budget after controller requirement changes.
+- Compact handoffs above 24 KiB in a separate session targeting 16 KiB. Preserve detailed evidence and pending reconciliation; compact before a due supervisor or loop assessment. Ignore valid marked delivery notes when comparing requirements.
+- Record session roles, elapsed time, context bytes and available client usage receipts in durable events and session history. Keep missing usage unknown.
+
+## 0.10.3 — 2026-10-23
+
+- Stop source-hash reconciliation loops: measure live-roadmap task completion, persist its high-water count, and prevent worker/supervisor source rewrites from renewing the stagnation budget. Controller requirement amendments adopted between sessions still grant one fresh budget. Preserve exhausted budgets across restarts and pending queues. Fixes #6.
+- Enable desktop attention notifications by default, retaining explicit CLI/environment/MCP off switches and durable events when OS delivery is unavailable.
+- Make global BLOCKED stop immediately (exit 75/reason blocked), preserving blocked status and pending queue entries. Permit one explicitly requested recovery worker after changed inputs with --recover-blocked or recoverBlocked; task-local deferrals still allow independent work.
+- Instruct workers/supervisors to reuse dependency audits and avoid repeated repository/cache/receipt scans on unchanged blockers.
+
+- Stop after three workers without completed checklist progress (configurable with `ROADMAP_MAX_IDLE_WORKERS`), preserving partial work and queued roadmaps. Exit 75 and expose `no_progress_limit` in terminal events and managed status.
+- Ignore handoff/blocker prose churn when detecting checklist progress, so recovery workers and supervisor edits cannot indefinitely renew the budget. Preserve source-revision resets and bounded recovery for independent work.
+
 ## 0.10.2 — 2026-10-20
 
 - Keep verified task checkmarks in the live roadmap and handoff/evidence in the bounded progress file. Prevent a progress-file COMPLETE status from closing unfinished roadmap tasks.

@@ -423,13 +423,21 @@ session, the worker may set:
 Status: BLOCKED
 ```
 
-`BLOCKED` is **not terminal**. It is a recovery/defer signal: the runner launches
-another fresh worker, which re-evaluates dependency facts, skips unchanged blockers,
-and searches the rest of the roadmap for useful work. Each blocked gate should keep
-its evidence, exact external unblock action and retry trigger so later sessions do
-not repeatedly rediscover or hammer the same stuck action. Only `COMPLETE`, explicit
-user interruption, unrecoverable runner/input corruption, or an ordinary fatal
-client/process failure ends the loop.
+`BLOCKED` is a terminal execution state: the runner preserves progress and stops
+with exit 75 and reason `blocked`, without launching another worker or supervisor.
+Use it only when no authorized work remains ready. A task-local blocker belongs in
+Deferred gates while independent work continues under `IN_PROGRESS`.
+
+After a recorded unblock input changes, request one recovery worker explicitly:
+
+```sh
+roadmap-runner start roadmap.md --recover-blocked --json
+```
+
+MCP uses `recoverBlocked: true`. If that worker remains blocked, the run stops
+again; the option never starts an automatic recovery loop. A required verification
+worker after an interrupted/quota session, or a changed source revision requiring
+reconciliation, may still inspect stale terminal state before trusting it.
 
 Completion remains an agent assertion: the runner reads the header status, not
 independent proof of every acceptance criterion. The three-iteration mock test
@@ -467,8 +475,8 @@ being truncated or reset. Restart with the same roadmap/path to resume. The same
 progress files.
 
 The progress file's opening-header status controls continuation when no source
-revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` starts
-a recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
+revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` stops
+with exit 75; `--recover-blocked` explicitly permits one recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
 worker to verify any terminal status it left before trusting completion. The roadmap's
 open checkboxes prevent completion even if the handoff says COMPLETE. The same
 header format rules apply. To unblock work,
@@ -493,7 +501,7 @@ reopens changed criteria, adds new gates, retires removed gates from active work
 and replaces drifted handoffs and outdated supervisor targets.
 
 Old `COMPLETE` state cannot stop the loop while reconciliation is pending.
-`BLOCKED` never stops the loop; it requests a fresh recovery worker. A fresh worker takes precedence over a scheduled review; a review based
+`BLOCKED` stops execution after any required source reconciliation. A fresh worker takes precedence over a scheduled review; a review based
 on superseded requirements cannot stop the new revision with stale status or a
 missing handoff. Pending reconciliation clears only after a successful worker
 session on that same revision. Timeouts, capacity failures, cancellation and old
@@ -564,7 +572,7 @@ roadmap-runner <roadmap-file> [options]
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
 --client-bin <path>    override selected client executable
---notify attention|off desktop alerts; default off
+--notify attention|off desktop alerts; default attention
 --notify-on <events>   extra desktop alerts; requires --notify attention
 --prevent-sleep        prevent idle system sleep for the entire run
 --no-prevent-sleep     override ROADMAP_PREVENT_SLEEP
@@ -583,7 +591,7 @@ ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
 ROADMAP_CLIENT_BIN
-ROADMAP_NOTIFY        off (default) or attention
+ROADMAP_NOTIFY        attention (default) or off
 ROADMAP_PREVENT_SLEEP  set to 1 or true to prevent idle system sleep
 ```
 
@@ -794,19 +802,53 @@ A skipped item remains incomplete and cannot unlock its dependent tasks. The
 runner emits attention events for these flags even with `Status: IN_PROGRESS`.
 An unchanged flag set produces one notification across restarts; a changed reason
 or resolved blocker updates the event state. When the entire ready set is blocked,
-`Status: BLOCKED` starts another recovery worker.
+`Status: BLOCKED` stops without another worker or supervisor, preserving the queue.
+Its final `runner.blocked` event has `terminal: true`, and managed status retains
+`roadmapState: blocked`, reason `blocked` and exit 75.
 
-A current supervisor review with `Health: STUCK` triggers the same attention alert.
-After two consecutive workers leave progress byte-for-byte unchanged, the runner
-emits `runner.stuck` as an attention event, once per stagnation episode even
-across restarts. Changed progress or a source revision emits `runner.progress_resumed`
-and allows a future stuck episode to alert again. Repeated recovery checks stay quiet.
-Recovery rechecks back off from 60 seconds to a maximum of 15 minutes. Set
-`ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` in integer seconds (1–3600)
-to adjust this. Changed progress or a source revision resets the delay. Timeout
-sessions use this same unchanged-progress guard. This detects unchanged persisted
-state; rewriting notes alone can evade it, so the prompt also forbids repeatedly
-rediscovering unchanged blockers.
+A current supervisor review with `Health: STUCK` triggers an attention alert.
+The runner stops with exit **75** and reason `no_progress_limit` after **three
+consecutive workers without completed checklist progress**, preserving progress,
+receipts, archives and unfinished queued roadmaps. It emits a terminal
+`runner.stuck` event followed by `runner.failed`, so this stop is visible in CLI,
+managed status and MCP even when desktop notifications are disabled. Resolve the
+blocker, then adopt a controller requirement amendment or use `--recover-blocked`
+for one explicit recovery worker. An unchanged restart preserves the exhausted
+budget and stops before another worker, supervisor or compactor.
+
+With supervision enabled, two idle workers also trigger one small LLM loop check
+before the next worker, including during repeated source reconciliation. It reuses
+bounded recent source/progress snapshots, worker outcomes and the prior review,
+with a maximum 60-second timeout. A current `Loop: DETECTED` verdict must cite at
+least two observed iterations and concrete evidence; it immediately blocks the
+runner (exit 75, terminal `runner.blocked`, reason `loop_detected`). Pending queue
+entries remain untouched. An unchanged restart stays blocked; a controller
+requirement amendment or explicit `--recover-blocked` permits recovery after repair.
+`CLEAR`, `UNCERTAIN`, missing or invalid reports never renew the deterministic
+budget. `--supervisor-every 0` disables LLM reviews while keeping the hard stop.
+
+Progress means increasing the number of completed tasks in the authoritative
+live roadmap, above the persisted high-water mark. Stable task IDs (or full labels
+when no ID exists) identify distinct tasks. For a source without checkboxes, the
+progress checklist supplies this measure. Reopening and rechecking the same tasks,
+mirrored handoff checkboxes, changed notes, and new unchecked tasks do not reset
+the budget. Fenced examples are ignored. A controller requirement amendment adopted
+between sessions grants one fresh budget. Checkbox/status edits and source rewrites
+during workers or supervisors, including hash-bearing delivery summaries, cannot
+continually renew it. Delivery summaries belong in progress, outside the source.
+This is a checklist-based
+orchestration guard, not independent validation that claimed implementation is
+correct. Workers should record validated implementation units as completed
+children rather than stretching one unchecked unit across many sessions.
+
+The counter persists across process restarts. An explicit restart permits a fresh
+worker to verify changed external inputs; another no-progress result still uses
+the retained counter. `ROADMAP_MAX_IDLE_WORKERS` adjusts the limit (1–100; default
+3). After two idle workers, an attention alert and bounded backoff precede the
+remaining attempt. `ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY`
+control that delay in seconds (defaults 60 and 900; range 1–3600). Prose-only
+handoffs also consume the budget; initialize a checklist and record validated
+units rather than relying on narrative changes as progress.
 
 Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
 to an executable's absolute path to receive each event's JSON on stdin. It is
@@ -815,11 +857,10 @@ failure is logged and does not halt roadmap work. Task IDs/statuses are included
 blocker reasons, model output and credentials are not included in event payloads.
 Hooks should filter event types and avoid repeated alerts for recheck records.
 
-Desktop alerts are optional and off by default. For CLI runs, enable them with
-`--notify attention` or `ROADMAP_NOTIFY=attention`; MCP starts use `notify: "attention"`.
-The permission command configures macOS authorization; each roadmap run still
-needs this explicit opt-in. `--notify-on` selects extra event types but does not
-enable desktop delivery by itself.
+Desktop attention alerts are on by default for CLI and MCP starts. Explicit
+`--notify off`, `ROADMAP_NOTIFY=off`, or MCP `notify: "off"` disables them.
+The permission command configures macOS authorization; it is separate from the
+run preference. `--notify-on` selects extra event types and respects explicit off.
 
 Runner events remain available with desktop alerts off. MCP clients can call
 `roadmap_events` with `{ "runId": "<run-id>", "cursor": 0 }`, then persist the

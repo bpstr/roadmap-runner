@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-23",
+  "inference": "Prepared executable clients and mocked transports only; no live provider calls or credential loading.",
+  "selection": {
+    "changed_inputs": "Merge loop recovery and supervisor assessment with separate compaction lifecycle, delivery metadata classification and session telemetry. Prevent unchanged restart from spending another exhausted worker budget.",
+    "development": [
+      "test/context-budget.test.js",
+      "test/source-loop.test.js"
+    ],
+    "affected": [
+      "test/progress.test.js",
+      "test/roadmap-updates.test.js",
+      "test/recovery.test.js",
+      "test/supervisor.test.js",
+      "test/queue.test.js",
+      "test/runner.test.js",
+      "test/agent-integration.test.js"
+    ],
+    "retained": "Retain PR #4 six-job CI at 39e5063 and PR #5 at 2e83ffc for unaffected behavior; retain context-bounds telemetry tests. Affected selectors must run against merged code.",
+    "reason": "Resolve lifecycle/recovery/supervisor conflicts; test compaction before loop assessment, deterministic fallback, restart persistence, authoritative task progress, queue preservation and managed state.",
+    "expected_cost": "Focused development about 15 seconds, affected batch about two minutes; package under 30 seconds.",
+    "completion": "All selected checks pass, package verification passes, all six release CI jobs pass.",
+    "release_gate": "Explicit existing .github/workflows/ci.yml gate: full prepared suite, package and whitespace on Node 20/22/24 across Ubuntu/macOS before publication. No additional local full suite."
+  },
+  "results": {}
+}

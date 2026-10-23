@@ -276,13 +276,13 @@ test("stale progress COMPLETE cannot finish with open roadmap tasks", (t) => {
   assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
-test("progress BLOCKED is non-terminal and launches a recovery worker", (t) => {
+test("progress BLOCKED stops without launching or rescanning", (t) => {
   const evidence = "# Evidence\nStatus: BLOCKED\n\n## Tasks\n- [ ] EX-1\n- [ ] EX-2\n- [ ] EX-3\n\n## Deferred gates\nEX-1 blocked externally.\n";
   const f = run(t, { evidence });
-  assert.equal(f.result.status, 0, f.result.stderr);
-  assert.equal(f.calls, 3);
-  assert.match(f.result.stdout + f.result.stderr, /continuing in recovery mode/);
-  assert.equal(roadmapStatus(fs.readFileSync(f.file, "utf8")), "complete");
+  assert.equal(f.result.status, 75, f.result.stderr);
+  assert.equal(f.calls, 0);
+  assert.match(f.result.stdout + f.result.stderr, /Roadmap is BLOCKED/);
+  assert.equal(fs.readFileSync(f.file, "utf8"), evidence);
 });
 
 test("conflicting progress statuses fail before launching", (t) => {

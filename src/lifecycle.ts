@@ -5,7 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { Recovery, recoverySettings } from "../lib/recovery.js";
+import { Recovery, recoverySettings, checklistProgress } from "../lib/recovery.js";
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt, TARGET_TRACKING_BYTES } from "../lib/tracking.js";
 import { sessionMetrics } from "../lib/telemetry.js";
@@ -108,6 +108,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let iteration = 0;
   let capacityFailures = 0;
   let retryDelay = options.capacity.delayMs;
+  let recoveryRequested = options.recoverBlocked === true;
 
   while (true) {
     if (signal.aborted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
@@ -116,6 +117,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = tracking.deliveryStatus(roadmapStatus(contents));
 
+    if (recovery.state.loopBlockedRevision === tracking.requirementsRevision) {
+      if (!recoveryRequested) {
+        await recovery.event("runner.blocked", { terminal: true, reason: "loop_detected", iteration });
+        return { code: 75, reason: "blocked" };
+      }
+      delete recovery.state.loopBlockedRevision;
+      recovery.save();
+    }
+
     if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       recovery.success();
       await recovery.event("runner.completed", { iteration });
@@ -123,21 +133,36 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       return { code: 0, reason: "complete" };
     }
 
-    await recovery.attention(contents, status, iteration);
-
     const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
-    if (blockedRecovery) {
-      console.warn("Roadmap reported BLOCKED; continuing in recovery mode instead of stopping.");
-      console.warn("The next worker must defer stuck gates, re-check dependencies, and advance any other useful work.");
+    const terminalBlocked = blockedRecovery && !recovery.state.requiresWorker && !recovery.state.quota && !recoveryRequested;
+    await recovery.attention(contents, status, iteration, terminalBlocked);
+    if (terminalBlocked) {
+      console.warn("Roadmap is BLOCKED; stopping without another worker or supervisor. Resolve the recorded unblock condition, then use --recover-blocked for one explicit recovery attempt.");
+      return { code: 75, reason: "blocked" };
+    }
+
+    if (!recoveryRequested && recovery.state.idle >= options.recovery.maxIdleWorkers &&
+        recovery.state.progressRevision === tracking.requirementsRevision) {
+      await recovery.stopNoProgress();
     }
 
     const compacting = tracking.needsCompaction;
-    // Compact before either role reads the handoff. Reconcile actual scope changes
-    // before supervision; explicitly marked delivery notes do not postpone it.
-    if (supervisor?.due && !tracking.needsReconciliation && !compacting) {
+    if (supervisor && recovery.state.idle < 2) supervisor.loopChecked = false;
+    const loopCheck = supervisor && !supervisor.loopChecked && supervisor.records.length >= 2 &&
+      recovery.state.idle >= 2 && recovery.state.progressRevision === tracking.requirementsRevision;
+    // A small early review inspects repeated reconciliation before the hard stop.
+    if (!compacting && supervisor && (loopCheck || (supervisor.due && !tracking.needsReconciliation))) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
-      await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery });
+      if (loopCheck) supervisor.loopChecked = true;
+      const review = await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery, loopCheck });
+      if (review?.loop) {
+        recovery.state.loopBlockedRevision = tracking.requirementsRevision;
+        recovery.save();
+        await recovery.event("runner.blocked", { terminal: true, reason: "loop_detected", role: "supervisor",
+          iteration, loopIterations: review.loop.iterations, loopEvidence: review.loop.evidence });
+        return { code: 75, reason: "blocked" };
+      }
       continue; // Re-read the supervisor's handoff/status before another worker.
     }
 
@@ -151,6 +176,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const started = performance.now();
     const output = compacting ? undefined : supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
+    const sourceContents = fs.readFileSync(tracking.sourceSnapshot, "utf8");
+    const revisionChanged = recovery.state.progressRevision != null &&
+      recovery.state.progressRevision !== tracking.requirementsRevision;
+    if (!compacting) recoveryRequested = false; // One explicit recovery worker.
     const snapshot = compacting ? tracking.archive({ kind: "before-compaction", iteration }) : null;
     const iterationPrompt = compacting
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
@@ -179,6 +208,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     await recovery.event("runner.turn_finished", receipt);
     tracking.refreshSource(iteration);
     const after = fs.readFileSync(tracking.file, "utf8");
+    const afterSource = fs.readFileSync(tracking.sourceSnapshot, "utf8");
+    const sourceHasTasks = checklistProgress(sourceContents).total || checklistProgress(afterSource).total;
+    const beforeProgress = sourceHasTasks ? sourceContents : contents;
+    const afterProgress = sourceHasTasks ? afterSource : after;
     tracking.archive({ kind: role, iteration, metadata: {
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
@@ -187,6 +220,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!compacting) supervisor?.record({
       iteration, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
       before: contents, after,
+      sourceBefore: sourceContents, sourceAfter: afterSource,
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
@@ -196,7 +230,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       await recovery.event("runner.turn_limit_reached", { role, iteration });
       if (compacting) fail(`handoff compaction timed out; original state preserved at ${snapshot}`);
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
       continue;
@@ -240,9 +274,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
     recovery.success({ worker: true });
     tracking.finishWorker(sourceRevision, result);
-    await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
-    if (tracking.deliveryStatus(roadmapStatus(after)) !== "complete" || tracking.needsReconciliation) {
-      await recovery.idle(contents, after, sourceRevision !== tracking.sourceRevision);
+    const afterStatus = tracking.deliveryStatus(roadmapStatus(after));
+    if (afterStatus !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, afterStatus, iteration);
+    if ((afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
     }
     console.log(`Iteration ${iteration} completed.`);
     console.log();
@@ -250,12 +285,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   } catch (error) {
     const stopped = signal.aborted || error.exitCode === 130;
     const type = stopped ? "runner.stopped" : "runner.failed";
-    const fields = { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "requested_stop" : "terminal_failure" };
+    const fields = { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "requested_stop" : error.reason || "terminal_failure" };
     if (recovery) await recovery.event(type, fields);
     else onEvent?.({ version: 1, id: randomUUID(), runId: options.runId || randomUUID(), sequence: 1, at: new Date().toISOString(), type,
       roadmap: options.roadmap, progressFile: options.progressFile, severity: stopped ? "info" : "warning", attention: !stopped, reasonCode: fields.reason, ...fields });
     if (!stopped) console.error(`roadmap-runner: ${error.message}`);
-    return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : "failed" };
+    return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : error.reason || "failed" };
   } finally {
     await sleep?.close();
     if (notifications) { if (!signal.aborted) await notifications.flush(); await notifications.close(); }

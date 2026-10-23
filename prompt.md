@@ -202,16 +202,23 @@ Update the roadmap and handoff, then stop this invocation:
   closed, identify the material prerequisite advanced and how it reduces the
   remaining work. Repeated rediscovery, extra notes or adjacent tests alone
   are not progress toward the active gate.
-- Treat blockers as **gate-local deferrals**, not as a reason to end the long-running
-  executor. When a gate cannot advance, record its blocker, evidence, unblock
-  condition and a bounded retry trigger, then SKIP it and scan every other unchecked
-  gate for useful authorized implementation, repair, investigation or verification.
-  Do not repeatedly spend fresh sessions on an unchanged blocker or failed check.
-- If Runner context says Blocked recovery mode: YES, the previous session exhausted
-  its ready set. Re-evaluate dependency facts once, then actively seek an alternative:
-  another ready gate, an independent child, preparatory work that reduces a blocker,
-  or a newly feasible verification/repair. Replace stale handoff targets rather than
-  retrying the same stuck action merely because it was previously active.
+- Treat task-local blockers as deferrals. Record evidence, the exact unblock
+  condition and a retry trigger, then use the existing dependency map to select
+  another ready implementation unit. Keep Status: IN_PROGRESS while any useful
+  authorized implementation or necessary repair can advance.
+- Avoid repeated scans: read the active source/current handoff once, then inspect
+  only named changed inputs and the active code boundary. Reuse the recorded
+  prerequisite audit; do not recursively inventory sibling repositories, search
+  the same cache, rehash unchanged receipts or rewrite unchanged blocker notes.
+  Resolve repository instructions at the workspace and ancestor paths, not by
+  enumerating unrelated checkouts. A new scan needs a concrete changed input or
+  an explicitly recorded unresolved question it will answer.
+- If Runner context says Blocked recovery mode: YES, this is one explicitly
+  requested recovery worker (or required verification after an interrupted run).
+  Check the supplied changed unblock input once. If it resolves the blocker,
+  implement/verify the next ready unit and set IN_PROGRESS. If it does not, retain
+  BLOCKED with the existing evidence and stop; do not invent preparation work or
+  repeat discovery to occupy another session.
 - In the bounded `## Deferred gates` section, flag each problematic task using one
   line: `- BLOCKED TASK-ID: reason | Unblock: exact condition | Retry: trigger`,
   `- NEEDS_INFO TASK-ID: question | Unblock: required answer | Retry: answer arrives`,
@@ -221,11 +228,12 @@ Update the roadmap and handoff, then stop this invocation:
   acceptance checkbox unchecked until implementation and validation both pass.
   A deferral is visible unfinished work. Prefer independent ready tasks over a
   repeated attempt on unchanged blockers; ask one precise question when input is needed.
-- Status: BLOCKED is a **non-terminal recovery signal**. Use it only when this
-  session finds no materially useful authorized action after scanning ALL remaining
-  gates and prerequisites. Record every blocking dependency and exact external
-  unblock action. The runner will start another fresh recovery worker rather than
-  exit. Prefer Status: IN_PROGRESS whenever any useful work can advance.
+- Status: BLOCKED stops the runner without another worker or supervisor. Use it
+  only when the existing dependency audit shows no useful authorized work remains.
+  Record each unresolved blocker, its owner, exact unblock condition and retry
+  trigger once. Keep blocked/failed/skipped criteria unchecked. An external
+  controller can request one recovery worker with --recover-blocked after inputs
+  change; elapsed time alone is not an unblock signal. Rewriting notes is not progress.
 - Set Status: COMPLETE only when every original gate and its required in-scope
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.

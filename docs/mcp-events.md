@@ -4,7 +4,7 @@ Reviewed 2026-10-07. The event journal and notification hook are implemented. An
 MCP server is now implemented; see [agent integration](agent-integration.md).
 Automatic agent dispatch remains proposed and has not been live-tested. Prepared tests establish local runner behavior only.
 
-Updated 2026-10-14: desktop notifications default off. MCP event reads and
+Updated 2026-10-20: desktop attention notifications default on; explicit off is respected. MCP event reads and
 resource subscriptions remain available independently; requesting macOS
 permission does not opt a roadmap run into desktop alerts.
 
@@ -32,7 +32,7 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.usage_resumed` | Reset wait ended; next session may run |
 | `runner.usage_wait_expired` | Incident wait ceiling reached; exit 75 |
 | `runner.supervisor_deferred` | Timed-out/incomplete review preserved; worker continues |
-| `runner.failed` | Ordinary worker CLI failure; partial work preserved |
+| `runner.failed` | Worker CLI failure or `no_progress_limit` (exit 75); partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |
 | `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |
 | `runner.completed` | The final roadmap completed; the managed queue is finished |
@@ -133,6 +133,26 @@ Assign MCP search (which did not contain these script resources):
 
 - `assign-infra/scripts/claude-roadmap-runner.py`: structured rejected-limit events, explicit zoned reset clocks, durable limit metadata.
 - `claude-assign-todo-loop.py`: keep externally blocked and failed-check task sets, inspect the next task and preserve incomplete task state.
-- `codex-roadmap-loop.sh`: capacity backoff and signal handling; its terminal global-BLOCKED behavior is superseded by this runner's recovery loop.
+- `codex-roadmap-loop.sh`: capacity backoff and signal handling; global BLOCKED stops this runner too; explicit recovery is a separate action.
 
 No Assign data was modified. No live model or notification was dispatched during validation.
+
+Stagnation stops after three workers without completed checklist progress (configurable
+with `ROADMAP_MAX_IDLE_WORKERS`). A terminal `runner.stuck` event has `terminal: true`,
+`reason: "no_progress_limit"`, `unchangedWorkers` and `maxIdleWorkers`, followed by
+`runner.failed` with the same reason and code 75. No further workers are scheduled.
+An unchanged restart repeats the terminal result without launching another session.
+A controller requirement amendment or one explicit `recoverBlocked` attempt permits recovery.
+
+Global `BLOCKED` emits a terminal `runner.blocked` event and exits 75 with reason
+`blocked`; it does not emit `runner.failed`. Managed state and queue items retain
+blocked status. `recoverBlocked: true` starts one explicitly requested recovery
+worker after changed inputs; remaining blocked stops again without polling.
+
+A current supervisor `Loop: DETECTED` verdict also blocks execution, requiring
+at least two observed worker iterations and concrete evidence. The terminal
+`runner.blocked` event carries `reason: "loop_detected"`, `loopIterations` and a
+bounded `loopEvidence` summary. Managed execution exits 75, marks the current queue
+item blocked and preserves later entries as pending. An unchanged restart remains
+blocked without a model call; changed requirements or explicit `recoverBlocked`
+permit recovery. Missing/uncertain loop reports do not reset the deterministic limit.
