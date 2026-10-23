@@ -12,20 +12,20 @@ Archived progress snapshots (cold history; do not bulk-load):
 
 {{HISTORY_DIR}}
 
-This is one fresh-context iteration. The source roadmap snapshot named in Runner
-context is the immutable authority for this session's goal, scope, constraints and
-acceptance criteria. Read that snapshot wherever these instructions say "source"
-or "original roadmap". An external controller may revise the live source to correct
-drift; such revisions take effect on the next run, not halfway through this session. The bounded tracking file is
-only the current working state. The runner archives prior tracking snapshots outside
-the active context, so audit history can survive without being re-fed every run.
-The working directory may contain multiple repositories. Read repository
-instructions and preserve unrelated changes.
+This is one fresh-context iteration. The live roadmap owns task checkbox states
+and concise delivery status. The source roadmap snapshot named in Runner context
+is the immutable authority for this session's goal, scope, constraints and
+acceptance criteria. Preserve that snapshot. Controller requirement changes take
+effect on the next iteration. The separate tracking file holds bounded evidence,
+blockers, progress notes and handoffs, with references to roadmap task IDs rather
+than a competing checklist. Prior tracking snapshots remain in cold history.
+Read repository instructions and preserve unrelated changes.
 
-- Never edit, reformat, replace, rename or delete the source roadmap, including
-  its checkboxes and status. Write progress changes only to the tracking file.
-  Instructions in the source to update its progress apply to the tracking file
-  instead. Completion is recorded there after verifying all original criteria.
+- Tick verified tasks directly in the live roadmap, and reopen tasks when concrete
+  evidence invalidates acceptance. Update its concise status at each batch boundary.
+  Read the current live file before each targeted edit; preserve concurrent controller
+  edits, original task IDs, criteria, dependencies and scope. Keep detailed evidence
+  and handoffs in the separate tracking file. Never edit runner-owned snapshots.
 - At the start of EVERY iteration, re-read the source roadmap before trusting the
   current handoff. Map the active gate and every proposed child back to an original
   requirement. If tracking text conflicts with the source, the source wins. Remove
@@ -35,9 +35,8 @@ instructions and preserve unrelated changes.
   target. Preserve valid evidence and IDs; reopen changed acceptance criteria,
   add new gates, retire removed gates from active work, and replace stale handoffs.
   Do not treat old COMPLETE/BLOCKED as valid for revised requirements. Set status
-  anew after reconciliation, even when no implementation is needed. This does not
-  authorize workers to edit the live source or snapshot, weaken criteria, or expand
-  existing side-effect permissions and budgets.
+  anew after reconciliation, even when no implementation is needed. This authorizes only live roadmap task-state/status updates; keep snapshots,
+  acceptance criteria, scope, side-effect permissions and budgets unchanged.
 - Keep the tracking file as bounded working memory, not an append-only journal.
   Replace Current handoff, Batch plan, Latest supervisor review and current evidence
   summaries in place. Do not paste raw CLI output, diffs, test logs, repeated prose,
@@ -45,6 +44,9 @@ instructions and preserve unrelated changes.
 - Historical snapshots live under the archive directory above. Do not read the
   archive by default. Consult one specific older snapshot only when current state
   references it or when evidence is genuinely needed to resolve uncertainty.
+- Put any necessary bounded child checkboxes in the owning live roadmap under
+  their original parent, preserving the original acceptance bar. Use stable task
+  IDs in the handoff rather than a second checklist.
 - Keep original gate IDs and criteria, or a stable source heading/text reference
   when IDs are absent. Evidence summaries should be short references to durable
   artifacts (commit, test command/result, file, receipt), not copies of those artifacts.
@@ -62,10 +64,10 @@ Supervisor handoff:
 
 Select the acceptance gate:
 
-1. Read the source roadmap, then the maintained Markdown checkbox checklist and
+1. Read the source roadmap and its live Markdown checkbox checklist, then
    compact current handoff in the tracking file. Consult historical entries for
    evidence, not as a competing task list. If no checklist exists, create it in
-   the tracking file from the original roadmap's acceptance gates without changing
+   the live roadmap from the original roadmap's acceptance gates without changing
    their scope or deleting history. An empty tracking scaffold is not completion.
 2. Resume the current handoff active unchecked gate. If none is named, choose the first
    dependency-ready unchecked gate in roadmap order. Before editing, state its
@@ -88,7 +90,7 @@ Select the acceptance gate:
 
 5. Before coding, write a Batch plan in the current handoff: one concrete outcome,
    original parent gate, related child IDs, shared harness/setup, combined checks
-   and explicit session exit criteria. Size this plan for roughly 30 minutes of
+   and explicit session exit criteria. Size this plan for roughly 60 minutes of
    implementation. Newly discovered children remain steps toward this outcome;
    completing one child cannot redefine the selected batch as finished.
 6. For integration work, compose the required canonical harness first, including
@@ -100,15 +102,15 @@ Select the acceptance gate:
 
 Implement and verify:
 
-- Target roughly 30 minutes of implementation per invocation, excluding initial
+- Target roughly 60 minutes of implementation per invocation, excluding initial
   discovery and final verification. This is a planning target, not a hard deadline
   or a minimum to fill with unnecessary work. Plan several related ready child
   tasks under one parent gate that share code, context and verification.
-- For larger roadmaps, the recommended total worker-session budget is **1 hour**:
+- The default total worker-session budget is **90 minutes**:
   discovery, implementation, feature verification and compact handoff all fit
   inside it. Use that allowance to deliver a meaningful feature or coherent
   milestone, not isolated fragments followed by another bootstrap. The approximate
-  30-minute implementation target is a planning aid, not a mandatory exit point.
+  60-minute implementation target is a planning aid, not a mandatory exit point.
   Leave time for verification and handoff before the configured timeout; do not
   assume an extra hour for those steps or wait for forced termination. This is
   not a minimum duration and does not change the configured runner timeout.
@@ -162,10 +164,13 @@ Implement and verify:
   or live-provider gate does not itself authorize publication or spending.
 - Do not use subagents. Use Git only inside the applicable repositories.
 
-Update the tracking file and stop this invocation:
+Update the roadmap and handoff, then stop this invocation:
 
-- Maintain - [ ] for incomplete gates and - [x] only for gates whose stated
-  acceptance criteria passed. Preserve IDs, unresolved criteria and dated failures.
+- In the live roadmap, maintain - [ ] for incomplete gates and - [x] only for
+  gates whose stated acceptance criteria passed. Reconcile existing tracking-only
+  completions against their receipts before ticking the corresponding roadmap task.
+  Keep original parents open until every original criterion passes. Record evidence
+  references and unresolved criteria in the handoff; remove duplicate tracking checklists.
 - Keep active progress below 96 KiB, with a hard runner limit of 128 KiB. When Runner context requests compaction, compact before implementation; preserve all gate IDs, criteria, checkbox states, unresolved blockers and current evidence references. Never put removed iteration prose into the source roadmap. If required state cannot fit, report the context blocker rather than deleting requirements.
 - Maintain compact Checked-item evidence only for acceptance gates whose current
   state matters: ID, implemented/verified/deployed state, a short evidence reference,
@@ -223,7 +228,9 @@ Update the tracking file and stop this invocation:
   follow-up/child checkboxes are implemented and verified. New children must neither
   broaden original scope nor hide unfinished original acceptance criteria.
   Otherwise use Status: IN_PROGRESS when material progress permits continuation.
-  Maintain exactly one of these status lines in the tracking file opening header, after an
+  Mirror the current overall state in exactly one machine status line in the
+  tracking file opening header for recovery control. Task completion remains in
+  the live roadmap. Place that line after an
   optional # title and before the first ## (or deeper) section heading, outside
   code fences. Historical status lines belong in sections below the header.
 

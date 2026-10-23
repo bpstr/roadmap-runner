@@ -1,0 +1,49 @@
+{
+  "version": "0.10.2",
+  "date": "2026-10-20",
+  "inference": "Prepared clients and mocked transports only; no credentials, paid inference or live providers.",
+  "selection": {
+    "changed_inputs": "Roadmap completion/reconciliation, CLI and managed timeout defaults, worker/supervisor prompts, prepared fixtures, roadmap writing guidance and package version.",
+    "selectors": [
+      "test/progress.test.js",
+      "test/recovery.test.js",
+      "test/roadmap-updates.test.js",
+      "test/queue.test.js",
+      "test/runner-regressions.test.js",
+      "test/example-integration.test.js",
+      "test/supervisor.test.js"
+    ],
+    "reason": "Affected completion, queue handoff, recovery and supervisor behavior; changed prepared fixture is shared by these tests. No local full-suite rerun.",
+    "expected_cost": "One affected prepared run, roughly 1\u20132 minutes; one build/package verification and skill validation, under 30 seconds. No new test authoring.",
+    "reuse": "Passing affected checks carried forward through evidence recording, commit and packaging; final tarball uses already verified build outputs.",
+    "release_gate": "Existing GitHub CI: full prepared suite, packaged CLI and whitespace checks on Node 20/22/24 across Linux and macOS. Require all six jobs to pass on the release commit before publication."
+  },
+  "results": {
+    "affected_tests": {
+      "passed": 137,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 79980.54275,
+      "log": "affected-tests.log"
+    },
+    "build": "passed",
+    "package": "passed; 61 files; extracted version/help verified",
+    "skill": "passed",
+    "whitespace": "passed"
+  },
+  "artifact": {
+    "filename": "bpstr-roadmap-runner-0.10.2.tgz",
+    "sha256": "f14e6b58bc1f7d41004148b315586628d7e947021799b31b63e11a2008715769"
+  },
+  "source_sha256": {
+    "lib/tracking.js": "f770f558b4497c55370305c2d577dccdcf98a7a2056300a55f267d0b5843d0cf",
+    "src/lifecycle.ts": "3f8c0000a5eecd427224bc49b3d4d6e455a64ae95bc31166e11b9303f48fe57d",
+    "src/run-manager.ts": "d866b8b26b1ec7c346f8613976add8f885a1562339d4e63fce95db2cd2f33efb",
+    "lib/runner.js": "3d255e64dedaa90452a2f9f8142faafc970ffb7e5de81d1775dbfd54013215f7",
+    "prompt.md": "552612ac071e398bdac5f5a106523077c70b26270ee3d69adc41a11ac4fc59aa",
+    "supervisor.md": "2332d590fa8b157f3c7514b76b27dc0081d8bafd86baadb1dae2abf0f5d46b6f",
+    "package.json": "fa7bcaa31ac1534d0b0f79b0dce43470b461b60ebb3166fb044faafc15698b95",
+    "package-lock.json": "87e5920842203f8568e456401b205ba7abee918c54a4cc3ca30e04d074351cdc"
+  }
+}

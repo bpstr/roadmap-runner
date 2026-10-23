@@ -82,6 +82,7 @@ if (supervisor) {
       fs.writeFileSync('consumed-supervisor-target', String(n));
     }
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
+    if (target >= ${total}) fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replace('- [ ] Gate A', '- [x] Gate A'));
     if (target >= ${total}) fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace(/Status: (IN_PROGRESS|BLOCKED)/, 'Status: COMPLETE'));
     else if (mode !== 'noop') fs.appendFileSync(tracking, '\\n- [x] W' + n + ' verified fixture unit\\n');
     if (mode === 'worker-timeout' && n === 1) setTimeout(() => process.exit(0), 5000);
@@ -176,7 +177,7 @@ for (const preserved of [true]) {
     assert.ok(stuck.every(event => event.attention && event.reasonCode === "supervisor_stuck"));
     assert.match(fs.readFileSync(f.tracking, 'utf8'), /Next delivery target: repair the canonical transport harness/);
     assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
-    if (preserved) assert.equal(fs.readFileSync(f.roadmap, 'utf8'), f.source);
+    if (preserved) assert.equal(fs.readFileSync(f.roadmap, 'utf8'), f.source.replace('- [ ] Gate A', '- [x] Gate A'));
     for (const review of [1, 2]) {
       const data = JSON.parse(fs.readFileSync(path.join(f.dir, `evidence-${review}.json`), 'utf8'));
       assert.deepEqual(data.records.map(r => r.iteration), review === 1 ? [1,2,3,4,5] : [6,7,8,9,10]);

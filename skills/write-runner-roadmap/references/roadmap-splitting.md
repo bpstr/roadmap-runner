@@ -3,7 +3,7 @@
 Workers reread the active source roadmap in each fresh session. Smaller tasks inside
 one huge file still make every worker read that file. Split the source before
 execution; the runner's queue advances between complete roadmap files and does not
-automatically partition a large source. Workers preserve the source and report a
+automatically partition a large source. Workers preserve source requirements and report a
 context blocker to the controller when further splitting is needed.
 
 ## Choose the boundary and input budget
@@ -16,7 +16,7 @@ context blocker to the controller when further splitting is needed.
   code needed for the next batch. Leave room for implementation and verification;
   a source that barely fits the context window is already too large.
 - Cut along dependency edges into independently verifiable outcomes. Keep a change
-  with its validation and enough integration work to leave a usable intermediate
+  with its focused delivery check and enough integration work to leave a usable intermediate
   state. Session-sized tasks remain necessary inside each file.
 - Keep the overall plan in a controller-owned index: ordered paths, outcomes,
   prerequisites, progress paths and evidence locations. Pass the focused roadmap
@@ -26,7 +26,7 @@ context blocker to the controller when further splitting is needed.
 ## Preserve context and acceptance
 
 Each split file carries its own goal, constraints, required acceptance, task
-contracts and local validation. Use precise paths, symbols or document sections for
+contracts and focused local validation under [the testing policy](task-contract.md#testing-policy). Use precise paths, symbols or document sections for
 additional context. Keep raw logs, full specifications, old roadmaps and historical
 handoffs behind targeted references rather than copying them into every file or
 requiring workers to read them all.
@@ -39,9 +39,10 @@ Before dependent implementation, verify that condition against the current
 workspace. Record a missing or invalid prerequisite as a blocker; successful queue
 advancement alone does not prove that a particular interface is still correct.
 
-End each milestone with validation and a compact handoff in its progress file:
-delivered interfaces/paths, validation command and result, evidence locations and
-remaining limitations. The next file references the relevant evidence only. Avoid
+End each milestone with a compact handoff of its focused delivery evidence in its progress file:
+delivered interfaces/paths, check selectors and results, evidence locations and
+remaining limitations. Reuse compatible evidence; a milestone boundary does not
+require another test run. The next file references the relevant evidence only. Avoid
 copying the predecessor's full checklist or progress history into the next input.
 Completion applies to that file; completion of the whole plan requires every
 required file and final integration acceptance to pass.
@@ -52,8 +53,14 @@ Queues are serial. Order files by true prerequisites, with independent local wor
 before an externally blocked release or qualification file. A blocked current
 roadmap holds later entries; queueing unrelated work behind it does not make that
 work eligible. Within a file, workers can still select other ready tasks. Use a
-final file for integration across milestones and any required release work, with
-its authority and entry conditions explicit.
+final testing file (or bounded testing files when needed for context) after ALL
+functional roadmaps for test development, comprehensive cases and justified
+cross-milestone validation. Give each testing requirement one owner in the index;
+do not append a testing epic or duplicate full test cases and broad runs after each
+functional roadmap. Functional files finish with their focused delivery checks
+and do not wait for final testing. Preserve required final acceptance, reuse prior
+evidence and put any required release work after its applicable testing gates,
+with authority and entry conditions explicit.
 
 For an authorized run, use repeated CLI `--queue` options or the MCP start tool's
 ordered `queue` entries. Append through CLI `queue` or MCP `roadmap_enqueue` only

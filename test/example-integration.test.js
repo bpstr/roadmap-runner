@@ -49,8 +49,8 @@ test("example roadmap completes in exactly three iterations", (t) => {
   assert.match(result.stdout, /Completed EX-3/);
   assert.match(result.stdout, /Roadmap complete after 3 iteration\(s\)\./);
 
-  assert.deepEqual(fs.readFileSync(roadmap), originalRoadmap);
-  const progressPath = result.stdout.match(/^Progress:\s+(.+?) \(bounded active state;/m)?.[1];
+  assert.equal(fs.readFileSync(roadmap, "utf8"), originalRoadmap.toString().replaceAll("- [ ] EX-", "- [x] EX-"));
+  const progressPath = result.stdout.match(/^Progress:\s+(.+?) \(bounded handoff\/evidence;/m)?.[1];
   assert.ok(progressPath, result.stdout);
   const finalProgress = fs.readFileSync(progressPath, "utf8");
   assert.match(finalProgress, /^Status: COMPLETE$/m);
@@ -64,5 +64,5 @@ test("example roadmap completes in exactly three iterations", (t) => {
   assert.doesNotMatch(finalProgress, /## Iteration history/);
   const historyPath = result.stdout.match(/^History:\s+(.+?) \(archived snapshots;/m)?.[1];
   assert.ok(historyPath, result.stdout);
-  assert.equal(fs.readdirSync(historyPath).filter(name => name.endsWith(".md.gz")).length, 3);
+  assert.equal(fs.readFileSync(path.join(path.dirname(historyPath), "history.jsonl"), "utf8").trim().split("\n").map(JSON.parse).filter(entry => entry.kind === "worker").length, 3);
 });

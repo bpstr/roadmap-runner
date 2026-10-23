@@ -40,7 +40,7 @@ Management options:
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
   --progress-file <path> Override the bounded progress-state path; workers never edit source
-  --timeout <duration>   Per-run timeout. Default: 2h
+  --timeout <duration>   Per-run timeout. Default: 90m
   --supervisor-every <n> Review after n workers (1-20); default 5, 0 disables
   --supervisor-timeout <duration> Review timeout; default 10m
   --model <model>        Optional client model override

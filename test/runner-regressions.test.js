@@ -59,8 +59,8 @@ test("a documentation example cannot skip the three real worker iterations", (t)
   });
   assert.equal(result.status, 0, result.stderr);
   assert.equal((result.stdout.match(/^===== iteration /gm) || []).length, 3, result.stdout);
-  assert.deepEqual(fs.readFileSync(roadmap), before);
-  const progress = result.stdout.match(/^Progress:\s+(.+?) \(bounded active state;/m)?.[1];
+  assert.equal(fs.readFileSync(roadmap, "utf8"), before.toString().replaceAll("- [ ] EX-", "- [x] EX-"));
+  const progress = result.stdout.match(/^Progress:\s+(.+?) \(bounded handoff\/evidence;/m)?.[1];
   assert.ok(progress, result.stdout);
   assert.equal((fs.readFileSync(progress, "utf8").match(/- \[x\] EX-/g) || []).length, 3);
 });

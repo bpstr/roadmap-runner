@@ -9,6 +9,13 @@
 - Stop after three workers without completed checklist progress (configurable with `ROADMAP_MAX_IDLE_WORKERS`), preserving partial work and queued roadmaps. Exit 75 and expose `no_progress_limit` in terminal events and managed status.
 - Ignore handoff/blocker prose churn when detecting checklist progress, so recovery workers and supervisor edits cannot indefinitely renew the budget. Preserve source-revision resets and bounded recovery for independent work.
 
+## 0.10.2 — 2026-10-20
+
+- Keep verified task checkmarks in the live roadmap and handoff/evidence in the bounded progress file. Prevent a progress-file COMPLETE status from closing unfinished roadmap tasks.
+- Preserve reconciliation evidence across checkbox-only and status-only source edits while continuing to reconcile changed requirements between sessions.
+- Default CLI and managed worker sessions to 90 minutes and target coherent 60-minute implementation batches, including time for focused verification and handoff.
+- Update roadmap writing, splitting and template guidance to defer test development and comprehensive cases until after all functional roadmaps, use narrow delivery checks and reuse compatible evidence without repeated broad test runs.
+
 ## 0.10.1 — 2026-10-18
 
 - Default desktop alerts to off for CLI and MCP starts; keep explicit opt-in independent of macOS permission requests. Runner journals, hooks and MCP events remain available.
