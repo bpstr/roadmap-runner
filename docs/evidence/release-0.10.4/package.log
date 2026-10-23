@@ -1,0 +1,21 @@
+
+> @bpstr/roadmap-runner@0.10.4 check:package
+> node scripts/check-package.js
+
+
+> @bpstr/roadmap-runner@0.10.4 prepack
+> npm run build
+
+
+> @bpstr/roadmap-runner@0.10.4 build
+> tsc
+
+
+> @bpstr/roadmap-runner@0.10.4 prepare
+> npm run build
+
+
+> @bpstr/roadmap-runner@0.10.4 build
+> tsc
+
+Package verified: @bpstr/roadmap-runner@0.10.4; 64 files; 134112 packed bytes; packaged version/help passed; no inference.

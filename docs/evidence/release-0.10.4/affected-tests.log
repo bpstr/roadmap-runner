@@ -1,0 +1,220 @@
+✔ managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection (492.825625ms)
+✔ simultaneous requests cannot create competing managed workers (165.89825ms)
+✔ progress aliases and symlink escapes cannot bypass managed path boundaries (6.945875ms)
+✔ stale reused PID becomes unknown without signaling or releasing a live identity reservation (210.391084ms)
+✔ control rejects unauthenticated ownership and nested worker management (143.678625ms)
+✔ managed quota wait can stop promptly and preserves its recovery checkpoint (315.336959ms)
+✔ bounded output and journal retention report truncation, expiry and malformed/partial records (62.611458ms)
+✔ notification filters and persistent deduplication omit model content and macOS click actions (38.021584ms)
+Desktop notifications: delivery_timeout; inspect status/progress for attention.
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+Desktop notifications: backend_unavailable; inspect status/progress for attention.
+✔ notification timeout, missing backend and headless Linux are best effort and recorded (50.289417ms)
+Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+✔ desktop attention defaults on and explicit off suppresses selected events (25.437292ms)
+✔ failed notification submission can retry after the backend is repaired (39.539042ms)
+✔ desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends (0.310083ms)
+✔ macOS permission denial is actionable and does not suppress a repaired submission (30.650167ms)
+✔ legacy failed fingerprints do not suppress notifications after an upgrade (25.981958ms)
+✔ setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation (45.125666ms)
+✔ prepared legacy MCP tools, restrictions, resources and subscriptions (1224.194417ms)
+✔ prepared modern MCP tools, restrictions, resources and subscriptions (1221.18375ms)
+✔ prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off (2774.329625ms)
+✔ prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off (2728.445041ms)
+✔ roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies (3.202875ms)
+✔ managed stop finishes only after an ignoring descendant is terminated (3462.824792ms)
+✔ setup connectivity checks only initialize/list MCP and never launch a provider (188.160708ms)
+✔ qualified local skills installer is staged and checked before publishing the skill (6.967125ms)
+✔ benign SKIPPED dependency flags do not trigger desktop attention (3.172625ms)
+Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+✔ Linux delivery uses notify-send, and off suppresses explicitly selected events (13.514625ms)
+✔ damaged notification state and thrown transports cannot interrupt runner work (14.928166ms)
+✔ managed startup failure reports its run identity without claiming readiness (107.101792ms)
+✔ unchanged blocked observations never dispatch despite note/cursor/run churn (0.865916ms)
+✔ changed verified input produces exactly one mocked recovery job (0.122584ms)
+✔ active work and missing authorization do not dispatch or consume recovery (0.202208ms)
+✔ two changed-input attempts exhaust the incident budget across runner restarts (0.493667ms)
+✔ a source or blocker change establishes a fresh baseline rather than blind dispatch (0.0675ms)
+Roadmap requirements changed; revision 31a7cb3d71d8 will be reconciled by the next worker.
+Roadmap requirements changed; revision d76106bc0d0f will be reconciled by the next worker.
+✔ progress-file argument and environment are opt-in, with CLI precedence (0.768667ms)
+✔ default mode preserves the roadmap and creates bounded internal progress state (3.854083ms)
+✔ new nested evidence gets an incomplete scaffold without touching the source (2.219666ms)
+✔ existing evidence is never truncated or reset by initialization (2.565292ms)
+✔ reject source alias: same path (0.621375ms)
+✔ reject source alias: normalized path (0.519458ms)
+✔ reject source alias: symlink (0.627125ms)
+✔ reject source alias: hard link (0.915042ms)
+✔ non-file progress targets are rejected without altering the source (0.67525ms)
+✔ source edits and deletion are detected without automatic restoration (4.714667ms)
+✔ progress replaced with a source alias is rejected at the next boundary (1.966ms)
+✔ prompt keeps literal paths and the latest batching and evidence instructions (0.189125ms)
+✔ source/history pollution is rejected before a worker sees it (1.12775ms)
+✔ a 350 KB source is rejected unchanged even though older versions accepted it (0.785334ms)
+✔ progress compaction is requested before the hard limit without discarding state (2.702959ms)
+✔ active progress is capped while archived snapshots preserve prior state (2.103708ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source IN_PROGRESS (560.621209ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source COMPLETE (452.564166ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source BLOCKED (439.828916ms)
+✔ resume skips previously checked tasks and preserves prior delivery evidence (388.468375ms)
+✔ stale progress COMPLETE cannot finish with open roadmap tasks (434.922084ms)
+✔ progress BLOCKED stops without launching or rescanning (107.418291ms)
+✔ conflicting progress statuses fail before launching (105.72725ms)
+✔ continue after edit-source, preserving controller edits and prior evidence (432.204916ms)
+✔ continue after edit-capacity, preserving controller edits and prior evidence (1441.631417ms)
+✔ stop after delete-source, without another worker or automatic restoration (370.51275ms)
+✔ stop after delete-progress, without another worker or automatic restoration (335.368042ms)
+✔ capacity retry retains progress and source protection (1482.8565ms)
+✔ a separate compactor reduces a large handoff before implementation (451.187959ms)
+✔ roadmap completion ignores fenced examples and rejects stale handoff completion (2.643542ms)
+✔ checkbox updates retain the source snapshot without requiring scope reconciliation (5.365ms)
+✔ queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors (616.359917ms)
+✔ macOS sleep prevention spans queue handoff and releases at completion (501.038584ms)
+✔ macOS sleep prevention releases when a queued run is stopped (355.794083ms)
+✔ CLI queue appends to an active run and rejects duplicates and terminal runs (401.6865ms)
+✔ a blocked or failed roadmap never starts the next queued roadmap (687.34575ms)
+✔ all queue entries are validated before launch, including path and progress aliases (4.707583ms)
+✔ foreground CLI accepts repeated --queue flags and completes every roadmap (505.775875ms)
+✔ a queued source removed before handoff fails the run and preserves later entries (367.4995ms)
+✔ no-progress limit is terminal in managed status and preserves the pending queue (1389.432459ms)
+✔ LLM loop detection blocks managed execution and leaves queued work pending (1402.365458ms)
+✔ fully blocked managed runs stop once, retain blocked status, and leave the queue pending (446.651875ms)
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-14T08:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-07T08:00:01.000Z).
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-08T13:00:00.000Z (deadline 2026-10-08T13:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+No progress change for 2 workers; recovery recheck in 0.01s.
+No progress change for 3 workers; recovery recheck in 0.02s.
+No progress change for 4 workers; recovery recheck in 0.02s.
+No progress change for 5 workers; recovery recheck in 0.02s.
+No progress change for 2 workers; recovery recheck in 0.001s.
+No progress change for 3 workers; recovery recheck in 0.001s.
+No progress change for 2 workers; recovery recheck in 0.001s.
+No progress change for 2 workers; recovery recheck in 0.001s.
+No progress change for 2 workers; recovery recheck in 0.001s.
+✔ reset clocks honor IANA timezone, next-day and dated weekly resets (32.161375ms)
+✔ quota observation distinguishes error events from model prose and advisory limits (0.720584ms)
+✔ short quota pauses restore and use one persistent incident budget (3.408916ms)
+✔ lowering the wait ceiling persists the shortened deadline across another restart (1.155625ms)
+✔ unknown reset fallbacks are five hours/session and at most one day/weekly (1.456333ms)
+✔ interrupts preserve the quota checkpoint and never renew its deadline (0.923542ms)
+✔ changed attention flags notify once, remain unfinished, and clear on recovery (1.861917ms)
+✔ unchanged workers back off with a bounded delay and reset after changed evidence (2.804667ms)
+✔ stuck attention is emitted once across restarts and rearmed after progress resumes (2.334125ms)
+✔ a supervisor stuck report stays active until a worker changes progress (1.203584ms)
+✔ handoff churn exhausts the persisted no-progress budget (1.460875ms)
+✔ checked task IDs and source revisions reset stagnation; notes and new open tasks do not (1.367542ms)
+✔ fenced checkbox examples cannot reset progress detection (0.112875ms)
+✔ pending source reconciliation resets the budget only once per revision (1.224084ms)
+✔ prose-only handoffs are bounded too (0.596166ms)
+✔ wait settings reject zero, invalid input and values above one day (0.171375ms)
+✔ codex CLI quota pauses then restores a fresh worker (1504.94975ms)
+✔ claude CLI quota pauses then restores a fresh worker (1513.896167ms)
+✔ a terminal status left by a quota session must be verified by the next worker (1525.954792ms)
+✔ weekly CLI quota expires at the configured ceiling without another provider attempt (1460.713875ms)
+✔ blocked CLI emits notification and stops before a repeated worker (933.845125ms)
+✔ SIGINT during a real quota wait exits promptly and keeps state for restart (518.768542ms)
+✔ CLI stops note-rewriting workers avoiding BLOCKED with exit 75 before another provider attempt (1535.388209ms)
+✔ explicit blocked recovery runs one worker and stops again if unchanged (457.498541ms)
+✔ explicit recovery can continue after the changed input resolves the blocker (459.851375ms)
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+Roadmap requirements changed; revision e89d2cfe0a67 will be reconciled by the next worker.
+✔ edits are adopted only at a boundary; snapshots and evidence stay intact during a run (6.72925ms)
+✔ pending reconciliation and source/progress binding survive restarts (5.463875ms)
+✔ timeout does not acknowledge a pending source revision (3.866459ms)
+✔ interrupt does not acknowledge a pending source revision (3.503ms)
+✔ failure does not acknowledge a pending source revision (3.233834ms)
+✔ spawn error does not acknowledge a pending source revision (3.23775ms)
+✔ capacity does not acknowledge a pending source revision (3.232292ms)
+✔ quota with zero exit does not acknowledge a pending source revision (3.497792ms)
+✔ a successful old worker cannot acknowledge a newer revision (3.010625ms)
+✔ multiple edits coalesce to the newest complete publication (3.074083ms)
+✔ unreadable, non-file and oversized replacement sources remain errors (2.919833ms)
+✔ corrupt revision metadata is not silently treated as a new baseline (1.747084ms)
+✔ revision metadata cannot be reused for another source or progress file (1.7015ms)
+✔ live edit overrides stale COMPLETE and runs corrected requirements next (512.456375ms)
+✔ live edit overrides stale BLOCKED and runs corrected requirements next (499.694959ms)
+✔ live edit overrides stale IN_PROGRESS and runs corrected requirements next (517.945125ms)
+✔ edit between invocations reopens persisted COMPLETE without erasing evidence (430.0165ms)
+✔ edit between invocations reopens persisted BLOCKED without erasing evidence (476.391666ms)
+✔ capacity-edit preserves the revision through recovery (1541.6945ms)
+✔ timeout-edit preserves the revision through recovery (674.262958ms)
+✔ supervisor-edit defers obsolete review results to a new worker (573.667875ms)
+✔ supervisor-capacity-edit defers obsolete review results to a new worker (1573.323667ms)
+✔ real external controller edit during capacity backoff is adopted by the next attempt (1535.51175ms)
+✔ source changes do not swallow an independent fatal client failure (458.418ms)
+✔ sleep prevention is opt-in and CLI flags override the environment (0.537792ms)
+✔ desktop notifications default on and explicit off overrides defaults (0.085875ms)
+✔ Codex adapter preserves accepted unattended invocation (0.407417ms)
+✔ Claude adapter bypasses permission prompts (0.058167ms)
+✔ Gemini adapter uses current noninteractive YOLO mode (0.068833ms)
+✔ Campfire-compatible secondary adapters are stable (0.074708ms)
+✔ Codex model and effort overrides are applied (0.086834ms)
+✔ duration parsing supports runner units (0.214625ms)
+✔ roadmap completion states are exact line based (0.325375ms)
+✔ client can be selected through args or environment (0.126917ms)
+✔ blocked recovery requires explicit opt-in (0.052334ms)
+✔ only the current supervisor review can report stuck, excluding examples and history (0.938291ms)
+✔ loop decisions require a current review, two observed turns and concrete evidence (0.5605ms)
+✔ loop-detected blocks immediately and preserves the decision on restart (1880.602792ms)
+✔ loop-source-churn blocks immediately and preserves the decision on restart (1869.788958ms)
+✔ loop-periodic blocks immediately and preserves the decision on restart (822.510917ms)
+✔ loop-clear cannot override the deterministic stop (1756.778917ms)
+✔ loop-uncertain cannot override the deterministic stop (1719.114584ms)
+✔ loop-invalid cannot override the deterministic stop (1762.885875ms)
+✔ loop-stale cannot override the deterministic stop (1765.893458ms)
+✔ supervision defaults to five; supports CLI/env overrides and disable (0.491708ms)
+✔ reject invalid supervisor interval "-1" (0.21575ms)
+✔ reject invalid supervisor interval "21" (0.041709ms)
+✔ reject invalid supervisor interval "1.5" (0.036167ms)
+✔ reject invalid supervisor interval "NaN" (0.034791ms)
+✔ reject invalid supervisor interval "" (0.0295ms)
+✔ reject invalid supervisor interval "05" (0.029416ms)
+✔ reject invalid supervisor interval "--model" (0.028917ms)
+✔ supervisor option validation rejects missing values and excessive timeouts (0.148791ms)
+✔ bounded capture retains exact short output and capped head/tail with omission count (0.537542ms)
+raw stdout
+✔ codex capture includes stdout and final stderr without a newline (343.915292ms)
+raw stdout
+✔ claude capture includes stdout and final stderr without a newline (193.508833ms)
+✔ reviews after workers 5 and 10; preserved=true (964.47375ms)
+✔ completion on worker 3 skips a pending/future review (576.632708ms)
+✔ completion on worker 5 skips a pending/future review (610.511084ms)
+✔ custom cadence and disabled supervision (1551.333917ms)
+✔ an explicit larger idle budget allows supervisor review of no-op workers (4832.539458ms)
+✔ the default idle budget stops no-op workers before a later supervisor checkpoint (1793.310417ms)
+✔ worker capacity retries are excluded from cadence and counted in review context (1815.206333ms)
+✔ timed-out workers count toward review cadence (3430.349417ms)
+✔ text adapter participates in the same supervisor loop (852.216959ms)
+✔ supervisor capacity retries the review, not a worker (2118.785708ms)
+✔ supervisor-failure does not launch a sixth worker (816.715667ms)
+✔ false-complete does not launch a sixth worker (770.305625ms)
+✔ missing-report preserves review evidence and continues delivery (693.945ms)
+✔ supervisor-timeout preserves review evidence and continues delivery (1692.885042ms)
+✔ supervisor-usage preserves review evidence and continues delivery (1819.873125ms)
+✔ a supervisor global blocker stops before another worker (793.934959ms)
+✔ controller edit during a supervisor review continues with a fresh worker (713.467625ms)
+✔ ordinary worker failures remain terminal (546.955416ms)
+✔ SIGINT during supervisor exits 130 without another worker (671.455291ms)
+✔ rolling evidence stays bounded across many verbose runs (25.343541ms)
+✔ supervisor prompt binds evidence, scope, read-only source and next-run expectation (0.220666ms)
+ℹ tests 176
+ℹ suites 0
+ℹ pass 176
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85576.115875

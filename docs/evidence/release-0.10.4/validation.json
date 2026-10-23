@@ -14,13 +14,102 @@
       "test/supervisor.test.js",
       "test/queue.test.js",
       "test/runner.test.js",
-      "test/agent-integration.test.js"
+      "test/agent-integration.test.js",
+      "test/codex-recovery-gate.test.js"
     ],
     "retained": "Retain PR #4 six-job CI at 39e5063 and PR #5 at 2e83ffc for unaffected behavior; retain context-bounds telemetry tests. Affected selectors must run against merged code.",
     "reason": "Resolve lifecycle/recovery/supervisor conflicts; test compaction before loop assessment, deterministic fallback, restart persistence, authoritative task progress, queue preservation and managed state.",
     "expected_cost": "Focused development about 15 seconds, affected batch about two minutes; package under 30 seconds.",
     "completion": "All selected checks pass, package verification passes, all six release CI jobs pass.",
-    "release_gate": "Explicit existing .github/workflows/ci.yml gate: full prepared suite, package and whitespace on Node 20/22/24 across Ubuntu/macOS before publication. No additional local full suite."
+    "release_gate": "Explicit existing .github/workflows/ci.yml gate: full prepared suite, package and whitespace on Node 20/22/24 across Ubuntu/macOS before publication. No additional local full suite.",
+    "development_follow_up": {
+      "changed_input": "Add the explicit one-worker override regression after the boundary guard; no runtime change.",
+      "selector": "test/source-loop.test.js: an exhausted budget",
+      "reuse": "Retain all 18 initial development results."
+    }
   },
-  "results": {}
+  "results": {
+    "development": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "log": "development-tests.log"
+    },
+    "explicit_recovery": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "log": "recovery-override-test.log"
+    },
+    "affected": {
+      "passed": 176,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "duration_ms": 85576.115875,
+      "log": "affected-tests.log"
+    },
+    "unique_selected_tests_passed": 195,
+    "retained": "Context-bounds telemetry tests remain applicable: lib/telemetry.js and runClient telemetry are unchanged. Unaffected PR checks retained.",
+    "build": "passed",
+    "package": "passed; 64 files; extracted CLI version/help verified; log package.log",
+    "whitespace": "passed; build log trailing blank lines normalized, original retained in /tmp/roadmap-runner-release/build-original.log",
+    "release_ci": "Required on final commit before publication; run URL and conclusions will be recorded in the GitHub release."
+  },
+  "artifact": {
+    "filename": "bpstr-roadmap-runner-0.10.4.tgz",
+    "sha256": "1e9e23e4a1d66a2af6bb5e3a9568435b7338e876b510e6cf8ecfbb73f6da5a13",
+    "size": 134112
+  },
+  "source_sha256": {
+    "lib/recovery.js": "3cb152a77a3c56ac8ee13e08a23b499f2b9e84737707548fcd29aea29738ca06",
+    "lib/supervision.js": "6811b1416b13bb17429d0e25ee7f34e4f0ee45fae63bcc3da5719a1044d5fcf1",
+    "lib/tracking.js": "cddc7089ea667904569f99b8fb906c813c27ba84591dd68ad8df1398841ea12d",
+    "lib/runner.js": "989f4f72078bd4fdf4b342e53cb5b557184473757b380d1474ff022a914bec25",
+    "lib/telemetry.js": "18bbdfa5954f5fac0cf967865e53af13e36411652018229a820d6b769dae539b",
+    "src/lifecycle.ts": "f891787bbd44f10c97b85df2384796a0aa81533decc42998a75aeab9f80a73ae",
+    "src/worker.ts": "b213158b079c8f56bfff2436693af054d03dd56a7340f91233ad03b7032b5531",
+    "package.json": "8c98420d2ec2813cfbc46348160569158c4257fb1a85b13f335ded4a2826185f",
+    "package-lock.json": "09c06f4302330e7e47757cb3ab68891c5c4b7a0b3ef2dd07039699bb092bb24b"
+  },
+  "cleanup": {
+    "browsers_or_servers_started": 0,
+    "remaining_task_test_processes": 0,
+    "removed_scratch_reviews": [
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-SqXMHz",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-l7dFVe",
+        "bytes": 16192
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-LEvR0o",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-EPzaMj",
+        "bytes": 35597
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-mOPLWG",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-dIamdl",
+        "bytes": 3310
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-kWzp9Q",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-8zrCSW",
+        "bytes": 24207
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-tHK4QQ",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-9Vwzi4",
+        "bytes": 3372
+      }
+    ],
+    "reclaimed_file_bytes": 82678,
+    "data_volume_free_gib": 42.77,
+    "note": "Preserved active Assign Vite/MCP/worker and browser-controller processes. Retained release archives and qualification evidence. No package installation or large build artifacts created. Existing node_modules (39 MiB) preserved; no unrelated disk cleanup."
+  },
+  "publication": {
+    "github": "Create after six release CI jobs pass.",
+    "npm": "Saved registry credentials rejected by npm whoami with HTTP 401. Credentials unchanged; GitHub release tarball remains installable."
+  }
 }
