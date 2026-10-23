@@ -772,11 +772,16 @@ managed status and MCP even when desktop notifications are disabled. Resolve the
 blocker or revise the source, then explicitly restart; the runner does not schedule
 more provider attempts after the limit.
 
-For a checklist, progress means checking a previously unchecked task, identified
-by its stable ID (or full label when no ID exists). Rewording handoffs, blocker
-reasons or completed task descriptions, adding unchecked preparation tasks, and
-supervisor review edits do not reset the budget. Fenced checklist examples are
-ignored. A source revision also resets the budget. This is a checklist-based
+Progress means increasing the number of completed tasks in the authoritative
+live roadmap, above the persisted high-water mark. Stable task IDs (or full labels
+when no ID exists) identify distinct tasks. For a source without checkboxes, the
+progress checklist supplies this measure. Reopening and rechecking the same tasks,
+mirrored handoff checkboxes, changed notes, and new unchecked tasks do not reset
+the budget. Fenced examples are ignored. A controller requirement amendment adopted
+between sessions grants one fresh budget. Checkbox/status edits and source rewrites
+during workers or supervisors, including hash-bearing delivery summaries, cannot
+continually renew it. Delivery summaries belong in progress, outside the source.
+This is a checklist-based
 orchestration guard, not independent validation that claimed implementation is
 correct. Workers should record validated implementation units as completed
 children rather than stretching one unchecked unit across many sessions.

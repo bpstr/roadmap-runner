@@ -5,7 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
-import { Recovery, recoverySettings } from "../lib/recovery.js";
+import { Recovery, recoverySettings, checklistProgress } from "../lib/recovery.js";
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt } from "../lib/tracking.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
@@ -144,7 +144,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const started = performance.now();
     const output = supervisor?.capture();
     const sourceRevision = tracking.sourceRevision;
-    const reconcilingSource = tracking.needsReconciliation;
+    const sourceContents = fs.readFileSync(tracking.sourceSnapshot, "utf8");
+    const revisionChanged = recovery.state.progressRevision != null &&
+      recovery.state.progressRevision !== tracking.requirementsRevision;
     recoveryRequested = false; // Explicit recovery authorizes one worker, not a retry loop.
     const iterationPrompt = `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.compactionContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${PROMPT_REVISION}\nIteration: ${iteration}\nSession started (UTC): ${new Date().toISOString()}\n`;
     await recovery.event("runner.turn_starting", { role: "worker", iteration, sourceRevision });
@@ -165,6 +167,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.refreshSource(iteration);
     const elapsedMs = Math.round(performance.now() - started);
     const after = fs.readFileSync(tracking.file, "utf8");
+    const afterSource = fs.readFileSync(tracking.sourceSnapshot, "utf8");
+    const sourceHasTasks = checklistProgress(sourceContents).total || checklistProgress(afterSource).total;
+    const beforeProgress = sourceHasTasks ? sourceContents : contents;
+    const afterProgress = sourceHasTasks ? afterSource : after;
     tracking.archive({ kind: "worker", iteration, metadata: {
       startedAt, elapsedMs, promptRevision: PROMPT_REVISION, sourceRevision, code: result.code,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
@@ -181,7 +187,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (result.timedOut) {
       await recovery.event("runner.turn_limit_reached", { role: "worker", iteration });
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
-      await recovery.idle(contents, after, reconcilingSource || sourceRevision !== tracking.sourceRevision);
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
       continue;
@@ -216,8 +222,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.finishWorker(sourceRevision, result);
     const afterStatus = tracking.deliveryStatus(roadmapStatus(after));
     if (afterStatus !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, afterStatus, iteration);
-    if (afterStatus !== "blocked" && (afterStatus !== "complete" || tracking.needsReconciliation)) {
-      await recovery.idle(contents, after, reconcilingSource || sourceRevision !== tracking.sourceRevision);
+    if ((afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
     }
     console.log(`Iteration ${iteration} completed.`);
     console.log();

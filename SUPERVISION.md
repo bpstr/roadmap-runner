@@ -40,7 +40,10 @@ COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
 `blocked`, without another worker or supervisor; use it only when no authorized
 work remains ready. Independent work continues under IN_PROGRESS with task-local
 deferrals. Three workers without checklist progress also stop with exit 75 and
-`no_progress_limit`. Unchanged notes and reviews do not reset that budget.
+`no_progress_limit`. Progress is a new high-water count of closed live-roadmap
+tasks. Unchanged notes, mirrored handoff checkboxes, and source rewrites during
+workers or supervisors do not reset that budget. A controller acceptance amendment
+adopted between sessions grants one bounded reconciliation budget.
 Explicit --recover-blocked permits one recovery worker after changed inputs.
 If worker 5 writes COMPLETE and no controller edit needs reconciliation, the runner
 exits without launching a review. A three-task
