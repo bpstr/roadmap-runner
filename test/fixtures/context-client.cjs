@@ -21,6 +21,11 @@ if (role === 'COMPACTOR') {
   assert.equal(gunzipSync(fs.readFileSync(snapshot)).toString(), old);
   if (mode === 'failure') process.exit(9);
   if (mode === 'timeout') { setInterval(() => {}, 1000); return; }
+  if (mode.startsWith('source')) fs.appendFileSync(roadmap, '\nUnexpected compactor requirement rewrite.\n');
+  if (mode === 'source-capacity') {
+    console.log(JSON.stringify({ type: 'error', message: 'Selected model is at capacity' }));
+    process.exit(1);
+  }
   if (mode !== 'noop') {
     const evidence = JSON.parse(prompt.match(/^Detailed evidence directory: (.+)$/m)[1]);
     fs.writeFileSync(path.join(evidence, 'GATE-2.md'), old);

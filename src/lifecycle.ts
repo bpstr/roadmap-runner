@@ -217,6 +217,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
     tracking.assertBounded();
+    if (compacting && afterSource !== sourceContents) {
+      recovery.requireWorker();
+      fail(`source roadmap changed during handoff compaction; source and handoff preserved, original handoff at ${snapshot}. Inspect the change before restarting.`);
+    }
     if (!compacting) supervisor?.record({
       iteration, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
       before: contents, after,

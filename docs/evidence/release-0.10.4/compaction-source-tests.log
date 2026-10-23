@@ -1,0 +1,10 @@
+✔ compaction source stops before implementation and retains the original archive (511.882209ms)
+✔ compaction source-capacity stops before implementation and retains the original archive (378.45125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 934.805125

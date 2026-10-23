@@ -1,0 +1,24 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ legacy large handoffs compact separately while detailed evidence remains available (754.821042ms)
+✔ compaction noop stops before implementation and retains the original archive (371.6265ms)
+✔ compaction status stops before implementation and retains the original archive (349.822917ms)
+✔ compaction source stops before implementation and retains the original archive (366.401542ms)
+✔ compaction failure stops before implementation and retains the original archive (367.959875ms)
+✔ compaction timeout stops before implementation and retains the original archive (1151.9445ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (504.366917ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (397.571083ms)
+✔ compaction preserves the early loop verdict (1533.7545ms)
+✔ compaction preserves the deterministic worker limit (1596.695916ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.06125ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7469.705708

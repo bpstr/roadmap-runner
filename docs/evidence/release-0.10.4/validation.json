@@ -26,6 +26,15 @@
       "changed_input": "Add the explicit one-worker override regression after the boundary guard; no runtime change.",
       "selector": "test/source-loop.test.js: an exhausted budget",
       "reuse": "Retain all 18 initial development results."
+    },
+    "compaction_follow_up": {
+      "changed_input": "Reject source roadmap rewrites made during compaction before another worker can interpret them as controller amendments.",
+      "selectors": [
+        "test/context-budget.test.js"
+      ],
+      "reason": "Changed only the successful compaction boundary. Recheck all compaction modes, loop interleaving and pending controller reconciliation; retain all unaffected lifecycle, queue, managed and source-loop results. Rebuild/repackage because the compiled lifecycle and changelog changed.",
+      "release_gate": "Prior CI belongs to superseded commit 07206c0. The existing six-job release gate must pass on the new final commit; cancel the superseded run if still active.",
+      "additional_selector": "test/context-budget.test.js: compaction source (success and capacity-error)"
     }
   },
   "results": {
@@ -51,17 +60,39 @@
       "duration_ms": 85576.115875,
       "log": "affected-tests.log"
     },
-    "unique_selected_tests_passed": 195,
+    "unique_selected_tests_passed": 197,
     "retained": "Context-bounds telemetry tests remain applicable: lib/telemetry.js and runClient telemetry are unchanged. Unaffected PR checks retained.",
-    "build": "passed",
-    "package": "passed; 64 files; extracted CLI version/help verified; log package.log",
+    "build": "passed; follow-up source guard compiled",
+    "package": "passed; final package has 64 files, extracted CLI version/help verified; package-follow-up.log",
     "whitespace": "passed; build log trailing blank lines normalized, original retained in /tmp/roadmap-runner-release/build-original.log",
-    "release_ci": "Required on final commit before publication; run URL and conclusions will be recorded in the GitHub release."
+    "release_ci": "Required on final commit before publication; run URL and conclusions will be recorded in the GitHub release.",
+    "compaction_follow_up": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "log": "compaction-follow-up-tests.log"
+    },
+    "compaction_source_boundary": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "log": "compaction-source-tests.log",
+      "reason": "Moved source guard before all error, quota and capacity retry paths; recheck success and capacity-source rewrites. Other compaction results remain compatible."
+    },
+    "previous_ci": {
+      "commit": "07206c0349c99468137bea9ca8825ce6cb0dbfd8",
+      "url": "https://github.com/bpstr/roadmap-runner/actions/runs/40016916876",
+      "jobs": 6,
+      "conclusion": "success",
+      "note": "Final release commit still needs its explicit six-job CI gate after the compactor guard."
+    }
   },
   "artifact": {
     "filename": "bpstr-roadmap-runner-0.10.4.tgz",
-    "sha256": "1e9e23e4a1d66a2af6bb5e3a9568435b7338e876b510e6cf8ecfbb73f6da5a13",
-    "size": 134112
+    "size": 134331,
+    "sha256": "5dc68ef55d17b6c4961fe0f0782a04b9200947ffa6239c1af667aa9ff4b0f9d4"
   },
   "source_sha256": {
     "lib/recovery.js": "3cb152a77a3c56ac8ee13e08a23b499f2b9e84737707548fcd29aea29738ca06",
@@ -69,7 +100,7 @@
     "lib/tracking.js": "cddc7089ea667904569f99b8fb906c813c27ba84591dd68ad8df1398841ea12d",
     "lib/runner.js": "989f4f72078bd4fdf4b342e53cb5b557184473757b380d1474ff022a914bec25",
     "lib/telemetry.js": "18bbdfa5954f5fac0cf967865e53af13e36411652018229a820d6b769dae539b",
-    "src/lifecycle.ts": "f891787bbd44f10c97b85df2384796a0aa81533decc42998a75aeab9f80a73ae",
+    "src/lifecycle.ts": "803eda95bd7df22499d0186a6dfff9a903f5c4cbef4041c709cb3f321ea7a27b",
     "src/worker.ts": "b213158b079c8f56bfff2436693af054d03dd56a7340f91233ad03b7032b5531",
     "package.json": "8c98420d2ec2813cfbc46348160569158c4257fb1a85b13f335ded4a2826185f",
     "package-lock.json": "09c06f4302330e7e47757cb3ab68891c5c4b7a0b3ef2dd07039699bb092bb24b"
@@ -102,10 +133,35 @@
         "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-tHK4QQ",
         "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-9Vwzi4",
         "bytes": 3372
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-EDyv2r",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-g8922B",
+        "bytes": 16192
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-Iz2N0Z",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-7BMYLC",
+        "bytes": 24207
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-NAlS87",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-FMXGjR",
+        "bytes": 3372
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-QQq9ME",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-FJj6Cr",
+        "bytes": 3310
+      },
+      {
+        "path": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-runner-review-mgwrAe",
+        "fixture": "/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-3902Ez",
+        "bytes": 35597
       }
     ],
-    "reclaimed_file_bytes": 82678,
-    "data_volume_free_gib": 42.77,
+    "reclaimed_file_bytes": 165356,
+    "data_volume_free_gib": 41.78,
     "note": "Preserved active Assign Vite/MCP/worker and browser-controller processes. Retained release archives and qualification evidence. No package installation or large build artifacts created. Existing node_modules (39 MiB) preserved; no unrelated disk cleanup."
   },
   "publication": {

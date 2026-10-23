@@ -56,7 +56,7 @@ test("legacy large handoffs compact separately while detailed evidence remains a
   assert.deepEqual(event.usage, sessions[0].usage);
 });
 
-for (const [mode, error] of [["noop", /did not reach/], ["status", /changed the opening status/], ["failure", /exited with code 9/], ["timeout", /compaction timed out/]]) {
+for (const [mode, error] of [["noop", /did not reach/], ["status", /changed the opening status/], ["source", /source roadmap changed/], ["source-capacity", /source roadmap changed/], ["failure", /exited with code 9/], ["timeout", /compaction timed out/]]) {
   test(`compaction ${mode} stops before implementation and retains the original archive`, t => {
     const f = fixture(t, mode);
     assert.notEqual(f.result.status, 0);
@@ -65,6 +65,7 @@ for (const [mode, error] of [["noop", /did not reach/], ["status", /changed the 
     const snapshot = jsonLines(f.tracking.historyFile).find(e => e.kind === "before-compaction").snapshot;
     assert.equal(gunzipSync(fs.readFileSync(path.join(f.tracking.stateDir, snapshot))).toString(), f.initial);
     assert.match(fs.readFileSync(f.roadmap, "utf8"), /- \[ \] GATE-1/);
+    if (mode.startsWith("source")) assert.match(fs.readFileSync(f.roadmap, "utf8"), /Unexpected compactor requirement rewrite/);
     assert.equal(JSON.parse(fs.readFileSync(`${f.tracking.file}.recovery.json`)).requiresWorker, true);
   });
 }

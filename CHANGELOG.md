@@ -5,6 +5,7 @@
 - Add a small supervisor LLM loop check after two idle workers. Compare bounded prior progress, source snapshots and worker outcomes; block immediately on a current, evidenced loop verdict. Keep the deterministic stop budget, pending queues and blocked state across unchanged restarts. Cap the extra check at 60 seconds and one per stagnation episode; supervision-off still disables model reviews.
 - Preserve the exhausted deterministic worker budget across unchanged restarts without launching another session. Allow one explicit recovery worker or a new bounded budget after controller requirement changes.
 - Compact handoffs above 24 KiB in a separate session targeting 16 KiB. Preserve detailed evidence and pending reconciliation; compact before a due supervisor or loop assessment. Ignore valid marked delivery notes when comparing requirements.
+- Stop if the source roadmap changes during compaction, preserving both files for inspection before restart. A compactor cannot silently grant a fresh worker budget by rewriting requirements.
 - Record session roles, elapsed time, context bytes and available client usage receipts in durable events and session history. Keep missing usage unknown.
 
 ## 0.10.3 — 2026-10-23
