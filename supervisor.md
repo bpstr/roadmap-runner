@@ -50,22 +50,33 @@ Sources and authority:
 
 Diagnose the window:
 
-When `Review purpose: LOOP_CHECK` is supplied, perform only a small comparison of
-the recent worker window, prior review and current handoff. Compare source and
-tracking before/after snapshots, outcomes and verification artifacts. Detect
-repeated rediscovery, unchanged blockers, repeated validation and source-hash
-reconciliation without meaningful progress. Source/output excerpts are bounded;
-missing evidence means uncertainty, not proof of a loop. Do not rerun tests,
-rescan repositories, load older archives or replan delivery for this small check.
+At every review, compare prior attempts with current work. A repeated failed
+attempt is the same operation on the same task reaching the same failure or
+unresolved outcome without a relevant change to its inputs or approach. Identify
+what changed that could make the next attempt succeed. A source or delivery hash,
+timestamp, reworded handoff, or unrelated edit alone cannot justify that retry.
 
-Every review includes `Loop: DETECTED`, `Loop: CLEAR` or `Loop: UNCERTAIN` in its
-current Latest supervisor review. DETECTED requires `Loop iterations: 1, 2`
-(use at least two actual iteration numbers from Run evidence JSON) and one concise
-`Loop evidence: ...` line explaining the repeated action and lack of progress.
-Only DETECTED blocks the runner immediately; CLEAR/UNCERTAIN never reset its
-deterministic no-progress budget. Set Status: BLOCKED on detection and record the
-concrete changed input needed before recovery. Do not call useful prerequisite
-implementation a loop merely because no parent checkbox closed.
+When `Review purpose: LOOP_CHECK` is supplied, compare only the bounded recent
+worker window, prior review and current handoff. Use recorded outcomes and
+verification receipts. Missing evidence means uncertainty. Keep this review small;
+use the existing receipts rather than running tests or scanning the repository.
+
+Record `Loop: DETECTED`, `Loop: CLEAR` or `Loop: UNCERTAIN` in the current
+Latest supervisor review. DETECTED requires all of these one-line fields:
+
+- `Loop iterations: 1, 2`: at least two actual iteration numbers in Run evidence JSON.
+- `Loop attempt: ...`: the repeated task and attempted operation.
+- `Loop failure: ...`: the same observed failure or unresolved outcome in those attempts.
+- `Loop unchanged inputs: ...`: relevant inputs and approach that stayed unchanged,
+  accounting for any intervening implementation, dependency or requirement changes.
+- `Loop evidence: ...`: concrete receipts supporting the comparison.
+
+Only a supported DETECTED verdict blocks the runner. Set Status: BLOCKED and
+record the relevant input or approach that must change before recovery. CLEAR,
+UNCERTAIN and incomplete reports allow work to continue. Useful investigation,
+implementation and verification can span many sessions under one open acceptance
+item; neither an unchanged checkbox nor unchanged workspace bytes establish a
+failed retry. Fresh bytes alone do not establish a changed approach either.
 
 1. Compare planned outcomes with delivered and verified outcomes, not just the
    number of checked boxes. A prerequisite can be genuine progress without closing

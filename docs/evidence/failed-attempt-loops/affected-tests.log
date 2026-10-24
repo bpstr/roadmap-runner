@@ -1,0 +1,239 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ legacy large handoffs compact separately while detailed evidence remains available (792.243125ms)
+✔ compaction noop stops before implementation and retains the original archive (596.071709ms)
+✔ compaction status stops before implementation and retains the original archive (427.236167ms)
+✔ compaction source stops before implementation and retains the original archive (504.991625ms)
+✔ compaction source-capacity stops before implementation and retains the original archive (483.887042ms)
+✔ compaction failure stops before implementation and retains the original archive (527.968083ms)
+✔ compaction timeout stops before implementation and retains the original archive (1144.045708ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (525.117708ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (414.920333ms)
+✔ compaction preserves the repeated-failure verdict (560.670542ms)
+✖ compaction preserves productive continuation (590.270417ms)
+✔ only valid delivery notes are excluded from scope reconciliation (14.851833ms)
+✖ queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors (8135.444375ms)
+✖ macOS sleep prevention spans queue handoff and releases at completion (8241.142916ms)
+✖ macOS sleep prevention releases when a queued run is stopped (8129.447583ms)
+✖ CLI queue appends to an active run and rejects duplicates and terminal runs (8238.376166ms)
+✖ a blocked or failed roadmap never starts the next queued roadmap (8248.439667ms)
+✔ all queue entries are validated before launch, including path and progress aliases (9.160542ms)
+✖ foreground CLI accepts repeated --queue flags and completes every roadmap (589.426416ms)
+✖ a queued source removed before handoff fails the run and preserves later entries (350.948375ms)
+✖ LLM loop detection blocks managed execution and leaves queued work pending (374.726875ms)
+✔ fully blocked managed runs stop once, retain blocked status, and leave the queue pending (483.785792ms)
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-14T08:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-07T08:00:01.000Z).
+Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-08T13:00:00.000Z (deadline 2026-10-08T13:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+✔ reset clocks honor IANA timezone, next-day and dated weekly resets (29.510833ms)
+✔ quota observation distinguishes error events from model prose and advisory limits (0.731292ms)
+✔ short quota pauses restore and use one persistent incident budget (3.350166ms)
+✔ lowering the wait ceiling persists the shortened deadline across another restart (1.208208ms)
+✔ unknown reset fallbacks are five hours/session and at most one day/weekly (1.53375ms)
+✔ interrupts preserve the quota checkpoint and never renew its deadline (1.121042ms)
+✔ changed attention flags notify once, remain unfinished, and clear on recovery (2.09125ms)
+✔ legacy progress counters are retired without losing quota or loop checkpoints (0.872125ms)
+✔ wait settings reject zero, invalid input and values above one day (0.120834ms)
+✔ codex CLI quota pauses then restores a fresh worker (1544.906166ms)
+✔ claude CLI quota pauses then restores a fresh worker (1531.696875ms)
+✔ a terminal status left by a quota session must be verified by the next worker (1558.175834ms)
+✔ weekly CLI quota expires at the configured ceiling without another provider attempt (1516.412916ms)
+✔ blocked CLI emits notification and stops before a repeated worker (967.082125ms)
+✔ SIGINT during a real quota wait exits promptly and keeps state for restart (477.839ms)
+✔ explicit blocked recovery runs one worker and stops again if unchanged (481.477791ms)
+✔ explicit recovery can continue after the changed input resolves the blocker (462.010708ms)
+✔ investigation continues seven sessions with an open acceptance item (861.710458ms)
+✔ repaired-input continues seven sessions with an open acceptance item (924.872791ms)
+✔ hash-only retries cannot postpone review and a confirmed repeated failure stays blocked on restart (937.440417ms)
+✔ attempt evidence and review cadence survive a failed invocation (819.93375ms)
+✔ disabling supervision does not leave a checkbox or file-based stopping condition (784.622083ms)
+
+Interrupted while running:
+
+⚠ test/supervisor.test.js (test/supervisor.test.js:1:1)
+✖ test/supervisor.test.js (4531.073666ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 35
+ℹ fail 9
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67061.595541
+
+✖ failing tests:
+
+test at test/context-budget.test.js:91:3
+✖ compaction preserves productive continuation (590.270417ms)
+  Error: ENOENT: no such file or directory, open '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-cAKeaH/progress.md.recovery.json'
+      at Object.openSync (node:fs:697:18)
+      at Object.readFileSync (node:fs:543:35)
+      at TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/context-budget.test.js:100:32)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-cAKeaH/progress.md.recovery.json'
+  }
+
+test at test/queue.test.js:66:1
+✖ queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors (8135.444375ms)
+  Error: Queue fixture deadline exceeded
+      at wait (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:15:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:72:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at test/queue.test.js:92:1
+✖ macOS sleep prevention spans queue handoff and releases at completion (8241.142916ms)
+  Error: Queue fixture deadline exceeded
+      at wait (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:15:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:97:21)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/queue.test.js:104:1
+✖ macOS sleep prevention releases when a queued run is stopped (8129.447583ms)
+  Error: Queue fixture deadline exceeded
+      at wait (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:15:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:107:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/queue.test.js:113:1
+✖ CLI queue appends to an active run and rejects duplicates and terminal runs (8238.376166ms)
+  Error: Queue fixture deadline exceeded
+      at wait (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:15:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:117:21)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/queue.test.js:122:1
+✖ a blocked or failed roadmap never starts the next queued roadmap (8248.439667ms)
+  Error: Queue fixture deadline exceeded
+      at wait (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:15:9)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:125:55)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at test/queue.test.js:148:1
+✖ foreground CLI accepts repeated --queue flags and completes every roadmap (589.426416ms)
+  AssertionError [ERR_ASSERTION]: file:///private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-bbH5AI/mock-client.mjs:11
+    fs.appendFileSync(progress, '\n## Latest supervisor review\nReview ID: ' + id + '\nLoop: DETECTED\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\nLoop attempt: Recheck the missing dependency.
+                                                                                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  SyntaxError: Invalid or unexpected token
+      at compileSourceTextModule (node:internal/modules/esm/utils:354:16)
+      at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:90:18)
+      at #translate (node:internal/modules/esm/loader:437:20)
+      at afterLoad (node:internal/modules/esm/loader:505:29)
+      at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:510:12)
+      at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:563:36)
+      at afterResolve (node:internal/modules/esm/loader:610:52)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:616:12)
+      at node:internal/modules/esm/loader:635:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22)
+
+  Node.js v26.4.0
+  roadmap-runner: codex exited with code 1; stopping.
+
+
+  1 !== 0
+
+      at Object.command (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:61:84)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:150:18)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/queue.test.js:155:1
+✖ a queued source removed before handoff fails the run and preserves later entries (350.948375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'pending'
+  - 'failed'
+
+      at TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:160:43)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/queue.test.js:165:1
+✖ LLM loop detection blocks managed execution and leaves queued work pending (374.726875ms)
+  AssertionError [ERR_ASSERTION]: Roadmap Runner 0.10.4
+  Client:    codex
+  Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/workspace
+  Roadmap:   /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/workspace/first.md
+  Progress:  /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/workspace/.roadmap-runner/first-a132fac59f34/progress.md (bounded handoff/evidence; task states in roadmap)
+  Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+  History:   /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/workspace/.roadmap-runner/first-a132fac59f34/history (archived snapshots; not loaded by default)
+  Timeout:   90m per run
+  Prompt:    97fdca2ae738 (60-minute implementation batches)
+  Supervisor: every 2 workers; timeout 10m
+  Press Ctrl-C to stop.
+
+  Events:    /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/workspace/.roadmap-runner/first-a132fac59f34/progress.md.events.jsonl
+  ===== iteration 1 | 2026-10-24T13:52:47.468Z =====
+  file:///private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-queue-VnQGw5/mock-client.mjs:11
+    fs.appendFileSync(progress, '\n## Latest supervisor review\nReview ID: ' + id + '\nLoop: DETECTED\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\nLoop attempt: Recheck the missing dependency.
+                                                                                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  SyntaxError: Invalid or unexpected token
+      at compileSourceTextModule (node:internal/modules/esm/utils:354:16)
+      at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:90:18)
+      at #translate (node:internal/modules/esm/loader:437:20)
+      at afterLoad (node:internal/modules/esm/loader:505:29)
+      at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:510:12)
+      at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:563:36)
+      at afterResolve (node:internal/modules/esm/loader:610:52)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:616:12)
+      at node:internal/modules/esm/loader:635:32
+      at TracingChannel.tracePromise (node:diagnostics_channel:539:22)
+
+  Node.js v26.4.0
+  roadmap-runner: codex exited with code 1; stopping.
+
+
+  1 !== 75
+
+      at TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/queue.test.js:177:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 75,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/supervisor.test.js:1:1
+✖ test/supervisor.test.js (4531.073666ms)
+  'Promise resolution is still pending but the event loop has already resolved'

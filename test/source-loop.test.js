@@ -3,184 +3,125 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 
-function fixture(t, mode, { limit = 3, supervisor = false } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'runner-source-loop-'));
-  t.after(() => {
-    const marker = path.join(dir, 'review-directory');
-    if (fs.existsSync(marker)) fs.rmSync(fs.readFileSync(marker, 'utf8'), { recursive: true, force: true });
-    fs.rmSync(dir, { recursive: true, force: true });
-  });
-  const source = path.join(dir, 'roadmap.md');
-  const progress = path.join(dir, 'progress.md');
-  const tasks = Array.from({ length: mode === 'productive' ? 5 : 2 }, (_, i) =>
-    `- [${mode === 'complete-churn' ? 'x' : ' '}] LOOP-${i + 1} Acceptance ${i + 1}.`).join('\n');
-  fs.writeFileSync(source, `# Roadmap\nStatus: IN_PROGRESS\n\n## Acceptance\n${tasks}\n`);
-  fs.writeFileSync(progress, '# Delivery\nStatus: IN_PROGRESS\n');
-  const client = path.join(dir, 'prepared.cjs');
-  fs.writeFileSync(client, `#!/usr/bin/env node
+// Prepared reviews verify orchestration contracts, not live model judgment.
+function fixture(t, mode, every = 2) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'runner-attempt-loop-'));
+  const roadmap = path.join(dir, 'roadmap.md');
+  const progress = path.join(dir, 'delivery.md');
+  fs.writeFileSync(roadmap, '# Roadmap\nStatus: IN_PROGRESS\n- [ ] Finish the long acceptance unit\n');
+  const worker = path.join(dir, 'prepared.cjs');
+  fs.writeFileSync(worker, `#!/usr/bin/env node
 const fs = require('node:fs');
 const crypto = require('node:crypto');
+const path = require('node:path');
 const prompt = process.argv.at(-1);
-const mode = ${JSON.stringify(mode)};
-const source = ${JSON.stringify(source)};
+const roadmap = ${JSON.stringify(roadmap)};
 const progress = ${JSON.stringify(progress)};
-const supervisor = prompt.includes('Runner role: SUPERVISOR');
-if (supervisor) {
-  const evidence = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
-  fs.writeFileSync('review-directory', require('node:path').dirname(evidence));
+const mode = ${JSON.stringify(mode)};
+const count = name => { const n = fs.existsSync(name) ? Number(fs.readFileSync(name)) + 1 : 1; fs.writeFileSync(name, String(n)); return n; };
+if (prompt.includes('Runner role: SUPERVISOR')) {
+  const n = count('reviews');
+  if (n > 8) process.exit(99);
+  const file = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
+  fs.writeFileSync('review-directory', path.dirname(file));
+  fs.copyFileSync(file, 'review-' + n + '.json');
+  const records = JSON.parse(fs.readFileSync(file)).records;
+  const id = prompt.match(/^Review ID: (.+)$/m)[1];
+  const detected = mode === 'hash-failure' || mode === 'restart-failure';
+  fs.writeFileSync(progress, '# Delivery\\nStatus: ' + (detected ? 'BLOCKED' : 'IN_PROGRESS') + '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nHealth: ' + (detected ? 'STUCK' : 'HEALTHY') + '\\nLoop: ' + (detected ? 'DETECTED' : 'CLEAR') + '\\n' + (detected
+    ? 'Loop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\\nLoop attempt: Retry the same transport acceptance check.\\nLoop failure: The check still fails because the transport is missing.\\nLoop unchanged inputs: Transport implementation and dependency receipt are unchanged; only the source delivery hash changed.\\nLoop evidence: Both cited worker outputs report transport-missing with the same prerequisite.\\n'
+    : 'Assessment: Prepared evidence shows another distinct investigation or repaired input.\\n'));
+  process.exit(0);
 }
-const counter = supervisor ? 'supervisors' : 'workers';
-const n = fs.existsSync(counter) ? Number(fs.readFileSync(counter)) + 1 : 1;
-fs.writeFileSync(counter, String(n));
-if (n > 8) process.exit(99); // A failing regression must remain bounded too.
-let text = fs.readFileSync(source, 'utf8');
-const snapshot = JSON.parse(prompt.match(/^Source roadmap snapshot: (.+)$/m)[1]);
-const sha = crypto.createHash('sha256').update(fs.readFileSync(snapshot)).digest('hex');
-if (mode.startsWith('workspace-')) {
-  if (mode === 'workspace-productive' || mode === 'workspace-toggle') {
-    fs.writeFileSync('feature.js', 'module.exports = ' + (mode === 'workspace-toggle' ? n % 2 : n) + ';\\n');
-  } else if (mode === 'workspace-timestamps') {
-    fs.utimesSync('feature.js', new Date(), new Date());
-  } else {
-    fs.mkdirSync('evidence', { recursive: true });
-    fs.writeFileSync('evidence/result.json', JSON.stringify({ passed: n, timestamp: Date.now() }));
-    fs.writeFileSync('evidence/generated.js', 'module.exports = ' + n);
-    fs.writeFileSync('notes.md', 'Inspection ' + n);
-  }
-  if (mode === 'workspace-productive' && n === 5) {
-    fs.writeFileSync(source, text.replaceAll('- [ ]', '- [x]'));
-    fs.writeFileSync(progress, '# Delivery\\nStatus: COMPLETE\\n');
-  }
-} else if (mode === 'productive') {
-  text = text.replace('- [ ]', '- [x]');
-  fs.writeFileSync(source, text);
-  fs.writeFileSync(progress, '# Delivery\\nStatus: ' + (n === 5 ? 'COMPLETE' : 'IN_PROGRESS') + '\\n');
-} else if (mode === 'toggle') {
-  text = text.replace(/- \\[[ x]\\] LOOP-1/, '- [' + (n % 2 ? 'x' : ' ') + '] LOOP-1');
-  fs.writeFileSync(source, text);
-} else if (mode === 'controller') {
-  // The test controller alone amends acceptance between sessions.
-} else if (mode === 'supervisor-churn' && !supervisor) {
-  // A supervisor rewrites source after each unchanged worker.
-} else {
-  text = text.replace(/^Current delivery:.*\\n/gm, '');
-  text = text.replace('# Roadmap\\n', '# Roadmap\\nCurrent delivery: reconciled source ' + sha + '.\\n');
-  fs.writeFileSync(source, text);
-  fs.writeFileSync(progress, '# Delivery\\nStatus: ' + (mode === 'complete-churn' ? 'COMPLETE' : mode === 'blocked-churn' ? 'BLOCKED' : 'IN_PROGRESS') + '\\n- [x] FAKE-' + n + ' mirrored handoff.\\n');
-  if (mode === 'timeout-churn') {
-    process.on('SIGTERM', () => process.exit(0));
-    setInterval(() => {}, 1000);
-  }
+const n = count('workers');
+if (n > 9) process.exit(99);
+const failed = mode === 'hash-failure' || mode === 'restart-failure';
+if (failed) {
+  const sha = crypto.createHash('sha256').update(fs.readFileSync(roadmap)).digest('hex');
+  fs.appendFileSync(roadmap, '\\nCurrent delivery: reconciled source hash ' + sha + '\\n');
+} else if (mode === 'repaired-input') fs.writeFileSync('transport.js', 'export const repair = ' + n + ';\\n');
+console.log(JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: failed
+  ? 'Attempt: transport acceptance check; failure: transport-missing; dependency receipt: missing-v1; implementation unchanged.'
+  : 'Distinct investigation/verification step ' + n + ' completed; remaining acceptance work is still open.' }}));
+if (mode === 'restart-failure' && n === 2) process.exit(7);
+if (!failed && n === 7) {
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replace('- [ ]', '- [x]'));
+  fs.writeFileSync(progress, '# Delivery\\nStatus: COMPLETE\\n');
 }
 `);
-  fs.chmodSync(client, 0o755);
-  if (mode.startsWith('workspace-')) {
-    fs.writeFileSync(path.join(dir, 'feature.js'), 'module.exports = 0;\n');
-    assert.equal(spawnSync('git', ['init', '-q'], { cwd: dir }).status, 0);
-    assert.equal(spawnSync('git', ['add', '.'], { cwd: dir }).status, 0);
-  }
-  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('ROADMAP_')));
-  Object.assign(env, { ROADMAP_STATE_DIR: path.join(dir, 'registry'), ROADMAP_NOTIFY: 'off',
-    ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1', ROADMAP_MAX_IDLE_WORKERS: String(limit) });
-  const args = [cli, source, '--progress-file', progress, '--client-bin', client,
-    '--supervisor-every', supervisor ? '1' : '0', '--timeout', mode === 'timeout-churn' ? '2s' : '5s'];
-  const options = { cwd: dir, env, encoding: 'utf8', timeout: 20_000 };
-  const count = () => Number(fs.readFileSync(path.join(dir, 'workers'), 'utf8'));
-  const events = () => fs.readFileSync(progress + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
-  return { dir, source, progress, args, options, count, events };
-}
-
-for (const mode of ['complete-churn', 'open-churn', 'blocked-churn', 'timeout-churn', 'supervisor-churn']) {
-  test(`${mode} cannot renew the no-progress budget with source hashes`, t => {
-    const f = fixture(t, mode, { supervisor: mode === 'supervisor-churn' });
-    const result = spawnSync(process.execPath, f.args, f.options);
-    assert.equal(result.error, undefined);
-    assert.equal(result.status, 75, result.stderr);
-    assert.equal(f.count(), 3);
-    assert.equal(f.events().at(-1).reason, 'no_progress_limit');
-    assert.ok(fs.existsSync(f.source));
-    assert.ok(fs.existsSync(f.progress));
-    if (mode === 'complete-churn') {
-      const again = spawnSync(process.execPath, f.args, f.options);
-      assert.equal(again.status, 75, again.stderr);
-      assert.equal(f.count(), 3, 'restart must preserve the exhausted budget without another worker');
-      const third = spawnSync(process.execPath, f.args, f.options);
-      assert.equal(third.status, 75, third.stderr);
-      assert.equal(f.count(), 3, 'repeated restarts cannot bypass the limit');
-    }
+  fs.chmodSync(worker, 0o755);
+  t.after(() => {
+    const file = path.join(dir, 'review-directory');
+    if (fs.existsSync(file)) fs.rmSync(fs.readFileSync(file, 'utf8'), { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true });
   });
+  const args = [cli, roadmap, '--progress-file', progress, '--client-bin', worker,
+    '--supervisor-every', String(every), '--timeout', '5s'];
+  const options = { cwd: dir, env: { ...process.env, ROADMAP_NOTIFY: 'off', ROADMAP_NOTIFY_BIN: '',
+    ROADMAP_MAX_IDLE_WORKERS: '1' }, encoding: 'utf8', timeout: 20_000 };
+  const count = name => fs.existsSync(path.join(dir, name)) ? Number(fs.readFileSync(path.join(dir, name))) : 0;
+  return { dir, roadmap, progress, args, options, count,
+    run: extra => spawnSync(process.execPath, [...args, ...(extra || [])], options),
+    events: () => fs.readFileSync(progress + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse) };
 }
 
-test('task completion in the live roadmap renews the budget', t => {
-  const f = fixture(t, 'productive', { limit: 1 });
-  const result = spawnSync(process.execPath, f.args, f.options);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(f.count(), 5);
-  assert.equal(f.events().at(-1).type, 'runner.completed');
-});
-
-test('productive implementation continues for five workers without early checkbox closure', t => {
-  const f = fixture(t, 'workspace-productive', { limit: 1 });
-  const result = spawnSync(process.execPath, f.args, f.options);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(f.count(), 5);
-  assert.equal(f.events().filter(e => e.type === 'runner.progress_observed').length, 4);
-  assert.equal(f.events().at(-1).type, 'runner.completed');
-});
-
-for (const mode of ['workspace-toggle', 'workspace-evidence', 'workspace-timestamps']) {
-  test(`${mode} stops repeated states or evidence churn and remains stopped after restart`, t => {
+for (const mode of ['investigation', 'repaired-input']) {
+  test(`${mode} continues seven sessions with an open acceptance item`, t => {
     const f = fixture(t, mode);
-    const result = spawnSync(process.execPath, f.args, f.options);
-    assert.equal(result.status, 75, result.stderr);
-    const count = mode === 'workspace-toggle' ? 4 : 3;
-    assert.equal(f.count(), count);
-    const again = spawnSync(process.execPath, f.args, f.options);
-    assert.equal(again.status, 75, again.stderr);
-    assert.equal(f.count(), count);
+    const result = f.run();
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(f.count('workers'), 7);
+    assert.equal(f.count('reviews'), 3);
+    assert.equal(f.events().at(-1).type, 'runner.completed');
+    assert.equal(f.events().some(e => e.reason === 'no_progress_limit'), false);
+    const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'review-3.json')));
+    assert.ok(evidence.records.every(r => !r.sourceBefore.head.includes('- [x]')));
+    if (mode === 'investigation') assert.ok(evidence.records.every(r => !r.trackingChanged));
   });
 }
 
-test('an exhausted budget permits one explicit recovery worker and then stays stopped', t => {
-  const f = fixture(t, 'open-churn', { limit: 1 });
-  assert.equal(spawnSync(process.execPath, f.args, f.options).status, 75);
-  assert.equal(f.count(), 1);
-  const recovered = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
-  assert.equal(recovered.status, 75, recovered.stderr);
-  assert.equal(f.count(), 2);
-  const again = spawnSync(process.execPath, f.args, f.options);
-  assert.equal(again.status, 75, again.stderr);
-  assert.equal(f.count(), 2, 'the explicit attempt must not reopen the exhausted budget');
-});
-
-test('reopening and rechecking the same task cannot repeat progress forever', t => {
-  const f = fixture(t, 'toggle');
-  const result = spawnSync(process.execPath, f.args, f.options);
+test('hash-only retries cannot postpone review and a confirmed repeated failure stays blocked on restart', t => {
+  const f = fixture(t, 'hash-failure');
+  const result = f.run();
   assert.equal(result.status, 75, result.stderr);
-  assert.equal(f.count(), 4);
+  assert.equal(f.count('workers'), 2);
+  assert.equal(f.count('reviews'), 1);
+  const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'review-1.json')));
+  assert.ok(evidence.records.every(r => r.sourceBefore.sha256 !== r.sourceAfter.sha256));
+  const event = f.events().at(-1);
+  assert.equal(event.reason, 'loop_detected');
+  assert.match(event.loopFailure, /transport is missing/);
+  assert.match(event.loopUnchangedInputs, /only the source delivery hash changed/);
+  assert.equal(f.run().status, 75);
+  assert.equal(f.count('workers'), 2);
+  assert.equal(f.count('reviews'), 1);
+  assert.equal(f.run(['--recover-blocked']).status, 75);
+  assert.equal(f.count('workers'), 3, 'explicit recovery grants exactly one worker before another failed-attempt review');
 });
 
-test('a controller acceptance amendment between sessions grants one fresh budget', async t => {
-  const f = fixture(t, 'controller');
-  const child = spawn(process.execPath, f.args, { ...f.options, stdio: ['ignore', 'pipe', 'pipe'] });
-  t.after(() => { if (child.exitCode === null) child.kill('SIGTERM'); });
-  let amended = false, stdout = '', stderr = '';
-  child.stdout.on('data', chunk => { stdout += chunk; });
-  child.stderr.on('data', chunk => {
-    stderr += chunk;
-    if (!amended && stderr.includes('recovery recheck')) {
-      fs.writeFileSync(f.source + '.next', fs.readFileSync(f.source, 'utf8') + '\nRequire an additional controller-owned invariant.\n');
-      fs.renameSync(f.source + '.next', f.source);
-      amended = true;
-    }
-  });
-  const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
-  assert.equal(code, 75, stderr + stdout);
-  assert.equal(amended, true);
-  assert.equal(f.count(), 6);
+test('attempt evidence and review cadence survive a failed invocation', t => {
+  const f = fixture(t, 'restart-failure', 3);
+  const first = f.run();
+  assert.equal(first.status, 7, first.stderr);
+  assert.equal(f.count('workers'), 2);
+  assert.equal(f.count('reviews'), 0);
+  const restarted = f.run();
+  assert.equal(restarted.status, 75, restarted.stderr);
+  assert.equal(f.count('workers'), 4, 'the first successful attempt still counts toward the review interval');
+  const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'review-1.json')));
+  assert.deepEqual(evidence.records.map(r => r.iteration), [2, 3, 4]);
+  assert.equal(evidence.records[0].code, 7, 'the failed attempt receipt is retained');
+});
+
+test('disabling supervision does not leave a checkbox or file-based stopping condition', t => {
+  const f = fixture(t, 'investigation', 0);
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(f.count('workers'), 7);
+  assert.equal(f.count('reviews'), 0);
 });
