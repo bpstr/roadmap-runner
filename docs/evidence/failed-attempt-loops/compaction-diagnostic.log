@@ -1,0 +1,27 @@
+✖ compaction preserves productive continuation (691.77775ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 764.457166
+
+✖ failing tests:
+
+test at test/context-budget.test.js:91:3
+✖ compaction preserves productive continuation (691.77775ms)
+  Error: ENOENT: no such file or directory, open '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-IZ8JK8/progress.md.recovery.json'
+      at Object.openSync (node:fs:697:18)
+      at Object.readFileSync (node:fs:543:35)
+      at TestContext.<anonymous> (file:///Users/bpstr/.codex/worktrees/failed-attempt-loops/roadmap-runner/test/context-budget.test.js:100:32)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-context-IZ8JK8/progress.md.recovery.json'
+  }

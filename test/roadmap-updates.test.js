@@ -218,11 +218,10 @@ for (const staleStatus of ["COMPLETE", "BLOCKED", "IN_PROGRESS"]) {
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
     const seen = observations(f);
-    assert.deepEqual(seen.map(x => x.role), ["W", "S", "W"]);
+    assert.deepEqual(seen.map(x => x.role), ["W", "W"]);
     assert.equal(seen[0].text, original);
     assert.equal(seen[1].text, revised);
     assert.equal(seen[1].pending, true);
-    assert.equal(seen[2].pending, true, 'supervision does not acknowledge worker reconciliation');
     assert.match(result.stdout, /Roadmap requirements changed/);
     assert.match(fs.readFileSync(f.progress, "utf8"), /NEW verified/);
     assert.equal(fs.readFileSync(f.roadmap, "utf8"), revised.replace("- [ ] NEW", "- [x] NEW"));

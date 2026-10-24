@@ -1,0 +1,90 @@
+TAP version 13
+# Subtest: a verified delivery counts once and configuration must be an explicit changed source
+ok 1 - a verified delivery counts once and configuration must be an explicit changed source
+  ---
+  duration_ms: 8.503916
+  type: 'test'
+  ...
+# Roadmap requirements changed; revision f7e3a1df5fae will be reconciled by the next worker.
+# Subtest: queued implementation delivery is observed without closing original acceptance
+ok 2 - queued implementation delivery is observed without closing original acceptance
+  ---
+  duration_ms: 706.121
+  type: 'test'
+  ...
+# Subtest: finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+ok 3 - finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+  ---
+  duration_ms: 4.959458
+  type: 'test'
+  ...
+# Subtest: failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+ok 4 - failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+  ---
+  duration_ms: 4.97625
+  type: 'test'
+  ...
+# Subtest: checkbox edits cannot clear attempt review or establish implementation delivery
+ok 5 - checkbox edits cannot clear attempt review or establish implementation delivery
+  ---
+  duration_ms: 4.897625
+  type: 'test'
+  ...
+# Subtest: legacy replan flags request review without establishing a terminal loop
+ok 6 - legacy replan flags request review without establishing a terminal loop
+  ---
+  duration_ms: 2.43175
+  type: 'test'
+  ...
+# Subtest: CLI and managed schema carry the finite authority without changing token options
+ok 7 - CLI and managed schema carry the finite authority without changing token options
+  ---
+  duration_ms: 2.156667
+  type: 'test'
+  ...
+# Supervisor review recorded: review-JhonPv:20
+# Subtest: supervisor aggregate stays bounded and due status survives restart and pending requirements
+ok 8 - supervisor aggregate stays bounded and due status survives restart and pending requirements
+  ---
+  duration_ms: 361.328708
+  type: 'test'
+  ...
+# Subtest: soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+ok 9 - soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+  ---
+  duration_ms: 4008.878334
+  type: 'test'
+  ...
+# Subtest: event timing separates concurrent command time, shutdown and unattributed silence
+ok 10 - event timing separates concurrent command time, shutdown and unattributed silence
+  ---
+  duration_ms: 0.349375
+  type: 'test'
+  ...
+# Subtest: repeated unchanged failed finite outcomes stop only after an evidenced loop review
+ok 11 - repeated unchanged failed finite outcomes stop only after an evidenced loop review
+  ---
+  duration_ms: 511.01325
+  type: 'test'
+  ...
+# Subtest: supervision retains owner-spanning evidence and migrates both prior checkpoint formats
+ok 12 - supervision retains owner-spanning evidence and migrates both prior checkpoint formats
+  ---
+  duration_ms: 5.375834
+  type: 'test'
+  ...
+# Subtest: productive partial finite batches continue after corrective reviews with parent checkboxes open
+ok 13 - productive partial finite batches continue after corrective reviews with parent checkboxes open
+  ---
+  duration_ms: 866.385208
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6573.532125

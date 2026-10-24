@@ -1,0 +1,502 @@
+{
+  "a verified delivery counts once and configuration must be an explicit changed source": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "queued implementation delivery is observed without closing original acceptance": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "finite baseline rotates real owners and rejects denominator drift and generator-only delivery": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "checkbox edits cannot clear attempt review or establish implementation delivery": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "legacy replan flags request review without establishing a terminal loop": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "CLI and managed schema carry the finite authority without changing token options": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "supervisor aggregate stays bounded and due status survives restart and pending requirements": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "soft deadline saves exact mock handoff before hard timeout and preserves unfinished source": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "event timing separates concurrent command time, shutdown and unattributed silence": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "repeated unchanged failed finite outcomes stop only after an evidenced loop review": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "investigation continues seven sessions with an open acceptance item": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "repaired-input continues seven sessions with an open acceptance item": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "hash-only retries cannot postpone review and a confirmed repeated failure stays blocked on restart": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "attempt evidence and review cadence survive a failed invocation": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "disabling supervision does not leave a checkbox or file-based stopping condition": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "only the current supervisor review can report stuck, excluding examples and history": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop decisions require a current review, two observed turns and concrete evidence": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-detected blocks immediately and preserves the decision on restart": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-source-churn blocks immediately and preserves the decision on restart": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-periodic blocks immediately and preserves the decision on restart": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-clear cannot stop productive workers": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-uncertain cannot stop productive workers": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-invalid cannot stop productive workers": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "loop-stale cannot stop productive workers": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervision defaults to five; supports CLI/env overrides and disable": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"-1\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"21\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"1.5\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"NaN\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"05\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reject invalid supervisor interval \"--model\"": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor option validation rejects missing values and excessive timeouts": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "bounded capture retains exact short output and capped head/tail with omission count": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "codex capture includes stdout and final stderr without a newline": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "claude capture includes stdout and final stderr without a newline": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "reviews after workers 5 and 10; preserved=true": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "completion on worker 3 skips a pending/future review": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "completion on worker 5 skips a pending/future review": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "custom cadence and disabled supervision": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "open tasks and unchanged files continue until the scheduled review": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "legacy idle limits do not stop long productive runs": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "worker capacity retries are excluded from cadence and counted in review context": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "timed-out workers count toward review cadence": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "text adapter participates in the same supervisor loop": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor capacity retries the review, not a worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor-failure does not launch a sixth worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "false-complete does not launch a sixth worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "missing-report preserves review evidence and continues delivery": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor-timeout preserves review evidence and continues delivery": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor-usage preserves review evidence and continues delivery": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "a supervisor global blocker stops before another worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "controller edit during a supervisor review continues with a fresh worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "ordinary worker failures remain terminal": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "SIGINT during supervisor exits 130 without another worker": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "rolling evidence stays bounded across many verbose runs": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervisor prompt binds evidence, scope, read-only source and next-run expectation": {
+    "passed": true,
+    "log": "development-tests.log"
+  },
+  "supervision retains owner-spanning evidence and migrates both prior checkpoint formats": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "productive partial finite batches continue after corrective reviews with parent checkboxes open": {
+    "passed": true,
+    "log": "execution-follow-up.log"
+  },
+  "finite execution respects a global supervisor BLOCKED outcome without requiring loop evidence": {
+    "passed": true,
+    "log": "global-blocked.log"
+  },
+  "legacy large handoffs compact separately while detailed evidence remains available": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction noop stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction status stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction source stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction source-capacity stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction failure stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction timeout stops before implementation and retains the original archive": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "worker growth compacts before a due supervisor; delivery notes do not starve review": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction cannot acknowledge pending requirements before the worker sees them": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction preserves the repeated-failure verdict": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "compaction preserves productive continuation": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "only valid delivery notes are excluded from scope reconciliation": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "macOS sleep prevention spans queue handoff and releases at completion": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "macOS sleep prevention releases when a queued run is stopped": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "CLI queue appends to an active run and rejects duplicates and terminal runs": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "a blocked or failed roadmap never starts the next queued roadmap": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "all queue entries are validated before launch, including path and progress aliases": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "foreground CLI accepts repeated --queue flags and completes every roadmap": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "a queued source removed before handoff fails the run and preserves later entries": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "LLM loop detection blocks managed execution and leaves queued work pending": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "fully blocked managed runs stop once, retain blocked status, and leave the queue pending": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "reset clocks honor IANA timezone, next-day and dated weekly resets": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "quota observation distinguishes error events from model prose and advisory limits": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "short quota pauses restore and use one persistent incident budget": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "lowering the wait ceiling persists the shortened deadline across another restart": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "unknown reset fallbacks are five hours/session and at most one day/weekly": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "interrupts preserve the quota checkpoint and never renew its deadline": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "changed attention flags notify once, remain unfinished, and clear on recovery": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "legacy progress counters are retired without losing quota or loop checkpoints": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "wait settings reject zero, invalid input and values above one day": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "codex CLI quota pauses then restores a fresh worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "claude CLI quota pauses then restores a fresh worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "a terminal status left by a quota session must be verified by the next worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "weekly CLI quota expires at the configured ceiling without another provider attempt": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "blocked CLI emits notification and stops before a repeated worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "SIGINT during a real quota wait exits promptly and keeps state for restart": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "explicit blocked recovery runs one worker and stops again if unchanged": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "explicit recovery can continue after the changed input resolves the blocker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "edits are adopted only at a boundary; snapshots and evidence stay intact during a run": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "pending reconciliation and source/progress binding survive restarts": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "timeout does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "interrupt does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "failure does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "spawn error does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "capacity does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "quota with zero exit does not acknowledge a pending source revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "a successful old worker cannot acknowledge a newer revision": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "multiple edits coalesce to the newest complete publication": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "unreadable, non-file and oversized replacement sources remain errors": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "corrupt revision metadata is not silently treated as a new baseline": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "revision metadata cannot be reused for another source or progress file": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "live edit overrides stale COMPLETE and runs corrected requirements next": {
+    "passed": true,
+    "log": "final-selectors.log"
+  },
+  "live edit overrides stale BLOCKED and runs corrected requirements next": {
+    "passed": true,
+    "log": "final-selectors.log"
+  },
+  "live edit overrides stale IN_PROGRESS and runs corrected requirements next": {
+    "passed": true,
+    "log": "final-selectors.log"
+  },
+  "edit between invocations reopens persisted COMPLETE without erasing evidence": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "edit between invocations reopens persisted BLOCKED without erasing evidence": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "capacity-edit preserves the revision through recovery": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "timeout-edit preserves the revision through recovery": {
+    "passed": true,
+    "log": "final-selectors.log"
+  },
+  "supervisor-edit defers obsolete review results to a new worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "supervisor-capacity-edit defers obsolete review results to a new worker": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "real external controller edit during capacity backoff is adopted by the next attempt": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "source changes do not swallow an independent fatal client failure": {
+    "passed": true,
+    "log": "affected-tests.log"
+  },
+  "quota and capacity rejections do not consume finite implementation attempts": {
+    "passed": true,
+    "log": "final-selectors.log"
+  }
+}

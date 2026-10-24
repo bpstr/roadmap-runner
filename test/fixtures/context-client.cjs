@@ -36,7 +36,7 @@ if (role === 'COMPACTOR') {
   const review = prompt.match(/^Review ID: (.+)$/m)[1];
   fs.appendFileSync(progress, '\n## Latest supervisor review\nReview ID: ' + review + '\nHealth: HEALTHY\nNext: GATE-2.\n');
   if (mode.startsWith('loop')) fs.appendFileSync(progress, 'Loop: ' + (mode === 'loop-detected' ? 'DETECTED' : 'CLEAR') +
-    '\nLoop iterations: 1, 2\nLoop evidence: Both workers only rewrote delivery receipts; GATE-1 and GATE-2 remain open.\n');
+    '\nLoop iterations: 1, 2\nLoop attempt: Repeat the same dependency check.\nLoop failure: The required transport is still missing.\nLoop unchanged inputs: No transport or dependency receipt changed.\nLoop evidence: Both workers report the same missing transport and only rewrote delivery receipts.\n');
 } else {
   assert.ok(fs.statSync(progress).size < 24 * 1024);
   if (process.env.CONTEXT_TEST_RECONCILE === 'yes') assert.match(prompt, /Roadmap reconciliation required: YES/);
@@ -47,7 +47,8 @@ if (role === 'COMPACTOR') {
     '<!-- roadmap-runner:delivery:start -->\nReceipt ' + n + '\n<!-- roadmap-runner:delivery:end -->');
   if (mode !== 'grow' && !mode.startsWith('loop')) source = source.replaceAll('- [ ]', '- [x]');
   fs.writeFileSync(roadmap, source);
-  const complete = !mode.startsWith('loop') && (mode !== 'grow' || n === 2);
+  const complete = (mode === 'loop-clear' && n >= 3) || (!mode.startsWith('loop') && (mode !== 'grow' || n === 2));
+  if (complete) fs.writeFileSync(roadmap, source.replaceAll('- [ ]', '- [x]'));
   let handoff = '# Handoff\nStatus: ' + (complete ? 'COMPLETE' : 'IN_PROGRESS') + '\n\n## Current handoff\nGATE-2: release receipt required.\n';
   if (!complete) handoff = handoff.padEnd(24 * 1024 + 100, 'e');
   fs.writeFileSync(progress, handoff);

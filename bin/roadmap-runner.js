@@ -63,9 +63,6 @@ Environment:
   ROADMAP_PREVENT_SLEEP      Set to 1 or true to prevent idle system sleep
   ROADMAP_NOTIFY_BIN         Notification executable; receives event JSON on stdin
   ROADMAP_USAGE_MAX_WAIT     Quota wait ceiling in seconds; default/max 86400
-  ROADMAP_MAX_IDLE_WORKERS   Stop after workers without checklist progress; default 3
-  ROADMAP_RECOVERY_DELAY     No-progress recheck delay in seconds; default 60
-  ROADMAP_RECOVERY_MAX_DELAY Maximum no-progress delay in seconds; default 900
   ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
   ROADMAP_CAPACITY_DELAY      Initial delay in seconds; default 300
   ROADMAP_CAPACITY_MAX_DELAY  Maximum delay in seconds; default 300

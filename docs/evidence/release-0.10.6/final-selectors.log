@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: quota and capacity rejections do not consume finite implementation attempts
+ok 1 - quota and capacity rejections do not consume finite implementation attempts
+  ---
+  duration_ms: 5.590542
+  type: 'test'
+  ...
+# Subtest: live edit overrides stale COMPLETE and runs corrected requirements next
+ok 2 - live edit overrides stale COMPLETE and runs corrected requirements next
+  ---
+  duration_ms: 785.989833
+  type: 'test'
+  ...
+# Subtest: live edit overrides stale BLOCKED and runs corrected requirements next
+ok 3 - live edit overrides stale BLOCKED and runs corrected requirements next
+  ---
+  duration_ms: 528.622667
+  type: 'test'
+  ...
+# Subtest: live edit overrides stale IN_PROGRESS and runs corrected requirements next
+ok 4 - live edit overrides stale IN_PROGRESS and runs corrected requirements next
+  ---
+  duration_ms: 524.843458
+  type: 'test'
+  ...
+# Subtest: timeout-edit preserves the revision through recovery
+ok 5 - timeout-edit preserves the revision through recovery
+  ---
+  duration_ms: 1703.550833
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3595.149041

@@ -1,0 +1,5 @@
+
+> @bpstr/roadmap-runner@0.10.5 build
+> tsc
+
+src/lifecycle.ts(251,78): error TS2304: Cannot find name 'completedHandoff'.

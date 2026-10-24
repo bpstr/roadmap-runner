@@ -1,0 +1,563 @@
+TAP version 13
+# Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+# Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+# Subtest: legacy large handoffs compact separately while detailed evidence remains available
+ok 1 - legacy large handoffs compact separately while detailed evidence remains available
+  ---
+  duration_ms: 633.626458
+  type: 'test'
+  ...
+# Subtest: compaction noop stops before implementation and retains the original archive
+ok 2 - compaction noop stops before implementation and retains the original archive
+  ---
+  duration_ms: 375.475291
+  type: 'test'
+  ...
+# Subtest: compaction status stops before implementation and retains the original archive
+ok 3 - compaction status stops before implementation and retains the original archive
+  ---
+  duration_ms: 389.742875
+  type: 'test'
+  ...
+# Subtest: compaction source stops before implementation and retains the original archive
+ok 4 - compaction source stops before implementation and retains the original archive
+  ---
+  duration_ms: 381.654666
+  type: 'test'
+  ...
+# Subtest: compaction source-capacity stops before implementation and retains the original archive
+ok 5 - compaction source-capacity stops before implementation and retains the original archive
+  ---
+  duration_ms: 393.673334
+  type: 'test'
+  ...
+# Subtest: compaction failure stops before implementation and retains the original archive
+ok 6 - compaction failure stops before implementation and retains the original archive
+  ---
+  duration_ms: 371.42375
+  type: 'test'
+  ...
+# Subtest: compaction timeout stops before implementation and retains the original archive
+ok 7 - compaction timeout stops before implementation and retains the original archive
+  ---
+  duration_ms: 1141.799
+  type: 'test'
+  ...
+# Subtest: worker growth compacts before a due supervisor; delivery notes do not starve review
+ok 8 - worker growth compacts before a due supervisor; delivery notes do not starve review
+  ---
+  duration_ms: 494.449875
+  type: 'test'
+  ...
+# Subtest: compaction cannot acknowledge pending requirements before the worker sees them
+ok 9 - compaction cannot acknowledge pending requirements before the worker sees them
+  ---
+  duration_ms: 473.967708
+  type: 'test'
+  ...
+# Subtest: compaction preserves the repeated-failure verdict
+ok 10 - compaction preserves the repeated-failure verdict
+  ---
+  duration_ms: 606.228625
+  type: 'test'
+  ...
+# Subtest: compaction preserves productive continuation
+ok 11 - compaction preserves productive continuation
+  ---
+  duration_ms: 781.403083
+  type: 'test'
+  ...
+# Subtest: only valid delivery notes are excluded from scope reconciliation
+ok 12 - only valid delivery notes are excluded from scope reconciliation
+  ---
+  duration_ms: 16.527791
+  type: 'test'
+  ...
+# Subtest: queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+ok 13 - queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+  ---
+  duration_ms: 622.072625
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention spans queue handoff and releases at completion
+ok 14 - macOS sleep prevention spans queue handoff and releases at completion
+  ---
+  duration_ms: 517.177458
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention releases when a queued run is stopped
+ok 15 - macOS sleep prevention releases when a queued run is stopped
+  ---
+  duration_ms: 346.750291
+  type: 'test'
+  ...
+# Subtest: CLI queue appends to an active run and rejects duplicates and terminal runs
+ok 16 - CLI queue appends to an active run and rejects duplicates and terminal runs
+  ---
+  duration_ms: 365.485583
+  type: 'test'
+  ...
+# Subtest: a blocked or failed roadmap never starts the next queued roadmap
+ok 17 - a blocked or failed roadmap never starts the next queued roadmap
+  ---
+  duration_ms: 665.462291
+  type: 'test'
+  ...
+# Subtest: all queue entries are validated before launch, including path and progress aliases
+ok 18 - all queue entries are validated before launch, including path and progress aliases
+  ---
+  duration_ms: 4.8415
+  type: 'test'
+  ...
+# Subtest: foreground CLI accepts repeated --queue flags and completes every roadmap
+ok 19 - foreground CLI accepts repeated --queue flags and completes every roadmap
+  ---
+  duration_ms: 515.696667
+  type: 'test'
+  ...
+# Subtest: a queued source removed before handoff fails the run and preserves later entries
+ok 20 - a queued source removed before handoff fails the run and preserves later entries
+  ---
+  duration_ms: 536.123041
+  type: 'test'
+  ...
+# Subtest: LLM loop detection blocks managed execution and leaves queued work pending
+ok 21 - LLM loop detection blocks managed execution and leaves queued work pending
+  ---
+  duration_ms: 428.266333
+  type: 'test'
+  ...
+# Subtest: fully blocked managed runs stop once, retain blocked status, and leave the queue pending
+ok 22 - fully blocked managed runs stop once, retain blocked status, and leave the queue pending
+  ---
+  duration_ms: 536.613083
+  type: 'test'
+  ...
+# Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-14T08:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-07T08:00:01.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-08T13:00:00.000Z (deadline 2026-10-08T13:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Subtest: reset clocks honor IANA timezone, next-day and dated weekly resets
+ok 23 - reset clocks honor IANA timezone, next-day and dated weekly resets
+  ---
+  duration_ms: 33.3525
+  type: 'test'
+  ...
+# Subtest: quota observation distinguishes error events from model prose and advisory limits
+ok 24 - quota observation distinguishes error events from model prose and advisory limits
+  ---
+  duration_ms: 0.7435
+  type: 'test'
+  ...
+# Subtest: short quota pauses restore and use one persistent incident budget
+ok 25 - short quota pauses restore and use one persistent incident budget
+  ---
+  duration_ms: 3.9565
+  type: 'test'
+  ...
+# Subtest: lowering the wait ceiling persists the shortened deadline across another restart
+ok 26 - lowering the wait ceiling persists the shortened deadline across another restart
+  ---
+  duration_ms: 1.374708
+  type: 'test'
+  ...
+# Subtest: unknown reset fallbacks are five hours/session and at most one day/weekly
+ok 27 - unknown reset fallbacks are five hours/session and at most one day/weekly
+  ---
+  duration_ms: 1.531041
+  type: 'test'
+  ...
+# Subtest: interrupts preserve the quota checkpoint and never renew its deadline
+ok 28 - interrupts preserve the quota checkpoint and never renew its deadline
+  ---
+  duration_ms: 0.821792
+  type: 'test'
+  ...
+# Subtest: changed attention flags notify once, remain unfinished, and clear on recovery
+ok 29 - changed attention flags notify once, remain unfinished, and clear on recovery
+  ---
+  duration_ms: 1.917
+  type: 'test'
+  ...
+# Subtest: legacy progress counters are retired without losing quota or loop checkpoints
+ok 30 - legacy progress counters are retired without losing quota or loop checkpoints
+  ---
+  duration_ms: 0.958708
+  type: 'test'
+  ...
+# Subtest: wait settings reject zero, invalid input and values above one day
+ok 31 - wait settings reject zero, invalid input and values above one day
+  ---
+  duration_ms: 0.109541
+  type: 'test'
+  ...
+# Subtest: codex CLI quota pauses then restores a fresh worker
+ok 32 - codex CLI quota pauses then restores a fresh worker
+  ---
+  duration_ms: 1635.347375
+  type: 'test'
+  ...
+# Subtest: claude CLI quota pauses then restores a fresh worker
+ok 33 - claude CLI quota pauses then restores a fresh worker
+  ---
+  duration_ms: 1587.667625
+  type: 'test'
+  ...
+# Subtest: a terminal status left by a quota session must be verified by the next worker
+ok 34 - a terminal status left by a quota session must be verified by the next worker
+  ---
+  duration_ms: 1632.894834
+  type: 'test'
+  ...
+# Subtest: weekly CLI quota expires at the configured ceiling without another provider attempt
+ok 35 - weekly CLI quota expires at the configured ceiling without another provider attempt
+  ---
+  duration_ms: 1472.2015
+  type: 'test'
+  ...
+# Subtest: blocked CLI emits notification and stops before a repeated worker
+ok 36 - blocked CLI emits notification and stops before a repeated worker
+  ---
+  duration_ms: 907.572542
+  type: 'test'
+  ...
+# Subtest: SIGINT during a real quota wait exits promptly and keeps state for restart
+ok 37 - SIGINT during a real quota wait exits promptly and keeps state for restart
+  ---
+  duration_ms: 527.610417
+  type: 'test'
+  ...
+# Subtest: explicit blocked recovery runs one worker and stops again if unchanged
+ok 38 - explicit blocked recovery runs one worker and stops again if unchanged
+  ---
+  duration_ms: 469.870167
+  type: 'test'
+  ...
+# Subtest: explicit recovery can continue after the changed input resolves the blocker
+ok 39 - explicit recovery can continue after the changed input resolves the blocker
+  ---
+  duration_ms: 511.322083
+  type: 'test'
+  ...
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+# Roadmap requirements changed; revision e89d2cfe0a67 will be reconciled by the next worker.
+# Subtest: edits are adopted only at a boundary; snapshots and evidence stay intact during a run
+ok 40 - edits are adopted only at a boundary; snapshots and evidence stay intact during a run
+  ---
+  duration_ms: 7.111334
+  type: 'test'
+  ...
+# Subtest: pending reconciliation and source/progress binding survive restarts
+ok 41 - pending reconciliation and source/progress binding survive restarts
+  ---
+  duration_ms: 5.827666
+  type: 'test'
+  ...
+# Subtest: timeout does not acknowledge a pending source revision
+ok 42 - timeout does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.671958
+  type: 'test'
+  ...
+# Subtest: interrupt does not acknowledge a pending source revision
+ok 43 - interrupt does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.378292
+  type: 'test'
+  ...
+# Subtest: failure does not acknowledge a pending source revision
+ok 44 - failure does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.756
+  type: 'test'
+  ...
+# Subtest: spawn error does not acknowledge a pending source revision
+ok 45 - spawn error does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.465083
+  type: 'test'
+  ...
+# Subtest: capacity does not acknowledge a pending source revision
+ok 46 - capacity does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.311
+  type: 'test'
+  ...
+# Subtest: quota with zero exit does not acknowledge a pending source revision
+ok 47 - quota with zero exit does not acknowledge a pending source revision
+  ---
+  duration_ms: 3.426417
+  type: 'test'
+  ...
+# Subtest: a successful old worker cannot acknowledge a newer revision
+ok 48 - a successful old worker cannot acknowledge a newer revision
+  ---
+  duration_ms: 3.15575
+  type: 'test'
+  ...
+# Subtest: multiple edits coalesce to the newest complete publication
+ok 49 - multiple edits coalesce to the newest complete publication
+  ---
+  duration_ms: 3.014875
+  type: 'test'
+  ...
+# Subtest: unreadable, non-file and oversized replacement sources remain errors
+ok 50 - unreadable, non-file and oversized replacement sources remain errors
+  ---
+  duration_ms: 2.52
+  type: 'test'
+  ...
+# Subtest: corrupt revision metadata is not silently treated as a new baseline
+ok 51 - corrupt revision metadata is not silently treated as a new baseline
+  ---
+  duration_ms: 1.816709
+  type: 'test'
+  ...
+# Subtest: revision metadata cannot be reused for another source or progress file
+ok 52 - revision metadata cannot be reused for another source or progress file
+  ---
+  duration_ms: 1.981166
+  type: 'test'
+  ...
+# Subtest: live edit overrides stale COMPLETE and runs corrected requirements next
+not ok 53 - live edit overrides stale COMPLETE and runs corrected requirements next
+  ---
+  duration_ms: 488.62975
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:216:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        'W',
+    -   'S',
+        'W'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'W'
+    1: 'S'
+    2: 'W'
+  actual:
+    0: 'W'
+    1: 'W'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:221:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: live edit overrides stale BLOCKED and runs corrected requirements next
+not ok 54 - live edit overrides stale BLOCKED and runs corrected requirements next
+  ---
+  duration_ms: 547.523542
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:216:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        'W',
+    -   'S',
+        'W'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'W'
+    1: 'S'
+    2: 'W'
+  actual:
+    0: 'W'
+    1: 'W'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:221:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: live edit overrides stale IN_PROGRESS and runs corrected requirements next
+not ok 55 - live edit overrides stale IN_PROGRESS and runs corrected requirements next
+  ---
+  duration_ms: 506.538333
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:216:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        'W',
+    -   'S',
+        'W'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'W'
+    1: 'S'
+    2: 'W'
+  actual:
+    0: 'W'
+    1: 'W'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:221:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: edit between invocations reopens persisted COMPLETE without erasing evidence
+ok 56 - edit between invocations reopens persisted COMPLETE without erasing evidence
+  ---
+  duration_ms: 582.840917
+  type: 'test'
+  ...
+# Subtest: edit between invocations reopens persisted BLOCKED without erasing evidence
+ok 57 - edit between invocations reopens persisted BLOCKED without erasing evidence
+  ---
+  duration_ms: 713.749375
+  type: 'test'
+  ...
+# Subtest: capacity-edit preserves the revision through recovery
+ok 58 - capacity-edit preserves the revision through recovery
+  ---
+  duration_ms: 1709.66225
+  type: 'test'
+  ...
+# Subtest: timeout-edit preserves the revision through recovery
+not ok 59 - timeout-edit preserves the revision through recovery
+  ---
+  duration_ms: 1677.372667
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:247:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /preserve checkpoint and apply bounded recovery/. Input:
+
+    'Roadmap Runner 0.10.5\n' +
+      'Client:    codex\n' +
+      'Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9\n' +
+      'Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/source roadmap.md\n' +
+      'Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/progress.md (bounded handoff/evidence; task states in roadmap)\n' +
+      'Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.\n' +
+      'History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/.roadmap-runner/source-roadmap-c8a01230b716/history (archived snapshots; not loaded by default)\n' +
+      'Timeout:   1500ms per run\n' +
+      'Prompt:    a988a2b1da0d (30–45-minute implementation batches)\n' +
+      'Supervisor: disabled\n' +
+      'Press Ctrl-C to stop.\n' +
+      '\n' +
+      'Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/progress.md.events.jsonl\n' +
+      '===== iteration 1 | 2026-10-24T14:33:28.102Z =====\n' +
+      'Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.\n' +
+      'Iteration 1 hit the 1500ms limit; starting a fresh session.\n' +
+      '\n' +
+      '===== iteration 2 | 2026-10-24T14:33:29.621Z =====\n' +
+      'Iteration 2 completed.\n' +
+      '\n' +
+      'Roadmap complete after 2 iteration(s).\n'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Roadmap Runner 0.10.5
+    Client:    codex
+    Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9
+    Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/source roadmap.md
+    Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/progress.md (bounded handoff/evidence; task states in roadmap)
+    Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+    History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/.roadmap-runner/source-roadmap-c8a01230b716/history (archived snapshots; not loaded by default)
+    Timeout:   1500ms per run
+    Prompt:    a988a2b1da0d (30–45-minute implementation batches)
+    Supervisor: disabled
+    Press Ctrl-C to stop.
+
+    Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-updates-Up7BG9/progress.md.events.jsonl
+    ===== iteration 1 | 2026-10-24T14:33:28.102Z =====
+    Roadmap requirements changed; revision 40606173f169 will be reconciled by the next worker.
+    Iteration 1 hit the 1500ms limit; starting a fresh session.
+
+    ===== iteration 2 | 2026-10-24T14:33:29.621Z =====
+    Iteration 2 completed.
+
+    Roadmap complete after 2 iteration(s).
+
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/roadmap-updates.test.js:254:17)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: supervisor-edit defers obsolete review results to a new worker
+ok 60 - supervisor-edit defers obsolete review results to a new worker
+  ---
+  duration_ms: 840.774042
+  type: 'test'
+  ...
+# Subtest: supervisor-capacity-edit defers obsolete review results to a new worker
+ok 61 - supervisor-capacity-edit defers obsolete review results to a new worker
+  ---
+  duration_ms: 536.495334
+  type: 'test'
+  ...
+# Subtest: real external controller edit during capacity backoff is adopted by the next attempt
+ok 62 - real external controller edit during capacity backoff is adopted by the next attempt
+  ---
+  duration_ms: 1739.063667
+  type: 'test'
+  ...
+# Subtest: source changes do not swallow an independent fatal client failure
+ok 63 - source changes do not swallow an independent fatal client failure
+  ---
+  duration_ms: 991.599
+  type: 'test'
+  ...
+1..63
+# tests 63
+# suites 0
+# pass 59
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29972.5325

@@ -25,7 +25,7 @@ function fixture(t, mode = "compact", reconcile = false) {
   fs.copyFileSync(new URL("./fixtures/context-client.cjs", import.meta.url), worker);
   fs.chmodSync(worker, 0o755);
   const result = spawnSync(process.execPath, [cli, roadmap, "--client", "codex", "--client-bin", worker,
-    "--progress-file", tracking.file, "--supervisor-every", mode.startsWith("loop") ? "5" : "1", ...(mode === "timeout" ? ["--timeout", "1s"] : [])], {
+    "--progress-file", tracking.file, "--supervisor-every", mode.startsWith("loop") ? "2" : "1", ...(mode === "timeout" ? ["--timeout", "1s"] : [])], {
     cwd: dir, encoding: "utf8", timeout: 10_000,
     env: { ...process.env, ROADMAP_NOTIFY: "off", ROADMAP_PREVENT_SLEEP: "off",
       ROADMAP_RECOVERY_DELAY: "1", ROADMAP_RECOVERY_MAX_DELAY: "1", ROADMAP_MAX_IDLE_WORKERS: "3",
@@ -88,18 +88,17 @@ test("compaction cannot acknowledge pending requirements before the worker sees 
 });
 
 for (const mode of ["loop-detected", "loop-clear"]) {
-  test(`compaction preserves ${mode === "loop-detected" ? "the early loop verdict" : "the deterministic worker limit"}`, t => {
+  test(`compaction preserves ${mode === "loop-detected" ? "the repeated-failure verdict" : "productive continuation"}`, t => {
     const f = fixture(t, mode);
-    assert.equal(f.result.status, 75, f.result.stderr);
+    assert.equal(f.result.status, mode === "loop-detected" ? 75 : 0, f.result.stderr);
     assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "WORKER", "COMPACTOR", "SUPERVISOR",
       ...(mode === "loop-clear" ? ["WORKER"] : [])]);
     const events = jsonLines(`${f.tracking.file}.events.jsonl`);
-    assert.equal(events.at(-1).reason, mode === "loop-detected" ? "loop_detected" : "no_progress_limit");
+    assert.equal(events.at(-1).reason, mode === "loop-detected" ? "loop_detected" : undefined);
     assert.equal(jsonLines(f.tracking.sessionsFile).filter(s => s.role === "worker").length,
       mode === "loop-detected" ? 2 : 3);
-    assert.equal(JSON.parse(fs.readFileSync(`${f.tracking.file}.recovery.json`)).idle,
-      mode === "loop-detected" ? 2 : 3);
-    assert.match(fs.readFileSync(f.roadmap, "utf8"), /- \[ \] GATE-1/);
+    assert.equal(events.some(e => e.reason === "no_progress_limit"), false);
+    assert.match(fs.readFileSync(f.roadmap, "utf8"), mode === "loop-detected" ? /- \[ \] GATE-1/ : /- \[x\] GATE-1/);
   });
 }
 

@@ -38,26 +38,24 @@ occur. Ordinary fatal failures and user cancellation still stop execution.
 
 COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
 `blocked`, without another worker or supervisor; use it only when no authorized
-work remains ready. Independent work continues under IN_PROGRESS with task-local
-deferrals. Three workers without checklist progress also stop with exit 75 and
-`no_progress_limit`. Progress is a new high-water count of closed original live-roadmap
-tasks; appended child checkboxes do not extend the frozen acceptance baseline. Unchanged notes, mirrored handoff checkboxes, and source rewrites during
-workers or supervisors do not reset that budget. A controller acceptance amendment
-adopted between sessions grants one bounded reconciliation budget.
-After two idle workers, enabled supervision performs one small loop check for that
-stagnation episode, even when source reconciliation is pending. It compares bounded
-source/progress snapshots and worker outcomes, with a timeout capped at 60 seconds.
-An explicit `Loop: DETECTED`, citing two observed iterations and concrete evidence,
-blocks immediately with exit 75 and terminal reason `loop_detected`. Periodic
-reviews can make the same decision. Other verdicts leave the hard stop intact.
-Explicit --recover-blocked permits one recovery worker after changed inputs.
-If worker 5 writes COMPLETE and no controller edit needs reconciliation, the runner
-exits without launching a review. A three-task
-smoke test still takes three workers and no supervisor. This is not a final
-independent acceptance gate.
+work remains ready. Independent work continues under IN_PROGRESS with task-local deferrals.
+Reviews run at the configured worker interval even while source reconciliation is
+pending. One reconciliation worker may precede a due review; this deferral is
+persisted and cannot be renewed by another source hash. A review compares failed attempts and relevant changes, including actual
+implementation, dependency, approach and requirement changes. Source/hash churn
+cannot postpone the review. No checkbox-count or workspace-byte condition stops
+productive long-running work.
 
-The cadence/window starts fresh on each invocation of `roadmap-runner`; it is not
-reconstructed from model-written iteration history. Existing progress, review
+A current `Loop: DETECTED` report must cite two recorded iterations, name the
+repeated attempt and failure, identify unchanged relevant inputs, and supply
+concrete receipts. It blocks immediately with exit 75 and terminal reason
+`loop_detected`. CLEAR, UNCERTAIN and incomplete reports permit continuation.
+`--recover-blocked` permits one recovery worker after changed inputs. Supervision
+disabled with `--supervisor-every 0` also disables loop detection.
+
+Completion still exits before an unnecessary review. The bounded recent attempt
+window and review cadence persist in runner-owned state across invocations;
+model-written iteration history is not used to reconstruct them. Existing review
 notes and next delivery targets remain in the tracking file across restarts.
 
 ## External controller edits
@@ -65,8 +63,9 @@ notes and next delivery targets remain in the tracking file across restarts.
 An external controller can revise the live roadmap to correct drift while a worker
 or review is running. The active session uses its fixed source snapshot; it is not
 cancelled, and controller edits are never restored over. At the next boundary the
-runner records the new revision. Due supervision runs even while reconciliation
-is pending; the next worker reconciles requirements, evidence and stale state.
+runner records the new revision. A due review may compare the changed requirements
+with recent attempts before the next worker reconciles its handoff. Relevant changed
+inputs can justify a retry; a new revision hash alone cannot.
 
 A review based on a superseded revision is archived but cannot stop revised work
 with its COMPLETE/BLOCKED status or missing handoff. Ordinary client failures and

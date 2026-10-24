@@ -1,0 +1,45 @@
+{
+  "local_commits": [
+    "0631192",
+    "56ae2ee"
+  ],
+  "unchanged_local_modules": {
+    "lib/runner.js": {
+      "retained_byte_for_byte": true,
+      "sha256": "3bdde8ca277a7a65c030701be879b6d553e37b0dcff174c8aff7a0e0f59034e3"
+    },
+    "lib/telemetry.js": {
+      "retained_byte_for_byte": true,
+      "sha256": "62ede64756930ceb84034c15774e541293fefa1dc487d079c255df45ad401155"
+    },
+    "lib/tracking.js": {
+      "retained_byte_for_byte": true,
+      "sha256": "11f14fbbc545827fd5b1ab72864110484229b31d56403209f5e0a09baa928ea2"
+    },
+    "prompt.md": {
+      "retained_byte_for_byte": true,
+      "sha256": "a988a2b1da0d57e255b9cb7cc5f151797dbd5c3423d81c2480b5f6fb09cbadd9"
+    },
+    "src/run-manager.ts": {
+      "retained_byte_for_byte": true,
+      "sha256": "82ea7004aa7d951026a2c746b5275e4ff2b0cc2fc95dacfc3a5628fdc0961722"
+    },
+    "src/run-state.ts": {
+      "retained_byte_for_byte": true,
+      "sha256": "a9b02957cb176a27d043ee856d3ed7584d457717afb95cf266e1ae3d736a5b83"
+    },
+    "src/worker.ts": {
+      "retained_byte_for_byte": true,
+      "sha256": "009254354251f319738db7013568eaa69f716d346177b9436ba6c7ceaab35ecb"
+    },
+    "src/events.ts": {
+      "retained_byte_for_byte": true,
+      "sha256": "01a79c51ce61c52c4fcba29504af8b51d7103751b575adb5c6553484753f1992"
+    }
+  },
+  "integrated_modules": [
+    "lib/execution.js: source verification, saved baseline and owner rotation retained; repeated attempts request review; named source observations supplied as evidence",
+    "lib/supervision.js: bounded cold evidence and owner selection retained with both checkpoint migrations and remote retry verdict requirements",
+    "src/lifecycle.ts: batch deadlines, checkpoints, unfinished recovery and verified delivery observations retained; checkbox counters and automatic replan stops superseded by user instruction"
+  ]
+}

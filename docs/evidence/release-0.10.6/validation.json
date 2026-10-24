@@ -1,0 +1,43 @@
+{
+  "scope": "Merge remote main b098dc1 with local main 56ae2ee, retaining both original commits and their implementation features. User clarification: no checkbox progress; compare actual implementation and handoffs for loops.",
+  "backup": "codex/preserve-local-main-56ae2ee",
+  "conflicts": "Resolve recovery/supervision/lifecycle overlaps by preserving bounded cold evidence, resumable finite batches, checkpoint deadlines, process cleanup/timing, and evidenced retry review. Attempt counters request review and never establish a terminal loop.",
+  "development_selectors": [
+    "test/execution-reset.test.js",
+    "test/source-loop.test.js",
+    "test/supervisor.test.js"
+  ],
+  "affected_selectors": [
+    "test/roadmap-updates.test.js",
+    "test/recovery.test.js",
+    "test/context-budget.test.js",
+    "test/queue.test.js"
+  ],
+  "retained": "Retain six passing remote 0.10.5 CI jobs for unaffected behavior. Carry local pre-merge evidence for byte-identical runner/telemetry modules where available; do not repeat those tests merely for a merge SHA.",
+  "completion": "Development and affected selectors pass; build/package/whitespace pass; preservation audit shows all local features retained and both parents remain ancestors.",
+  "release_gate": "If 0.10.6 is worthwhile, .github/workflows/ci.yml is the explicit six-job full prepared-suite gate before publication. Do not add a local full-suite run.",
+  "inference": "Prepared executable clients and mocked transports only; no live provider, proxy, credentials or fixture recording.",
+  "development_results": {
+    "initial": "58 passed, 0 failed, 0 skipped",
+    "source_observation_follow_up": "13 finite-execution checks passed, 0 failed/skipped; retain the compatible 47 other development outcomes",
+    "global_blocked_follow_up": "1 selector passed",
+    "affected": "59 passed, 4 failed; three obsolete review-order assertions and a merge-lost timeout wording. Preserve original log; rerun just those changed selectors."
+  },
+  "follow_up_selection": "Changed only timeout wording and obsolete review-order assertions; recheck four affected roadmap-update selectors. Add quota/capacity admission regression for the finite-attempt counter. Counter review is advisory; all stopping requires an evidenced loop, global BLOCKED or explicit finite-plan exhaustion.",
+  "results": {
+    "distinct_affected_checks": 125,
+    "failed": 0,
+    "skipped": 0,
+    "retention": "Compatible test results retained in test-results.json; full original failures preserved. Source observations add only optional data to non-batch records.",
+    "build": "passed",
+    "package": "passed; 0.10.6 packaged version/help and finite execution module included",
+    "release_decision": "Publish 0.10.6 after the explicit six-job CI gate; bounded handoffs, resumable batches and activity timing are useful, while stop decisions follow actual progress/handoff evidence."
+  },
+  "input_sha256": {
+    "src/lifecycle.ts": "d1ac1759a44aab9840e87fce715a1077f001030dae2bb0dc399c2e516d345011",
+    "lib/execution.js": "6bf75443e009075da8f371b2c61c9c51db720759b5d3705a29802995473f389b",
+    "lib/supervision.js": "ca8936880d613c56df407405298d2ca2d2c913f245d2870f307512de135f40dc",
+    "lib/recovery.js": "e075dfd2c03af5d388fb88615ae5f608ce04e9b011abac4a97ddd38639a0eb14",
+    "supervisor.md": "906f81ae30ca835e36f0ff51d7f21ef3b2e6a57700edfd2a1569027968343716"
+  }
+}

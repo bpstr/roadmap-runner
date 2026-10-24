@@ -1,11 +1,20 @@
 # Changelog
 
-## 0.10.5 — 2026-10-24
+## 0.10.6 — 2026-10-24
 
+- Compare named implementation inputs, receipts and handoffs for retry loops. Attempt counters request review; checkbox completion never establishes progress.
+- Migrate both prior supervisor checkpoint formats while preserving cross-owner evidence.
 - Bound aggregate review summaries and persist supervision cadence across restart; pending requirements and delivery notes cannot starve review.
-- Add fixed task/operation execution baselines, three-batch dependency selection, source delivery evidence, rotation and corrective replan stops.
+- Add fixed task/operation execution baselines, three-batch dependency selection, source delivery evidence, rotation and corrective reviews of actual implementation/handoff outcomes.
 - Add soft checkpoints, retained unfinished-source recovery, observed activity timing and verified process-group cleanup; preserve source snapshots and failed evidence.
 - Keep Codex token limits and the default hard timeout unchanged. Finite batches use 30–45-minute implementation budgets.
+
+## 0.10.5 — 2026-10-24
+
+- Remove checkbox-count and workspace-fingerprint stop conditions. Productive work can continue across sessions while acceptance items remain open.
+- Review repeated failed attempts at the configured supervisor interval, including during source-hash reconciliation. Require the repeated operation, failure, unchanged relevant inputs and concrete receipts before a loop stop.
+- Preserve one worker reconciliation attempt ahead of a due review after requirement edits; further hash rewrites cannot postpone review.
+- Persist recent attempt evidence and review cadence across restarts. Retire idle-budget settings while retaining quota waits, global BLOCKED, explicit recovery and queued work.
 
 ## 0.10.4 — 2026-10-23
 

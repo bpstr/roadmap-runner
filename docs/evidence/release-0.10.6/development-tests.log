@@ -1,0 +1,362 @@
+TAP version 13
+# Subtest: a verified delivery counts once and configuration must be an explicit changed source
+ok 1 - a verified delivery counts once and configuration must be an explicit changed source
+  ---
+  duration_ms: 8.361417
+  type: 'test'
+  ...
+# Roadmap requirements changed; revision f7e3a1df5fae will be reconciled by the next worker.
+# Subtest: queued implementation delivery is observed without closing original acceptance
+ok 2 - queued implementation delivery is observed without closing original acceptance
+  ---
+  duration_ms: 1108.770041
+  type: 'test'
+  ...
+# Subtest: finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+ok 3 - finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+  ---
+  duration_ms: 5.050834
+  type: 'test'
+  ...
+# Subtest: failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+ok 4 - failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+  ---
+  duration_ms: 5.276916
+  type: 'test'
+  ...
+# Subtest: checkbox edits cannot clear attempt review or establish implementation delivery
+ok 5 - checkbox edits cannot clear attempt review or establish implementation delivery
+  ---
+  duration_ms: 3.917459
+  type: 'test'
+  ...
+# Subtest: legacy replan flags request review without establishing a terminal loop
+ok 6 - legacy replan flags request review without establishing a terminal loop
+  ---
+  duration_ms: 2.750291
+  type: 'test'
+  ...
+# Subtest: CLI and managed schema carry the finite authority without changing token options
+ok 7 - CLI and managed schema carry the finite authority without changing token options
+  ---
+  duration_ms: 2.274834
+  type: 'test'
+  ...
+# Supervisor review recorded: review-Pp0mP2:20
+# Subtest: supervisor aggregate stays bounded and due status survives restart and pending requirements
+ok 8 - supervisor aggregate stays bounded and due status survives restart and pending requirements
+  ---
+  duration_ms: 413.984959
+  type: 'test'
+  ...
+# Subtest: soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+ok 9 - soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+  ---
+  duration_ms: 4008.215958
+  type: 'test'
+  ...
+# Subtest: event timing separates concurrent command time, shutdown and unattributed silence
+ok 10 - event timing separates concurrent command time, shutdown and unattributed silence
+  ---
+  duration_ms: 0.282
+  type: 'test'
+  ...
+# Subtest: repeated unchanged failed finite outcomes stop only after an evidenced loop review
+ok 11 - repeated unchanged failed finite outcomes stop only after an evidenced loop review
+  ---
+  duration_ms: 616.185708
+  type: 'test'
+  ...
+# Subtest: investigation continues seven sessions with an open acceptance item
+ok 12 - investigation continues seven sessions with an open acceptance item
+  ---
+  duration_ms: 803.890125
+  type: 'test'
+  ...
+# Subtest: repaired-input continues seven sessions with an open acceptance item
+ok 13 - repaired-input continues seven sessions with an open acceptance item
+  ---
+  duration_ms: 932.445667
+  type: 'test'
+  ...
+# Subtest: hash-only retries cannot postpone review and a confirmed repeated failure stays blocked on restart
+ok 14 - hash-only retries cannot postpone review and a confirmed repeated failure stays blocked on restart
+  ---
+  duration_ms: 966.214042
+  type: 'test'
+  ...
+# Subtest: attempt evidence and review cadence survive a failed invocation
+ok 15 - attempt evidence and review cadence survive a failed invocation
+  ---
+  duration_ms: 814.694708
+  type: 'test'
+  ...
+# Subtest: disabling supervision does not leave a checkbox or file-based stopping condition
+ok 16 - disabling supervision does not leave a checkbox or file-based stopping condition
+  ---
+  duration_ms: 722.176917
+  type: 'test'
+  ...
+# Subtest: only the current supervisor review can report stuck, excluding examples and history
+ok 17 - only the current supervisor review can report stuck, excluding examples and history
+  ---
+  duration_ms: 0.944209
+  type: 'test'
+  ...
+# Subtest: loop decisions require a current review, two observed turns and concrete evidence
+ok 18 - loop decisions require a current review, two observed turns and concrete evidence
+  ---
+  duration_ms: 0.894417
+  type: 'test'
+  ...
+# Subtest: loop-detected blocks immediately and preserves the decision on restart
+ok 19 - loop-detected blocks immediately and preserves the decision on restart
+  ---
+  duration_ms: 1141.4995
+  type: 'test'
+  ...
+# Subtest: loop-source-churn blocks immediately and preserves the decision on restart
+ok 20 - loop-source-churn blocks immediately and preserves the decision on restart
+  ---
+  duration_ms: 885.721792
+  type: 'test'
+  ...
+# Subtest: loop-periodic blocks immediately and preserves the decision on restart
+ok 21 - loop-periodic blocks immediately and preserves the decision on restart
+  ---
+  duration_ms: 893.4595
+  type: 'test'
+  ...
+# Subtest: loop-clear cannot stop productive workers
+ok 22 - loop-clear cannot stop productive workers
+  ---
+  duration_ms: 752.377917
+  type: 'test'
+  ...
+# Subtest: loop-uncertain cannot stop productive workers
+ok 23 - loop-uncertain cannot stop productive workers
+  ---
+  duration_ms: 778.767792
+  type: 'test'
+  ...
+# Subtest: loop-invalid cannot stop productive workers
+ok 24 - loop-invalid cannot stop productive workers
+  ---
+  duration_ms: 811.84675
+  type: 'test'
+  ...
+# Subtest: loop-stale cannot stop productive workers
+ok 25 - loop-stale cannot stop productive workers
+  ---
+  duration_ms: 907.958458
+  type: 'test'
+  ...
+# Subtest: supervision defaults to five; supports CLI/env overrides and disable
+ok 26 - supervision defaults to five; supports CLI/env overrides and disable
+  ---
+  duration_ms: 0.564792
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "-1"
+ok 27 - reject invalid supervisor interval "-1"
+  ---
+  duration_ms: 0.22025
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "21"
+ok 28 - reject invalid supervisor interval "21"
+  ---
+  duration_ms: 0.0695
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "1.5"
+ok 29 - reject invalid supervisor interval "1.5"
+  ---
+  duration_ms: 0.03275
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "NaN"
+ok 30 - reject invalid supervisor interval "NaN"
+  ---
+  duration_ms: 0.036917
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval ""
+ok 31 - reject invalid supervisor interval ""
+  ---
+  duration_ms: 0.028458
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "05"
+ok 32 - reject invalid supervisor interval "05"
+  ---
+  duration_ms: 0.029208
+  type: 'test'
+  ...
+# Subtest: reject invalid supervisor interval "--model"
+ok 33 - reject invalid supervisor interval "--model"
+  ---
+  duration_ms: 0.027333
+  type: 'test'
+  ...
+# Subtest: supervisor option validation rejects missing values and excessive timeouts
+ok 34 - supervisor option validation rejects missing values and excessive timeouts
+  ---
+  duration_ms: 0.143375
+  type: 'test'
+  ...
+# Subtest: bounded capture retains exact short output and capped head/tail with omission count
+ok 35 - bounded capture retains exact short output and capped head/tail with omission count
+  ---
+  duration_ms: 0.223417
+  type: 'test'
+  ...
+# raw stdout
+# Subtest: codex capture includes stdout and final stderr without a newline
+ok 36 - codex capture includes stdout and final stderr without a newline
+  ---
+  duration_ms: 521.122209
+  type: 'test'
+  ...
+# raw stdout
+# Subtest: claude capture includes stdout and final stderr without a newline
+ok 37 - claude capture includes stdout and final stderr without a newline
+  ---
+  duration_ms: 364.584458
+  type: 'test'
+  ...
+# Subtest: reviews after workers 5 and 10; preserved=true
+ok 38 - reviews after workers 5 and 10; preserved=true
+  ---
+  duration_ms: 1304.07175
+  type: 'test'
+  ...
+# Subtest: completion on worker 3 skips a pending/future review
+ok 39 - completion on worker 3 skips a pending/future review
+  ---
+  duration_ms: 764.45475
+  type: 'test'
+  ...
+# Subtest: completion on worker 5 skips a pending/future review
+ok 40 - completion on worker 5 skips a pending/future review
+  ---
+  duration_ms: 845.04675
+  type: 'test'
+  ...
+# Subtest: custom cadence and disabled supervision
+ok 41 - custom cadence and disabled supervision
+  ---
+  duration_ms: 2131.363667
+  type: 'test'
+  ...
+# Subtest: open tasks and unchanged files continue until the scheduled review
+ok 42 - open tasks and unchanged files continue until the scheduled review
+  ---
+  duration_ms: 1036.297208
+  type: 'test'
+  ...
+# Subtest: legacy idle limits do not stop long productive runs
+ok 43 - legacy idle limits do not stop long productive runs
+  ---
+  duration_ms: 874.232209
+  type: 'test'
+  ...
+# Subtest: worker capacity retries are excluded from cadence and counted in review context
+ok 44 - worker capacity retries are excluded from cadence and counted in review context
+  ---
+  duration_ms: 2170.35425
+  type: 'test'
+  ...
+# Subtest: timed-out workers count toward review cadence
+ok 45 - timed-out workers count toward review cadence
+  ---
+  duration_ms: 3412.969333
+  type: 'test'
+  ...
+# Subtest: text adapter participates in the same supervisor loop
+ok 46 - text adapter participates in the same supervisor loop
+  ---
+  duration_ms: 735.946958
+  type: 'test'
+  ...
+# Subtest: supervisor capacity retries the review, not a worker
+ok 47 - supervisor capacity retries the review, not a worker
+  ---
+  duration_ms: 1830.559125
+  type: 'test'
+  ...
+# Subtest: supervisor-failure does not launch a sixth worker
+ok 48 - supervisor-failure does not launch a sixth worker
+  ---
+  duration_ms: 788.568291
+  type: 'test'
+  ...
+# Subtest: false-complete does not launch a sixth worker
+ok 49 - false-complete does not launch a sixth worker
+  ---
+  duration_ms: 730.302791
+  type: 'test'
+  ...
+# Subtest: missing-report preserves review evidence and continues delivery
+ok 50 - missing-report preserves review evidence and continues delivery
+  ---
+  duration_ms: 696.996959
+  type: 'test'
+  ...
+# Subtest: supervisor-timeout preserves review evidence and continues delivery
+ok 51 - supervisor-timeout preserves review evidence and continues delivery
+  ---
+  duration_ms: 1710.962458
+  type: 'test'
+  ...
+# Subtest: supervisor-usage preserves review evidence and continues delivery
+ok 52 - supervisor-usage preserves review evidence and continues delivery
+  ---
+  duration_ms: 1989.412625
+  type: 'test'
+  ...
+# Subtest: a supervisor global blocker stops before another worker
+ok 53 - a supervisor global blocker stops before another worker
+  ---
+  duration_ms: 998.0935
+  type: 'test'
+  ...
+# Subtest: controller edit during a supervisor review continues with a fresh worker
+ok 54 - controller edit during a supervisor review continues with a fresh worker
+  ---
+  duration_ms: 1213.230167
+  type: 'test'
+  ...
+# Subtest: ordinary worker failures remain terminal
+ok 55 - ordinary worker failures remain terminal
+  ---
+  duration_ms: 1188.09325
+  type: 'test'
+  ...
+# Subtest: SIGINT during supervisor exits 130 without another worker
+ok 56 - SIGINT during supervisor exits 130 without another worker
+  ---
+  duration_ms: 862.321
+  type: 'test'
+  ...
+# Subtest: rolling evidence stays bounded across many verbose runs
+ok 57 - rolling evidence stays bounded across many verbose runs
+  ---
+  duration_ms: 29.16225
+  type: 'test'
+  ...
+# Subtest: supervisor prompt binds evidence, scope, read-only source and next-run expectation
+ok 58 - supervisor prompt binds evidence, scope, read-only source and next-run expectation
+  ---
+  duration_ms: 0.239667
+  type: 'test'
+  ...
+1..58
+# tests 58
+# suites 0
+# pass 58
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 42962.56575
