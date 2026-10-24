@@ -1,11 +1,13 @@
 import fs from "node:fs";
 import { Notifications } from "./notifications.js";
 import { SleepInhibitor } from "./sleep-inhibitor.js";
+import { registryRoot } from "./run-state.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { Recovery, recoverySettings, checklistProgress } from "../lib/recovery.js";
+import { workspaceFingerprint } from "../lib/workspace-progress.js";
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt, TARGET_TRACKING_BYTES } from "../lib/tracking.js";
 import { sessionMetrics } from "../lib/telemetry.js";
@@ -81,6 +83,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     onEvent = event => notifications.enqueue(event);
   }
   recovery = new Recovery({ tracking, roadmap, settings: options.recovery, wait: ms => waitForRetry(ms, signal), signal, onEvent, runId: options.runId });
+  const workspaceExclusions = [roadmap, tracking.file, tracking.stateDir, recovery.stateFile,
+    `${tracking.file}.notifications.json`, registryRoot()];
   await recovery.event("runner.started");
   if (!managedSleep) { sleep = new SleepInhibitor(options.preventSleep); await sleep.start(); }
   await onReady?.(tracking);
@@ -185,6 +189,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
       : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const before = tracking.contextBytes(iterationPrompt);
+    const workspaceBefore = compacting ? null : workspaceFingerprint(workdir, workspaceExclusions);
     await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, contextBytes: before });
     const result = await runClient({
       signal,
@@ -212,6 +217,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const sourceHasTasks = checklistProgress(sourceContents).total || checklistProgress(afterSource).total;
     const beforeProgress = sourceHasTasks ? sourceContents : contents;
     const afterProgress = sourceHasTasks ? afterSource : after;
+    const workspace = compacting ? {} : {
+      before: workspaceBefore, after: workspaceFingerprint(workdir, workspaceExclusions),
+    };
     tracking.archive({ kind: role, iteration, metadata: {
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
@@ -234,7 +242,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       await recovery.event("runner.turn_limit_reached", { role, iteration });
       if (compacting) fail(`handoff compaction timed out; original state preserved at ${snapshot}`);
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
-      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged, workspace);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
       console.log();
       continue;
@@ -281,7 +289,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const afterStatus = tracking.deliveryStatus(roadmapStatus(after));
     if (afterStatus !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, afterStatus, iteration);
     if ((afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
-      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged, workspace);
     }
     console.log(`Iteration ${iteration} completed.`);
     console.log();

@@ -137,12 +137,18 @@ Assign MCP search (which did not contain these script resources):
 
 No Assign data was modified. No live model or notification was dispatched during validation.
 
-Stagnation stops after three workers without completed checklist progress (configurable
+Stagnation stops after three workers without substantive progress (configurable
 with `ROADMAP_MAX_IDLE_WORKERS`). A terminal `runner.stuck` event has `terminal: true`,
 `reason: "no_progress_limit"`, `unchangedWorkers` and `maxIdleWorkers`, followed by
 `runner.failed` with the same reason and code 75. No further workers are scheduled.
 An unchanged restart repeats the terminal result without launching another session.
 A controller requirement amendment or one explicit `recoverBlocked` attempt permits recovery.
+
+Novel worker implementation content in a Git workspace also resets stagnation,
+without requiring a closed acceptance checkbox. The runner emits
+`runner.progress_observed` with `kind: "workspace"` and the content `fingerprint`.
+The last 256 observed states persist across restarts; repeated states, handoff
+prose, receipts, build output and timestamps do not count as implementation progress.
 
 Global `BLOCKED` emits a terminal `runner.blocked` event and exits 75 with reason
 `blocked`; it does not emit `runner.failed`. Managed state and queue items retain

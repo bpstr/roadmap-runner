@@ -171,7 +171,7 @@ for (const mode of ['loop-clear', 'loop-uncertain', 'loop-invalid', 'loop-stale'
     const result = run(f);
     assert.equal(result.status, 75, result.stderr);
     assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
-    assert.match(result.stderr, /No completed checklist progress for 3 workers/);
+    assert.match(result.stderr, /No substantive progress for 3 workers/);
   });
 }
 
@@ -283,7 +283,7 @@ test('the default idle budget stops no-op workers before a later supervisor chec
   const result = run(f);
   assert.equal(result.status, 75, result.stderr);
   assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
-  assert.match(result.stderr, /No completed checklist progress for 3 workers/);
+  assert.match(result.stderr, /No substantive progress for 3 workers/);
 });
 
 test('worker capacity retries are excluded from cadence and counted in review context', (t) => {

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix #7: keep productive workers running while acceptance checkboxes remain open. Observe worker implementation content in Git workspaces and persist recent fingerprints, while retaining stops for repeated states, handoff/evidence churn and unchanged exhausted restarts.
+
 ## 0.10.4 — 2026-10-23
 
 - Add a small supervisor LLM loop check after two idle workers. Compare bounded prior progress, source snapshots and worker outcomes; block immediately on a current, evidenced loop verdict. Keep the deterministic stop budget, pending queues and blocked state across unchanged restarts. Cap the extra check at 60 seconds and one per stagnation episode; supervision-off still disables model reviews.

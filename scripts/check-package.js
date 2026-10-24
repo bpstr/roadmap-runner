@@ -15,6 +15,7 @@ try {
   assert.equal(packed.name, manifest.name);
   assert.equal(packed.version, manifest.version);
   const files = packed.files.map(file => file.path);
+  assert.ok(files.includes('lib/workspace-progress.js'), 'Implementation progress observer must be packaged');
   for (const required of ['bin/roadmap-runner.js', 'dist/doctor.js', 'dist/setup.js', 'dist/mcp.js', 'dist/worker.js', 'dist/sleep-inhibitor.js', 'dist/notification-permission.js', 'lib/runner.js', 'lib/telemetry.js', 'prompt.md', 'compact.md', 'supervisor.md', 'README.md', 'LICENSE', 'docs/agent-integration.md', 'skills/write-runner-roadmap/SKILL.md', 'skills/write-runner-roadmap/references/task-contract.md', 'skills/write-runner-roadmap/references/roadmap-splitting.md', 'skills/write-runner-roadmap/templates/roadmap.md']) {
     assert.ok(files.includes(required), `Missing packaged file: ${required}`);
   }

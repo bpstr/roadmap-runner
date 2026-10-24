@@ -39,11 +39,17 @@ occur. Ordinary fatal failures and user cancellation still stop execution.
 COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
 `blocked`, without another worker or supervisor; use it only when no authorized
 work remains ready. Independent work continues under IN_PROGRESS with task-local
-deferrals. Three workers without checklist progress also stop with exit 75 and
+deferrals. Three workers without substantive progress also stop with exit 75 and
 `no_progress_limit`. Progress is a new high-water count of closed live-roadmap
-tasks. Unchanged notes, mirrored handoff checkboxes, and source rewrites during
-workers or supervisors do not reset that budget. A controller acceptance amendment
-adopted between sessions grants one bounded reconciliation budget.
+tasks or a novel implementation content state produced during a worker in a Git
+workspace. Source/test/configuration/dependency fingerprints retain the last 256
+observed states across restarts; repeated states, timestamp changes, logs,
+receipts, documentation and generated build output earn no credit. Productive
+implementation may continue while the original acceptance checkbox stays open.
+Unavailable observations earn no credit, and content novelty does not establish
+correctness. Unchanged notes, mirrored handoff checkboxes, and source-summary
+rewrites during workers or supervisors do not reset that budget. A controller
+acceptance amendment adopted between sessions grants one bounded reconciliation budget.
 After two idle workers, enabled supervision performs one small loop check for that
 stagnation episode, even when source reconciliation is pending. It compares bounded
 source/progress snapshots and worker outcomes, with a timeout capped at 60 seconds.

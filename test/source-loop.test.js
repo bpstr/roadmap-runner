@@ -41,7 +41,22 @@ if (n > 8) process.exit(99); // A failing regression must remain bounded too.
 let text = fs.readFileSync(source, 'utf8');
 const snapshot = JSON.parse(prompt.match(/^Source roadmap snapshot: (.+)$/m)[1]);
 const sha = crypto.createHash('sha256').update(fs.readFileSync(snapshot)).digest('hex');
-if (mode === 'productive') {
+if (mode.startsWith('workspace-')) {
+  if (mode === 'workspace-productive' || mode === 'workspace-toggle') {
+    fs.writeFileSync('feature.js', 'module.exports = ' + (mode === 'workspace-toggle' ? n % 2 : n) + ';\\n');
+  } else if (mode === 'workspace-timestamps') {
+    fs.utimesSync('feature.js', new Date(), new Date());
+  } else {
+    fs.mkdirSync('evidence', { recursive: true });
+    fs.writeFileSync('evidence/result.json', JSON.stringify({ passed: n, timestamp: Date.now() }));
+    fs.writeFileSync('evidence/generated.js', 'module.exports = ' + n);
+    fs.writeFileSync('notes.md', 'Inspection ' + n);
+  }
+  if (mode === 'workspace-productive' && n === 5) {
+    fs.writeFileSync(source, text.replaceAll('- [ ]', '- [x]'));
+    fs.writeFileSync(progress, '# Delivery\\nStatus: COMPLETE\\n');
+  }
+} else if (mode === 'productive') {
   text = text.replace('- [ ]', '- [x]');
   fs.writeFileSync(source, text);
   fs.writeFileSync(progress, '# Delivery\\nStatus: ' + (n === 5 ? 'COMPLETE' : 'IN_PROGRESS') + '\\n');
@@ -64,6 +79,11 @@ if (mode === 'productive') {
 }
 `);
   fs.chmodSync(client, 0o755);
+  if (mode.startsWith('workspace-')) {
+    fs.writeFileSync(path.join(dir, 'feature.js'), 'module.exports = 0;\n');
+    assert.equal(spawnSync('git', ['init', '-q'], { cwd: dir }).status, 0);
+    assert.equal(spawnSync('git', ['add', '.'], { cwd: dir }).status, 0);
+  }
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('ROADMAP_')));
   Object.assign(env, { ROADMAP_STATE_DIR: path.join(dir, 'registry'), ROADMAP_NOTIFY: 'off',
     ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1', ROADMAP_MAX_IDLE_WORKERS: String(limit) });
@@ -96,13 +116,35 @@ for (const mode of ['complete-churn', 'open-churn', 'blocked-churn', 'timeout-ch
   });
 }
 
-test('only task completion in the live roadmap renews the budget', t => {
+test('task completion in the live roadmap renews the budget', t => {
   const f = fixture(t, 'productive', { limit: 1 });
   const result = spawnSync(process.execPath, f.args, f.options);
   assert.equal(result.status, 0, result.stderr);
   assert.equal(f.count(), 5);
   assert.equal(f.events().at(-1).type, 'runner.completed');
 });
+
+test('productive implementation continues for five workers without early checkbox closure', t => {
+  const f = fixture(t, 'workspace-productive', { limit: 1 });
+  const result = spawnSync(process.execPath, f.args, f.options);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(f.count(), 5);
+  assert.equal(f.events().filter(e => e.type === 'runner.progress_observed').length, 4);
+  assert.equal(f.events().at(-1).type, 'runner.completed');
+});
+
+for (const mode of ['workspace-toggle', 'workspace-evidence', 'workspace-timestamps']) {
+  test(`${mode} stops repeated states or evidence churn and remains stopped after restart`, t => {
+    const f = fixture(t, mode);
+    const result = spawnSync(process.execPath, f.args, f.options);
+    assert.equal(result.status, 75, result.stderr);
+    const count = mode === 'workspace-toggle' ? 4 : 3;
+    assert.equal(f.count(), count);
+    const again = spawnSync(process.execPath, f.args, f.options);
+    assert.equal(again.status, 75, again.stderr);
+    assert.equal(f.count(), count);
+  });
+}
 
 test('an exhausted budget permits one explicit recovery worker and then stays stopped', t => {
   const f = fixture(t, 'open-churn', { limit: 1 });

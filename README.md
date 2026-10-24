@@ -808,7 +808,7 @@ Its final `runner.blocked` event has `terminal: true`, and managed status retain
 
 A current supervisor review with `Health: STUCK` triggers an attention alert.
 The runner stops with exit **75** and reason `no_progress_limit` after **three
-consecutive workers without completed checklist progress**, preserving progress,
+consecutive workers without substantive progress**, preserving progress,
 receipts, archives and unfinished queued roadmaps. It emits a terminal
 `runner.stuck` event followed by `runner.failed`, so this stop is visible in CLI,
 managed status and MCP even when desktop notifications are disabled. Resolve the
@@ -827,19 +827,26 @@ requirement amendment or explicit `--recover-blocked` permits recovery after rep
 `CLEAR`, `UNCERTAIN`, missing or invalid reports never renew the deterministic
 budget. `--supervisor-every 0` disables LLM reviews while keeping the hard stop.
 
-Progress means increasing the number of completed tasks in the authoritative
-live roadmap, above the persisted high-water mark. Stable task IDs (or full labels
-when no ID exists) identify distinct tasks. For a source without checkboxes, the
-progress checklist supplies this measure. Reopening and rechecking the same tasks,
-mirrored handoff checkboxes, changed notes, and new unchecked tasks do not reset
-the budget. Fenced examples are ignored. A controller requirement amendment adopted
-between sessions grants one fresh budget. Checkbox/status edits and source rewrites
-during workers or supervisors, including hash-bearing delivery summaries, cannot
-continually renew it. Delivery summaries belong in progress, outside the source.
-This is a checklist-based
-orchestration guard, not independent validation that claimed implementation is
-correct. Workers should record validated implementation units as completed
-children rather than stretching one unchecked unit across many sessions.
+Progress includes either a new high-water count of completed tasks in the
+authoritative live roadmap or a novel implementation content state produced by a
+worker in a Git workspace. A large acceptance unit can stay unchecked across
+productive sessions. The runner fingerprints source, tests, configuration and
+dependency inputs before and after each worker, including staged, unstaged and
+non-ignored untracked files. It retains the last 256 observed states across
+restarts so returning to an earlier state does not renew the budget. Hashes are
+content based; staging and timestamps do not count. Documentation, handoff/source
+summaries, logs, generated build directories, evidence and receipts are excluded.
+Unavailable workspace observations grant no implementation credit. Other artifact
+types and non-Git workspaces still use checklist progress and supervisor review.
+
+Stable task IDs (or full labels when no ID exists) identify checklist tasks. For a
+source without checkboxes, the progress checklist supplies this measure. Reopening
+and rechecking tasks, mirrored handoff checkboxes, new unchecked tasks and fenced
+examples cannot renew the budget. A controller requirement amendment adopted
+between sessions grants one fresh budget. Supervisor and compactor edits do not
+earn implementation credit. This is an orchestration heuristic, not independent
+validation that changed code is correct; periodic evidence-based loop review and
+all original acceptance gates remain in force.
 
 The counter persists across process restarts. An explicit restart permits a fresh
 worker to verify changed external inputs; another no-progress result still uses
@@ -847,8 +854,7 @@ the retained counter. `ROADMAP_MAX_IDLE_WORKERS` adjusts the limit (1–100; def
 3). After two idle workers, an attention alert and bounded backoff precede the
 remaining attempt. `ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY`
 control that delay in seconds (defaults 60 and 900; range 1–3600). Prose-only
-handoffs also consume the budget; initialize a checklist and record validated
-units rather than relying on narrative changes as progress.
+handoff changes without implementation or checklist progress consume the budget.
 
 Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
 to an executable's absolute path to receive each event's JSON on stdin. It is
