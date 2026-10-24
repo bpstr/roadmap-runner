@@ -41,8 +41,21 @@
       "check": "Package and CLI",
       "result": "passed: version 0.10.8, 65 files; no inference",
       "log": "package.log"
+    },
+    {
+      "check": "Worker and supervisor prompt contract",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "prompt-test.log"
     }
   ],
   "follow_up": "Added one completed-handoff regression after the initial pass. Only its selector ran; fixture default behavior is unchanged, so the 53 earlier passing checks are retained.",
-  "npm_registry": "Saved npm authentication returns HTTP 401 from npm whoami; credentials preserved. No registry publication claimed. Prepare an installable tarball for GitHub release."
+  "npm_registry": "Saved npm authentication returns HTTP 401 from npm whoami; credentials preserved. No registry publication claimed. Prepare an installable tarball for GitHub release.",
+  "ci_follow_up": {
+    "initial_run": 40114815280,
+    "observed": "Node 22 Ubuntu job reported failure; prompt contract still asserted the previous 16 KiB wording. Updated that assertion and added both-role limit/compression guidance checks.",
+    "local_rerun": "Only the changed supervisor prompt test; the 54 prior behavior checks remain valid.",
+    "release_rerun_reason": "The initial release gate cannot pass its obsolete prompt assertion. The corrected prompt contract must pass the existing six-job release gate; no local full-suite rerun."
+  }
 }

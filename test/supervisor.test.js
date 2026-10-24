@@ -422,7 +422,11 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(worker, /current supervisor correction/);
   assert.match(worker, /batch determines this invocation's\s+scope/);
   assert.match(worker, /canonical\s+fixtures/);
-  assert.match(worker, /targeting less than 16 KiB/);
+  for (const text of [worker, prompt]) {
+    assert.match(text, /below 32 KiB \(32768 UTF-8 bytes/);
+    assert.match(text, /size alone is not a reason\s+to set BLOCKED/);
+    assert.match(text, /256 KiB \(262144 bytes\), inclusive/);
+  }
   assert.match(worker, /overrides conflicting handoff prose/);
   assert.match(worker, /During development-before-qualification/);
   assert.match(worker, /rerun only invalidated\/failed coverage/);
