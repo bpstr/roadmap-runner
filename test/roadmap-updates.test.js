@@ -140,7 +140,7 @@ const source = ${JSON.stringify(f.roadmap)};
 const progress = ${JSON.stringify(f.progress)};
 const revised = ${JSON.stringify(revised)};
 const mode = ${JSON.stringify(mode)};
-const role = prompt.includes('Runner role: SUPERVISOR') ? 'S' : 'W';
+const role = prompt.includes('Runner role: RESOLVER') ? 'R' : 'W';
 const n = fs.existsSync(role) ? Number(fs.readFileSync(role)) + 1 : 1;
 fs.writeFileSync(role, String(n));
 if (n > 8) process.exit(99);
@@ -159,17 +159,15 @@ const capacity = () => {
   console.log(JSON.stringify({type:'error', message:'Selected model is at capacity'}));
   process.exitCode = 1;
 };
-if (role === 'S') {
-  const evidence = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
-  fs.writeFileSync('review-directory', require('node:path').dirname(evidence));
-  if (mode.startsWith('supervisor-')) {
-    publish();
-    fs.writeFileSync(progress, '# State\\nStatus: COMPLETE\\n\\n## Evidence\\nPrior proof.\\n');
-    if (mode === 'supervisor-capacity-edit') capacity();
-    // No Review ID: this obsolete review must not prevent reconciliation.
-  } else {
-    fs.writeFileSync(progress, '# State\\nStatus: IN_PROGRESS\\n\\nPrior proof.\\n## Latest supervisor review\\nReview ID: '+prompt.match(/^Review ID: (.+)$/m)[1]+'\\nHealth: HEALTHY\\n');
-  }
+if (role === 'R') {
+  if (mode.startsWith('resolver-')) publish();
+  if (mode === 'resolver-capacity-edit' && n === 1) { capacity(); return; }
+  const stopped = mode === 'failure-edit';
+  fs.writeFileSync(progress, '# State\\nStatus: ' + (stopped ? 'STOPPED' : 'IN_PROGRESS') + '\\n\\n## Evidence\\nPrior proof.\\n');
+  fs.writeFileSync(JSON.parse(prompt.match(/^Resolution decision file: (.+)$/m)[1]), JSON.stringify({
+    resolutionId: prompt.match(/^Resolution ID: (.+)$/m)[1], outcome: stopped ? 'stopped' : 'resolved',
+    evidence: stopped ? 'Prepared fatal client failure remains unresolved' : 'Corrected roadmap and retained proof',
+    nextAction: stopped ? 'Repair client access' : 'Reconcile corrected requirements' }));
 } else if (n === 1 && ['worker-edit', 'capacity-edit', 'failure-edit', 'timeout-edit'].includes(mode)) {
   publish();
   fs.writeFileSync(progress, '# State\\nStatus: ${staleStatus}\\n\\n## Evidence\\nPrior proof.\\n');
@@ -179,8 +177,8 @@ if (role === 'S') {
     process.on('SIGTERM', () => process.exit(0));
     setInterval(() => {}, 1000);
   }
-} else if (n === 1 && mode.startsWith('supervisor-')) {
-  fs.appendFileSync(progress, '\\nPrior proof.\\n');
+} else if (n === 1 && mode.startsWith('resolver-')) {
+  fs.writeFileSync(progress, 'Status: BLOCKED\\n## Evidence\\nPrior proof.\\n');
 } else if (n === 1 && mode === 'capacity-wait') {
   capacity();
 } else {
@@ -218,7 +216,7 @@ for (const staleStatus of ["COMPLETE", "BLOCKED", "IN_PROGRESS"]) {
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
     const seen = observations(f);
-    assert.deepEqual(seen.map(x => x.role), ["W", "W"]);
+    assert.deepEqual(seen.map(x => x.role), staleStatus === "BLOCKED" ? ["W", "R", "W"] : ["W", "W"]);
     assert.equal(seen[0].text, original);
     assert.equal(seen[1].text, revised);
     assert.equal(seen[1].pending, true);
@@ -236,8 +234,8 @@ for (const staleStatus of ["COMPLETE", "BLOCKED"]) {
     publish(f.roadmap, revised);
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(observations(f).length, 1);
-    assert.equal(observations(f)[0].pending, true);
+    assert.deepEqual(observations(f).map(x => x.role), staleStatus === "BLOCKED" ? ["R", "W"] : ["W"]);
+    assert.equal(observations(f).at(-1).pending, true);
     assert.match(fs.readFileSync(f.progress, "utf8"), /Prior proof/);
   });
 }
@@ -254,16 +252,16 @@ for (const mode of ["capacity-edit", "timeout-edit"]) {
   });
 }
 
-for (const mode of ["supervisor-edit", "supervisor-capacity-edit"]) {
-  test(`${mode} defers obsolete review results to a new worker`, (t) => {
+for (const mode of ["resolver-edit", "resolver-capacity-edit"]) {
+  test(`${mode} resumes a worker against corrected requirements`, (t) => {
     const f = fixture(t, { mode, every: 1 });
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
     const seen = observations(f);
-    assert.deepEqual(seen.map(x => x.role), ["W", "S", "W"]);
+    assert.deepEqual(seen.map(x => x.role), mode === "resolver-capacity-edit" ? ["W", "R", "R", "W"] : ["W", "R", "W"]);
     assert.equal(seen[1].text, original);
-    assert.equal(seen[2].text, revised);
-    assert.equal(seen[2].pending, true);
+    assert.equal(seen.at(-1).text, revised);
+    assert.equal(seen.at(-1).pending, true);
   });
 }
 
@@ -288,11 +286,11 @@ test("real external controller edit during capacity backoff is adopted by the ne
   assert.equal(observations(f)[1].text, revised);
 });
 
-test("source changes do not swallow an independent fatal client failure", (t) => {
+test("source changes preserve a fatal client failure through resolver STOPPED", (t) => {
   const f = fixture(t, { mode: "failure-edit" });
   const result = run(f);
-  assert.equal(result.status, 7);
-  assert.equal(observations(f).length, 1);
+  assert.equal(result.status, 75);
+  assert.deepEqual(observations(f).map(x => x.role), ["W", "R"]);
   assert.equal(prepareTracking(f.roadmap, f.progress, f.dir).needsReconciliation, true);
   assert.equal(fs.readFileSync(f.roadmap, "utf8"), revised);
 });

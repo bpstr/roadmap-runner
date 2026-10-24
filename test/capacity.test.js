@@ -70,11 +70,11 @@ test('persistent capacity errors exhaust finite exponential retries', (t) => {
 });
 
 for (const mode of ['ordinary', 'mixed']) {
-  test(`${mode} failure does not retry`, (t) => {
+  test(`${mode} failure dispatches a resolver without capacity retries`, (t) => {
     const f = fixture(t, mode);
     const result = spawnSync(process.execPath, f.args, f.options);
-    assert.equal(result.status, 1, result.stderr);
-    assert.equal(fs.readFileSync(path.join(f.temp, 'count'), 'utf8'), '1');
+    assert.equal(result.status, 75, result.stderr);
+    assert.equal(fs.readFileSync(path.join(f.temp, 'count'), 'utf8'), '2');
     assert.doesNotMatch(result.stdout, /retry/);
   });
 }

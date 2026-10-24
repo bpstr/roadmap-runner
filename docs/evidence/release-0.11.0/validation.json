@@ -73,5 +73,19 @@
   "disk": {
     "free_gib_at_check": 38.4,
     "session_artifacts": "Build output 192 KiB; local logs and release evidence under 1 MiB. No large disposable artifacts created; no broad cleanup performed."
+  },
+  "release_ci": {
+    "initial_run": "https://github.com/bpstr/roadmap-runner/actions/runs/40119296090",
+    "initial_commit": "f0d2586138512fc3cd4dc75f8f45c62ff79f1ea2",
+    "initial_result": "Six matrix jobs failed on seven retired supervisor/immediate-exit expectations; representative Linux and macOS logs retained",
+    "repair": "Prepared capacity and roadmap-update fixtures now expect resolver dispatch, fresh decisions, corrected requirements and STOPPED on unresolved failures. Runtime and packaged files unchanged.",
+    "affected_selectors": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "log": "release-repaired-selectors.log"
+    },
+    "widening_reason": "Repeat the existing release CI gate from .github/workflows/ci.yml: prepared full suite and package checks on Node 20/22/24 across Linux/macOS. The previous release used this six-job gate; local passing checks are retained and not rerun.",
+    "status": "pending release CI after fixture corrections"
   }
 }
