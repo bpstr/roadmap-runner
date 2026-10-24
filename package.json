@@ -1,6 +1,6 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.10.8",
+  "version": "0.11.0",
   "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {
@@ -43,8 +43,8 @@
     "lib",
     "prompt.md",
     "compact.md",
-    "supervisor.md",
-    "SUPERVISION.md",
+    "resolver.md",
+    "RECOVERY.md",
     "README.md",
     "LICENSE",
     "examples",

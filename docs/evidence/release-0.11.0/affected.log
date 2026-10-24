@@ -1,0 +1,1633 @@
+TAP version 13
+# Subtest: managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+ok 1 - managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+  ---
+  duration_ms: 843.227833
+  type: 'test'
+  ...
+# Subtest: simultaneous requests cannot create competing managed workers
+ok 2 - simultaneous requests cannot create competing managed workers
+  ---
+  duration_ms: 141.361875
+  type: 'test'
+  ...
+# Subtest: progress aliases and symlink escapes cannot bypass managed path boundaries
+ok 3 - progress aliases and symlink escapes cannot bypass managed path boundaries
+  ---
+  duration_ms: 2.550917
+  type: 'test'
+  ...
+# Subtest: stale reused PID becomes unknown without signaling or releasing a live identity reservation
+ok 4 - stale reused PID becomes unknown without signaling or releasing a live identity reservation
+  ---
+  duration_ms: 168.206709
+  type: 'test'
+  ...
+# Subtest: control rejects unauthenticated ownership and nested worker management
+ok 5 - control rejects unauthenticated ownership and nested worker management
+  ---
+  duration_ms: 142.693417
+  type: 'test'
+  ...
+# Subtest: managed quota wait can stop promptly and preserves its recovery checkpoint
+ok 6 - managed quota wait can stop promptly and preserves its recovery checkpoint
+  ---
+  duration_ms: 453.420709
+  type: 'test'
+  ...
+# Subtest: bounded output and journal retention report truncation, expiry and malformed/partial records
+ok 7 - bounded output and journal retention report truncation, expiry and malformed/partial records
+  ---
+  duration_ms: 113.625583
+  type: 'test'
+  ...
+# Subtest: notification filters and persistent deduplication omit model content and macOS click actions
+ok 8 - notification filters and persistent deduplication omit model content and macOS click actions
+  ---
+  duration_ms: 48.088166
+  type: 'test'
+  ...
+# Desktop notifications: delivery_timeout; inspect status/progress for attention.
+# Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+# Desktop notifications: backend_unavailable; inspect status/progress for attention.
+# Subtest: notification timeout, missing backend and headless Linux are best effort and recorded
+ok 9 - notification timeout, missing backend and headless Linux are best effort and recorded
+  ---
+  duration_ms: 53.025709
+  type: 'test'
+  ...
+# Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+# Subtest: desktop attention defaults on and explicit off suppresses selected events
+ok 10 - desktop attention defaults on and explicit off suppresses selected events
+  ---
+  duration_ms: 28.53975
+  type: 'test'
+  ...
+# Subtest: failed notification submission can retry after the backend is repaired
+ok 11 - failed notification submission can retry after the backend is repaired
+  ---
+  duration_ms: 42.967666
+  type: 'test'
+  ...
+# Subtest: desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends
+ok 12 - desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends
+  ---
+  duration_ms: 1.294834
+  type: 'test'
+  ...
+# Subtest: macOS permission denial is actionable and does not suppress a repaired submission
+ok 13 - macOS permission denial is actionable and does not suppress a repaired submission
+  ---
+  duration_ms: 31.969125
+  type: 'test'
+  ...
+# Subtest: legacy failed fingerprints do not suppress notifications after an upgrade
+ok 14 - legacy failed fingerprints do not suppress notifications after an upgrade
+  ---
+  duration_ms: 28.02975
+  type: 'test'
+  ...
+# Subtest: setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation
+ok 15 - setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation
+  ---
+  duration_ms: 56.304709
+  type: 'test'
+  ...
+# Subtest: prepared legacy MCP tools, restrictions, resources and subscriptions
+ok 16 - prepared legacy MCP tools, restrictions, resources and subscriptions
+  ---
+  duration_ms: 1271.42075
+  type: 'test'
+  ...
+# Subtest: prepared modern MCP tools, restrictions, resources and subscriptions
+ok 17 - prepared modern MCP tools, restrictions, resources and subscriptions
+  ---
+  duration_ms: 1211.005583
+  type: 'test'
+  ...
+# Subtest: prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off
+not ok 18 - prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off
+  ---
+  duration_ms: 10504.308
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:248:37'
+  failureType: 'testCodeFailure'
+  error: 'Fixture deadline exceeded'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+    async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:281:3)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off
+not ok 19 - prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off
+  ---
+  duration_ms: 10542.121041
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:248:37'
+  failureType: 'testCodeFailure'
+  error: 'Fixture deadline exceeded'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    wait (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:21:9)
+    async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/agent-integration.test.js:281:3)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies
+ok 20 - roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies
+  ---
+  duration_ms: 17.415875
+  type: 'test'
+  ...
+# Subtest: managed stop finishes only after an ignoring descendant is terminated
+ok 21 - managed stop finishes only after an ignoring descendant is terminated
+  ---
+  duration_ms: 3854.167375
+  type: 'test'
+  ...
+# Subtest: setup connectivity checks only initialize/list MCP and never launch a provider
+ok 22 - setup connectivity checks only initialize/list MCP and never launch a provider
+  ---
+  duration_ms: 272.110583
+  type: 'test'
+  ...
+# Subtest: qualified local skills installer is staged and checked before publishing the skill
+ok 23 - qualified local skills installer is staged and checked before publishing the skill
+  ---
+  duration_ms: 7.31275
+  type: 'test'
+  ...
+# Subtest: benign SKIPPED dependency flags do not trigger desktop attention
+ok 24 - benign SKIPPED dependency flags do not trigger desktop attention
+  ---
+  duration_ms: 3.433
+  type: 'test'
+  ...
+# Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+# Subtest: Linux delivery uses notify-send, and off suppresses explicitly selected events
+ok 25 - Linux delivery uses notify-send, and off suppresses explicitly selected events
+  ---
+  duration_ms: 12.907584
+  type: 'test'
+  ...
+# Subtest: damaged notification state and thrown transports cannot interrupt runner work
+ok 26 - damaged notification state and thrown transports cannot interrupt runner work
+  ---
+  duration_ms: 16.448167
+  type: 'test'
+  ...
+# Subtest: managed startup failure reports its run identity without claiming readiness
+ok 27 - managed startup failure reports its run identity without claiming readiness
+  ---
+  duration_ms: 105.76725
+  type: 'test'
+  ...
+# Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+# Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+# Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+# Subtest: a 32767-byte handoff compacts only at the 32 KiB boundary
+ok 28 - a 32767-byte handoff compacts only at the 32 KiB boundary
+  ---
+  duration_ms: 727.271667
+  type: 'test'
+  ...
+# Subtest: a 32768-byte handoff compacts only at the 32 KiB boundary
+ok 29 - a 32768-byte handoff compacts only at the 32 KiB boundary
+  ---
+  duration_ms: 600.726958
+  type: 'test'
+  ...
+# Subtest: a 32769-byte handoff compacts only at the 32 KiB boundary
+ok 30 - a 32769-byte handoff compacts only at the 32 KiB boundary
+  ---
+  duration_ms: 570.516083
+  type: 'test'
+  ...
+# Subtest: a blocked handoff compacts before recovery stops and leaves a 256 KiB roadmap intact
+ok 31 - a blocked handoff compacts before recovery stops and leaves a 256 KiB roadmap intact
+  ---
+  duration_ms: 500.835083
+  type: 'test'
+  ...
+# Subtest: a complete handoff compacts before exiting without another worker
+ok 32 - a complete handoff compacts before exiting without another worker
+  ---
+  duration_ms: 513.806
+  type: 'test'
+  ...
+# Subtest: legacy large handoffs compact separately while detailed evidence remains available
+ok 33 - legacy large handoffs compact separately while detailed evidence remains available
+  ---
+  duration_ms: 632.277
+  type: 'test'
+  ...
+# Subtest: compaction noop stops before implementation and retains the original archive
+ok 34 - compaction noop stops before implementation and retains the original archive
+  ---
+  duration_ms: 578.3525
+  type: 'test'
+  ...
+# Subtest: compaction status stops before implementation and retains the original archive
+ok 35 - compaction status stops before implementation and retains the original archive
+  ---
+  duration_ms: 453.606625
+  type: 'test'
+  ...
+# Subtest: compaction source stops before implementation and retains the original archive
+ok 36 - compaction source stops before implementation and retains the original archive
+  ---
+  duration_ms: 429.437417
+  type: 'test'
+  ...
+# Subtest: compaction source-capacity stops before implementation and retains the original archive
+ok 37 - compaction source-capacity stops before implementation and retains the original archive
+  ---
+  duration_ms: 427.846583
+  type: 'test'
+  ...
+# Subtest: compaction failure stops before implementation and retains the original archive
+ok 38 - compaction failure stops before implementation and retains the original archive
+  ---
+  duration_ms: 478.891708
+  type: 'test'
+  ...
+# Subtest: compaction timeout stops before implementation and retains the original archive
+ok 39 - compaction timeout stops before implementation and retains the original archive
+  ---
+  duration_ms: 1184.336041
+  type: 'test'
+  ...
+# Subtest: worker growth compacts before the next worker without scheduled supervision
+ok 40 - worker growth compacts before the next worker without scheduled supervision
+  ---
+  duration_ms: 487.836708
+  type: 'test'
+  ...
+# Subtest: compaction cannot acknowledge pending requirements before the worker sees them
+ok 41 - compaction cannot acknowledge pending requirements before the worker sees them
+  ---
+  duration_ms: 481.855708
+  type: 'test'
+  ...
+# Subtest: compaction preserves the repeated-failure verdict
+ok 42 - compaction preserves the repeated-failure verdict
+  ---
+  duration_ms: 609.677917
+  type: 'test'
+  ...
+# Subtest: compaction preserves productive continuation
+ok 43 - compaction preserves productive continuation
+  ---
+  duration_ms: 603.247958
+  type: 'test'
+  ...
+# Subtest: only valid delivery notes are excluded from scope reconciliation
+ok 44 - only valid delivery notes are excluded from scope reconciliation
+  ---
+  duration_ms: 16.691958
+  type: 'test'
+  ...
+# Subtest: a verified delivery counts once and configuration must be an explicit changed source
+ok 45 - a verified delivery counts once and configuration must be an explicit changed source
+  ---
+  duration_ms: 7.13325
+  type: 'test'
+  ...
+# Subtest: queued implementation delivery is observed without closing original acceptance
+ok 46 - queued implementation delivery is observed without closing original acceptance
+  ---
+  duration_ms: 585.133542
+  type: 'test'
+  ...
+# Subtest: selected batch context accepts 32 KiB and rejects excess UTF-8 bytes
+ok 47 - selected batch context accepts 32 KiB and rejects excess UTF-8 bytes
+  ---
+  duration_ms: 3.453209
+  type: 'test'
+  ...
+# Subtest: finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+ok 48 - finite baseline rotates real owners and rejects denominator drift and generator-only delivery
+  ---
+  duration_ms: 4.836292
+  type: 'test'
+  ...
+# Subtest: failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+ok 49 - failed delivery resumes saved work and changed prerequisite evidence cannot schedule a worker
+  ---
+  duration_ms: 8.553209
+  type: 'test'
+  ...
+# Subtest: checkbox edits cannot clear attempt review or establish implementation delivery
+ok 50 - checkbox edits cannot clear attempt review or establish implementation delivery
+  ---
+  duration_ms: 8.430166
+  type: 'test'
+  ...
+# Subtest: legacy replan flags request review without establishing a terminal loop
+ok 51 - legacy replan flags request review without establishing a terminal loop
+  ---
+  duration_ms: 3.69975
+  type: 'test'
+  ...
+# Subtest: CLI and managed schema carry the finite authority without changing token options
+ok 52 - CLI and managed schema carry the finite authority without changing token options
+  ---
+  duration_ms: 2.897208
+  type: 'test'
+  ...
+# Subtest: supervisor aggregate stays bounded and due status survives restart and pending requirements
+not ok 53 - supervisor aggregate stays bounded and due status survives restart and pending requirements
+  ---
+  duration_ms: 31.187958
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/execution-reset.test.js:188:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/execution-reset.test.js:198:53)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+ok 54 - soft deadline saves exact mock handoff before hard timeout and preserves unfinished source
+  ---
+  duration_ms: 4025.205041
+  type: 'test'
+  ...
+# Subtest: event timing separates concurrent command time, shutdown and unattributed silence
+ok 55 - event timing separates concurrent command time, shutdown and unattributed silence
+  ---
+  duration_ms: 0.509833
+  type: 'test'
+  ...
+# Subtest: run history retains owner-spanning evidence and migrates both prior checkpoint formats
+ok 56 - run history retains owner-spanning evidence and migrates both prior checkpoint formats
+  ---
+  duration_ms: 9.345583
+  type: 'test'
+  ...
+# Subtest: productive partial finite batches continue without scheduled reviews with parent checkboxes open
+ok 57 - productive partial finite batches continue without scheduled reviews with parent checkboxes open
+  ---
+  duration_ms: 890.957417
+  type: 'test'
+  ...
+# Subtest: finite execution dispatches a resolver for a global blocker
+ok 58 - finite execution dispatches a resolver for a global blocker
+  ---
+  duration_ms: 768.106
+  type: 'test'
+  ...
+# Subtest: quota and capacity rejections do not consume finite implementation attempts
+ok 59 - quota and capacity rejections do not consume finite implementation attempts
+  ---
+  duration_ms: 4.1245
+  type: 'test'
+  ...
+# file:///Users/bpstr/Github/roadmap-runner/test/progress.test.js:48
+#   const file = prompt.match(/Tracking file \\\\(progress \\\\/ delivery evidence\\\\):\\\\s*\\\\n\\\\s*([^\\\\n]+)/)[1];
+#                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# SyntaxError: Invalid regular expression: /Tracking file \\\\(progress \\\\/: Unterminated group
+#     at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+#     at \#translate (node:internal/modules/esm/loader:434:20)
+#     at afterLoad (node:internal/modules/esm/loader:502:29)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:507:12)
+#     at \#getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+#     at afterResolve (node:internal/modules/esm/loader:607:52)
+#     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+#     at node:internal/modules/esm/loader:632:32
+#     at TracingChannel.tracePromise (node:diagnostics_channel:362:14)
+# Node.js v24.19.0
+# Subtest: test/progress.test.js
+not ok 4 - test/progress.test.js
+  ---
+  duration_ms: 34.126166
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/progress.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+ok 61 - queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+  ---
+  duration_ms: 1300.960541
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention spans queue handoff and releases at completion
+ok 62 - macOS sleep prevention spans queue handoff and releases at completion
+  ---
+  duration_ms: 1340.122834
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention releases when a queued run is stopped
+ok 63 - macOS sleep prevention releases when a queued run is stopped
+  ---
+  duration_ms: 643.641166
+  type: 'test'
+  ...
+# Subtest: CLI queue appends to an active run and rejects duplicates and terminal runs
+ok 64 - CLI queue appends to an active run and rejects duplicates and terminal runs
+  ---
+  duration_ms: 459.797417
+  type: 'test'
+  ...
+# Subtest: a blocked or failed roadmap never starts the next queued roadmap
+ok 65 - a blocked or failed roadmap never starts the next queued roadmap
+  ---
+  duration_ms: 958.936792
+  type: 'test'
+  ...
+# Subtest: all queue entries are validated before launch, including path and progress aliases
+ok 66 - all queue entries are validated before launch, including path and progress aliases
+  ---
+  duration_ms: 6.369792
+  type: 'test'
+  ...
+# Subtest: foreground CLI accepts repeated --queue flags and completes every roadmap
+ok 67 - foreground CLI accepts repeated --queue flags and completes every roadmap
+  ---
+  duration_ms: 565.493791
+  type: 'test'
+  ...
+# Subtest: a queued source removed before handoff fails the run and preserves later entries
+ok 68 - a queued source removed before handoff fails the run and preserves later entries
+  ---
+  duration_ms: 380.7615
+  type: 'test'
+  ...
+# Subtest: LLM loop detection blocks managed execution and leaves queued work pending
+not ok 69 - LLM loop detection blocks managed execution and leaves queued work pending
+  ---
+  duration_ms: 8136.001792
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/queue.test.js:158:1'
+  failureType: 'testCodeFailure'
+  error: 'Queue fixture deadline exceeded'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    wait (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:15:9)
+    async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:169:17)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: fully blocked managed runs stop once, retain stopped status, and leave the queue pending
+not ok 70 - fully blocked managed runs stop once, retain stopped status, and leave the queue pending
+  ---
+  duration_ms: 8240.729875
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/queue.test.js:178:1'
+  failureType: 'testCodeFailure'
+  error: 'Queue fixture deadline exceeded'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    wait (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:15:9)
+    async TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:188:17)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: workers continue useful work without periodic supervisors even with the legacy cadence
+ok 71 - workers continue useful work without periodic supervisors even with the legacy cadence
+  ---
+  duration_ms: 722.2295
+  type: 'test'
+  ...
+# Subtest: repair: blocked worker dispatches resolver then resumes
+ok 72 - repair: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 531.147667
+  type: 'test'
+  ...
+# Subtest: worker-failure: blocked worker dispatches resolver then resumes
+ok 73 - worker-failure: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 593.639417
+  type: 'test'
+  ...
+# Subtest: quota: blocked worker dispatches resolver then resumes
+ok 74 - quota: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 1213.997916
+  type: 'test'
+  ...
+# Subtest: capacity: blocked worker dispatches resolver then resumes
+ok 75 - capacity: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 1787.389166
+  type: 'test'
+  ...
+# Subtest: worker loop check sees previous receipts and recovery permits a changed attempt
+ok 76 - worker loop check sees previous receipts and recovery permits a changed attempt
+  ---
+  duration_ms: 635.3565
+  type: 'test'
+  ...
+# Subtest: stop: unresolved recovery persists STOPPED and does not retry on restart
+ok 77 - stop: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 598.912709
+  type: 'test'
+  ...
+# Subtest: loop-stop: unresolved recovery persists STOPPED and does not retry on restart
+ok 78 - loop-stop: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 739.91725
+  type: 'test'
+  ...
+# Subtest: missing-decision: unresolved recovery persists STOPPED and does not retry on restart
+ok 79 - missing-decision: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 685.614208
+  type: 'test'
+  ...
+# Subtest: stale-decision: unresolved recovery persists STOPPED and does not retry on restart
+ok 80 - stale-decision: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 622.5725
+  type: 'test'
+  ...
+# Subtest: source-blocked: unresolved recovery persists STOPPED and does not retry on restart
+ok 81 - source-blocked: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 622.017583
+  type: 'test'
+  ...
+# Subtest: resolver-failure: unresolved recovery persists STOPPED and does not retry on restart
+ok 82 - resolver-failure: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 633.922208
+  type: 'test'
+  ...
+# Subtest: timeout: unresolved recovery persists STOPPED and does not retry on restart
+ok 83 - timeout: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 818.935584
+  type: 'test'
+  ...
+# Subtest: an existing BLOCKED handoff dispatches a resolver before any worker
+ok 84 - an existing BLOCKED handoff dispatches a resolver before any worker
+  ---
+  duration_ms: 520.113959
+  type: 'test'
+  ...
+# Subtest: explicit recovery retries a durable stop using the resolver
+ok 85 - explicit recovery retries a durable stop using the resolver
+  ---
+  duration_ms: 626.11075
+  type: 'test'
+  ...
+# Subtest: resolver STOPPED leaves the next queued roadmap pending
+ok 86 - resolver STOPPED leaves the next queued roadmap pending
+  ---
+  duration_ms: 515.227666
+  type: 'test'
+  ...
+# Subtest: SIGINT during resolution preserves the blocker for recovery
+ok 87 - SIGINT during resolution preserves the blocker for recovery
+  ---
+  duration_ms: 539.911291
+  type: 'test'
+  ...
+# Subtest: STOPPED is header state; status edits preserve fenced examples
+ok 88 - STOPPED is header state; status edits preserve fenced examples
+  ---
+  duration_ms: 0.643667
+  type: 'test'
+  ...
+# Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-14T08:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T09:00:00.000Z (deadline 2026-10-07T08:00:01.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T13:00:00.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-08T13:00:00.000Z (deadline 2026-10-08T13:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Usage limit: preserving work; resume at 2026-10-07T08:00:01.000Z (deadline 2026-10-08T08:00:00.000Z).
+# Subtest: reset clocks honor IANA timezone, next-day and dated weekly resets
+ok 89 - reset clocks honor IANA timezone, next-day and dated weekly resets
+  ---
+  duration_ms: 35.497125
+  type: 'test'
+  ...
+# Subtest: quota observation distinguishes error events from model prose and advisory limits
+ok 90 - quota observation distinguishes error events from model prose and advisory limits
+  ---
+  duration_ms: 0.752
+  type: 'test'
+  ...
+# Subtest: short quota pauses restore and use one persistent incident budget
+ok 91 - short quota pauses restore and use one persistent incident budget
+  ---
+  duration_ms: 3.979125
+  type: 'test'
+  ...
+# Subtest: lowering the wait ceiling persists the shortened deadline across another restart
+ok 92 - lowering the wait ceiling persists the shortened deadline across another restart
+  ---
+  duration_ms: 1.380834
+  type: 'test'
+  ...
+# Subtest: unknown reset fallbacks are five hours/session and at most one day/weekly
+ok 93 - unknown reset fallbacks are five hours/session and at most one day/weekly
+  ---
+  duration_ms: 1.572917
+  type: 'test'
+  ...
+# Subtest: interrupts preserve the quota checkpoint and never renew its deadline
+ok 94 - interrupts preserve the quota checkpoint and never renew its deadline
+  ---
+  duration_ms: 0.924875
+  type: 'test'
+  ...
+# Subtest: changed attention flags notify once, remain unfinished, and clear on recovery
+ok 95 - changed attention flags notify once, remain unfinished, and clear on recovery
+  ---
+  duration_ms: 2.104041
+  type: 'test'
+  ...
+# Subtest: legacy progress counters are retired without losing quota or loop checkpoints
+ok 96 - legacy progress counters are retired without losing quota or loop checkpoints
+  ---
+  duration_ms: 1.389125
+  type: 'test'
+  ...
+# Subtest: wait settings reject zero, invalid input and values above one day
+ok 97 - wait settings reject zero, invalid input and values above one day
+  ---
+  duration_ms: 0.1235
+  type: 'test'
+  ...
+# Subtest: codex CLI quota pauses then restores a fresh worker
+ok 98 - codex CLI quota pauses then restores a fresh worker
+  ---
+  duration_ms: 1562.014125
+  type: 'test'
+  ...
+# Subtest: claude CLI quota pauses then restores a fresh worker
+ok 99 - claude CLI quota pauses then restores a fresh worker
+  ---
+  duration_ms: 1515.923625
+  type: 'test'
+  ...
+# Subtest: a terminal status left by a quota session must be verified by the next worker
+ok 100 - a terminal status left by a quota session must be verified by the next worker
+  ---
+  duration_ms: 1523.252
+  type: 'test'
+  ...
+# Subtest: weekly CLI quota expires at the configured ceiling without another provider attempt
+ok 101 - weekly CLI quota expires at the configured ceiling without another provider attempt
+  ---
+  duration_ms: 1490.173666
+  type: 'test'
+  ...
+# Subtest: blocked CLI emits notification and unresolved recovery stops before a repeated worker
+ok 102 - blocked CLI emits notification and unresolved recovery stops before a repeated worker
+  ---
+  duration_ms: 1050.696667
+  type: 'test'
+  ...
+# Subtest: SIGINT during a real quota wait exits promptly and keeps state for restart
+ok 103 - SIGINT during a real quota wait exits promptly and keeps state for restart
+  ---
+  duration_ms: 500.122542
+  type: 'test'
+  ...
+# Subtest: explicit blocked recovery dispatches a resolver and stops if unchanged
+ok 104 - explicit blocked recovery dispatches a resolver and stops if unchanged
+  ---
+  duration_ms: 513.804541
+  type: 'test'
+  ...
+# Subtest: explicit recovery can continue after the changed input resolves the blocker
+ok 105 - explicit recovery can continue after the changed input resolves the blocker
+  ---
+  duration_ms: 775.797625
+  type: 'test'
+  ...
+# Subtest: bounded capture retains short output and bounded head/tail plus omissions
+ok 106 - bounded capture retains short output and bounded head/tail plus omissions
+  ---
+  duration_ms: 1.393
+  type: 'test'
+  ...
+# Subtest: rolling evidence and checkpoint survive restart without loading detail into the summary
+not ok 107 - rolling evidence and checkpoint survive restart without loading detail into the summary
+  ---
+  duration_ms: 30.296834
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/run-evidence.test.js:25:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-11-3eb5435f-b5d0-4346-83de-4e07573f27ef.json',
+    -     interrupted: undefined,
+          iteration: 11,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-12-d03ec86b-e80d-4aa5-a6db-e7a79b7844e2.json',
+    -     interrupted: undefined,
+          iteration: 12,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-13-c007400b-cdf1-4e38-878b-13ae48bcfae8.json',
+    -     interrupted: undefined,
+          iteration: 13,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-14-0819c2c5-4db0-4f30-9da8-8ec400e22250.json',
+    -     interrupted: undefined,
+          iteration: 14,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-15-e08059a8-12a7-42b0-ac49-07f939705bec.json',
+    -     interrupted: undefined,
+          iteration: 15,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-16-b7e3e1f4-3465-438d-90a0-20311f8bfc8c.json',
+    -     interrupted: undefined,
+          iteration: 16,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-17-882bb3d3-2b45-4fd6-98f0-384da2fbf5dc.json',
+    -     interrupted: undefined,
+          iteration: 17,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-18-47baf020-ff7d-4440-9591-0c22970c23fb.json',
+    -     interrupted: undefined,
+          iteration: 18,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-19-e414b21f-ef96-45d5-811a-0de4d6eef275.json',
+    -     interrupted: undefined,
+          iteration: 19,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-20-4355abad-4e6a-4fed-bb1d-15679142b5d5.json',
+    -     interrupted: undefined,
+          iteration: 20,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-21-fe83e486-cc81-4fff-8916-09aa80ca00c4.json',
+    -     interrupted: undefined,
+          iteration: 21,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-22-b0fdfb58-1082-4513-8f1b-eec654ab0c5c.json',
+    -     interrupted: undefined,
+          iteration: 22,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-23-a468bd1f-6f0e-4c52-b984-c3d56a25ec5e.json',
+    -     interrupted: undefined,
+          iteration: 23,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-24-a9a13eed-8154-4989-9cf0-3b2c76b5bc78.json',
+    -     interrupted: undefined,
+          iteration: 24,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-25-7883e90e-981e-4b83-bf8b-46c335538baa.json',
+    -     interrupted: undefined,
+          iteration: 25,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-26-be0247b8-c67e-45a6-bcb4-6084dd311c8a.json',
+    -     interrupted: undefined,
+          iteration: 26,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-27-e634faa1-bd45-4517-9a6b-0d327fd1d0b9.json',
+    -     interrupted: undefined,
+          iteration: 27,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-28-42fe26e5-5c8f-4d9a-ad11-3d34a9bdb7f5.json',
+    -     interrupted: undefined,
+          iteration: 28,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-29-d18dc6c6-6230-4669-a7ab-7d0822795127.json',
+    -     interrupted: undefined,
+          iteration: 29,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        },
+        {
+    -     batch: undefined,
+          code: 0,
+    -     elapsedMs: undefined,
+          error: null,
+          evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-30-738df72c-ab0b-4f82-a680-edb45434f9a6.json',
+    -     interrupted: undefined,
+          iteration: 30,
+          roadmap: '/source',
+    -     sourceRevision: undefined,
+    -     startedAt: undefined,
+    -     task: undefined,
+    -     timedOut: undefined,
+          timing: null,
+          trackingChanged: true
+        }
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      iteration: 11
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-11-3eb5435f-b5d0-4346-83de-4e07573f27ef.json'
+      timing: ~
+    1:
+      iteration: 12
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-12-d03ec86b-e80d-4aa5-a6db-e7a79b7844e2.json'
+      timing: ~
+    2:
+      iteration: 13
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-13-c007400b-cdf1-4e38-878b-13ae48bcfae8.json'
+      timing: ~
+    3:
+      iteration: 14
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-14-0819c2c5-4db0-4f30-9da8-8ec400e22250.json'
+      timing: ~
+    4:
+      iteration: 15
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-15-e08059a8-12a7-42b0-ac49-07f939705bec.json'
+      timing: ~
+    5:
+      iteration: 16
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-16-b7e3e1f4-3465-438d-90a0-20311f8bfc8c.json'
+      timing: ~
+    6:
+      iteration: 17
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-17-882bb3d3-2b45-4fd6-98f0-384da2fbf5dc.json'
+      timing: ~
+    7:
+      iteration: 18
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-18-47baf020-ff7d-4440-9591-0c22970c23fb.json'
+      timing: ~
+    8:
+      iteration: 19
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-19-e414b21f-ef96-45d5-811a-0de4d6eef275.json'
+      timing: ~
+    9:
+      iteration: 20
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-20-4355abad-4e6a-4fed-bb1d-15679142b5d5.json'
+      timing: ~
+    10:
+      iteration: 21
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-21-fe83e486-cc81-4fff-8916-09aa80ca00c4.json'
+      timing: ~
+    11:
+      iteration: 22
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-22-b0fdfb58-1082-4513-8f1b-eec654ab0c5c.json'
+      timing: ~
+    12:
+      iteration: 23
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-23-a468bd1f-6f0e-4c52-b984-c3d56a25ec5e.json'
+      timing: ~
+    13:
+      iteration: 24
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-24-a9a13eed-8154-4989-9cf0-3b2c76b5bc78.json'
+      timing: ~
+    14:
+      iteration: 25
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-25-7883e90e-981e-4b83-bf8b-46c335538baa.json'
+      timing: ~
+    15:
+      iteration: 26
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-26-be0247b8-c67e-45a6-bcb4-6084dd311c8a.json'
+      timing: ~
+    16:
+      iteration: 27
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-27-e634faa1-bd45-4517-9a6b-0d327fd1d0b9.json'
+      timing: ~
+    17:
+      iteration: 28
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-28-42fe26e5-5c8f-4d9a-ad11-3d34a9bdb7f5.json'
+      timing: ~
+    18:
+      iteration: 29
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-29-d18dc6c6-6230-4669-a7ab-7d0822795127.json'
+      timing: ~
+    19:
+      iteration: 30
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-30-738df72c-ab0b-4f82-a680-edb45434f9a6.json'
+      timing: ~
+  actual:
+    0:
+      iteration: 11
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-11-3eb5435f-b5d0-4346-83de-4e07573f27ef.json'
+      timing: ~
+    1:
+      iteration: 12
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-12-d03ec86b-e80d-4aa5-a6db-e7a79b7844e2.json'
+      timing: ~
+    2:
+      iteration: 13
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-13-c007400b-cdf1-4e38-878b-13ae48bcfae8.json'
+      timing: ~
+    3:
+      iteration: 14
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-14-0819c2c5-4db0-4f30-9da8-8ec400e22250.json'
+      timing: ~
+    4:
+      iteration: 15
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-15-e08059a8-12a7-42b0-ac49-07f939705bec.json'
+      timing: ~
+    5:
+      iteration: 16
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-16-b7e3e1f4-3465-438d-90a0-20311f8bfc8c.json'
+      timing: ~
+    6:
+      iteration: 17
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-17-882bb3d3-2b45-4fd6-98f0-384da2fbf5dc.json'
+      timing: ~
+    7:
+      iteration: 18
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-18-47baf020-ff7d-4440-9591-0c22970c23fb.json'
+      timing: ~
+    8:
+      iteration: 19
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-19-e414b21f-ef96-45d5-811a-0de4d6eef275.json'
+      timing: ~
+    9:
+      iteration: 20
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-20-4355abad-4e6a-4fed-bb1d-15679142b5d5.json'
+      timing: ~
+    10:
+      iteration: 21
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-21-fe83e486-cc81-4fff-8916-09aa80ca00c4.json'
+      timing: ~
+    11:
+      iteration: 22
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-22-b0fdfb58-1082-4513-8f1b-eec654ab0c5c.json'
+      timing: ~
+    12:
+      iteration: 23
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-23-a468bd1f-6f0e-4c52-b984-c3d56a25ec5e.json'
+      timing: ~
+    13:
+      iteration: 24
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-24-a9a13eed-8154-4989-9cf0-3b2c76b5bc78.json'
+      timing: ~
+    14:
+      iteration: 25
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-25-7883e90e-981e-4b83-bf8b-46c335538baa.json'
+      timing: ~
+    15:
+      iteration: 26
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-26-be0247b8-c67e-45a6-bcb4-6084dd311c8a.json'
+      timing: ~
+    16:
+      iteration: 27
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-27-e634faa1-bd45-4517-9a6b-0d327fd1d0b9.json'
+      timing: ~
+    17:
+      iteration: 28
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-28-42fe26e5-5c8f-4d9a-ad11-3d34a9bdb7f5.json'
+      timing: ~
+    18:
+      iteration: 29
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-29-d18dc6c6-6230-4669-a7ab-7d0822795127.json'
+      timing: ~
+    19:
+      iteration: 30
+      roadmap: '/source'
+      code: 0
+      error: ~
+      trackingChanged: true
+      evidence: '/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-evidence-duhvRQ/evidence/runs-Bcgb7L/worker-30-738df72c-ab0b-4f82-a680-edb45434f9a6.json'
+      timing: ~
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/run-evidence.test.js:30:55)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: legacy inline supervisor evidence migrates without dispatching review
+ok 108 - legacy inline supervisor evidence migrates without dispatching review
+  ---
+  duration_ms: 2.659417
+  type: 'test'
+  ...
+# Subtest: legacy pointer supervisor evidence migrates without dispatching review
+ok 109 - legacy pointer supervisor evidence migrates without dispatching review
+  ---
+  duration_ms: 2.360125
+  type: 'test'
+  ...
+# Subtest: quota and capacity rejections are excluded from implementation attempts
+ok 110 - quota and capacity rejections are excluded from implementation attempts
+  ---
+  duration_ms: 0.512708
+  type: 'test'
+  ...
+# Subtest: header status: fenced completion example
+ok 111 - header status: fenced completion example
+  ---
+  duration_ms: 0.843167
+  type: 'test'
+  ...
+# Subtest: header status: historical blocker
+ok 112 - header status: historical blocker
+  ---
+  duration_ms: 0.16075
+  type: 'test'
+  ...
+# Subtest: header status: historical completion
+ok 113 - header status: historical completion
+  ---
+  duration_ms: 0.062333
+  type: 'test'
+  ...
+# Subtest: header status: long backtick fence
+ok 114 - header status: long backtick fence
+  ---
+  duration_ms: 0.110291
+  type: 'test'
+  ...
+# Subtest: header status: tilde fence
+ok 115 - header status: tilde fence
+  ---
+  duration_ms: 0.104666
+  type: 'test'
+  ...
+# Subtest: header status: BOM and CRLF
+ok 116 - header status: BOM and CRLF
+  ---
+  duration_ms: 0.219667
+  type: 'test'
+  ...
+# Subtest: header status: indented example
+ok 117 - header status: indented example
+  ---
+  duration_ms: 0.0475
+  type: 'test'
+  ...
+# Subtest: header status: status only in a section
+ok 118 - header status: status only in a section
+  ---
+  duration_ms: 0.049584
+  type: 'test'
+  ...
+# Subtest: header status: uninitialized roadmap
+ok 119 - header status: uninitialized roadmap
+  ---
+  duration_ms: 0.06
+  type: 'test'
+  ...
+# Subtest: reject duplicate header: Status: IN_PROGRESS / Status: COMPLETE
+ok 120 - reject duplicate header: Status: IN_PROGRESS / Status: COMPLETE
+  ---
+  duration_ms: 0.334958
+  type: 'test'
+  ...
+# Subtest: reject duplicate header: Status: COMPLETE / Status: COMPLETE
+ok 121 - reject duplicate header: Status: COMPLETE / Status: COMPLETE
+  ---
+  duration_ms: 0.071833
+  type: 'test'
+  ...
+# Subtest: reject invalid header: Status: DONE
+ok 122 - reject invalid header: Status: DONE
+  ---
+  duration_ms: 0.092791
+  type: 'test'
+  ...
+# Subtest: reject invalid header: Status: / COMPLETE
+ok 123 - reject invalid header: Status: / COMPLETE
+  ---
+  duration_ms: 0.070791
+  type: 'test'
+  ...
+# Subtest: a documentation example cannot skip the three real worker iterations
+ok 124 - a documentation example cannot skip the three real worker iterations
+  ---
+  duration_ms: 613.84525
+  type: 'test'
+  ...
+# Subtest: conflicting progress header statuses fail before starting a worker
+ok 125 - conflicting progress header statuses fail before starting a worker
+  ---
+  duration_ms: 622.546709
+  type: 'test'
+  ...
+# Subtest: timeout with ignored descendant stdio
+ok 126 - timeout with ignored descendant stdio
+  ---
+  duration_ms: 2753.455834
+  type: 'test'
+  ...
+# Subtest: timeout with inherited descendant pipes
+ok 127 - timeout with inherited descendant pipes
+  ---
+  duration_ms: 2733.317334
+  type: 'test'
+  ...
+# Subtest: SIGINT after the leader closes
+ok 128 - SIGINT after the leader closes
+  ---
+  duration_ms: 818.205375
+  type: 'test'
+  ...
+# Subtest: SIGTERM with inherited pipes
+ok 129 - SIGTERM with inherited pipes
+  ---
+  duration_ms: 758.678625
+  type: 'test'
+  ...
+# Subtest: repeated SIGINT
+ok 130 - repeated SIGINT
+  ---
+  duration_ms: 687.191459
+  type: 'test'
+  ...
+# Subtest: text adapter cancellation
+ok 131 - text adapter cancellation
+  ---
+  duration_ms: 791.740833
+  type: 'test'
+  ...
+# Subtest: spawn failure removes its signal listeners
+ok 132 - spawn failure removes its signal listeners
+  ---
+  duration_ms: 3.501334
+  type: 'test'
+  ...
+# Codex error: Selected model is at capacity
+# Subtest: final capacity JSON without a newline is drained before resolving
+ok 133 - final capacity JSON without a newline is drained before resolving
+  ---
+  duration_ms: 349.465125
+  type: 'test'
+  ...
+# Subtest: sleep prevention is opt-in and CLI flags override the environment
+ok 134 - sleep prevention is opt-in and CLI flags override the environment
+  ---
+  duration_ms: 0.57225
+  type: 'test'
+  ...
+# Subtest: desktop notifications default on and explicit off overrides defaults
+ok 135 - desktop notifications default on and explicit off overrides defaults
+  ---
+  duration_ms: 0.095125
+  type: 'test'
+  ...
+# Subtest: Codex adapter preserves accepted unattended invocation
+ok 136 - Codex adapter preserves accepted unattended invocation
+  ---
+  duration_ms: 0.409
+  type: 'test'
+  ...
+# Subtest: Claude adapter bypasses permission prompts
+ok 137 - Claude adapter bypasses permission prompts
+  ---
+  duration_ms: 0.064209
+  type: 'test'
+  ...
+# Subtest: Gemini adapter uses current noninteractive YOLO mode
+ok 138 - Gemini adapter uses current noninteractive YOLO mode
+  ---
+  duration_ms: 0.062875
+  type: 'test'
+  ...
+# Subtest: Campfire-compatible secondary adapters are stable
+ok 139 - Campfire-compatible secondary adapters are stable
+  ---
+  duration_ms: 0.06675
+  type: 'test'
+  ...
+# Subtest: Codex model and effort overrides are applied
+ok 140 - Codex model and effort overrides are applied
+  ---
+  duration_ms: 0.079125
+  type: 'test'
+  ...
+# Subtest: duration parsing supports runner units
+ok 141 - duration parsing supports runner units
+  ---
+  duration_ms: 0.207875
+  type: 'test'
+  ...
+# Subtest: roadmap completion states are exact line based
+ok 142 - roadmap completion states are exact line based
+  ---
+  duration_ms: 0.32875
+  type: 'test'
+  ...
+# Subtest: client can be selected through args or environment
+ok 143 - client can be selected through args or environment
+  ---
+  duration_ms: 0.13
+  type: 'test'
+  ...
+# Subtest: blocked recovery requires explicit opt-in
+ok 144 - blocked recovery requires explicit opt-in
+  ---
+  duration_ms: 0.056875
+  type: 'test'
+  ...
+1..144
+# tests 144
+# suites 0
+# pass 137
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 99818.183958

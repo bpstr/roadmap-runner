@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { parseArgs, parseDuration } from '../lib/runner.js';
 import { trackingPaths } from '../lib/tracking.js';
-import { supervisorSettings } from '../lib/supervision.js';
+import { resolverSettings } from '../lib/recovery-runs.js';
 import { readEvents, eventTypes } from './events.js';
 import { registryRoot, privateDir, runDir, readRun, saveRun, publicRun, outputTail, type RunRecord, type QueueItem } from './run-state.js';
 
@@ -18,8 +18,8 @@ export const startSchema = z.object({
   workspace: z.string().min(1), roadmap: z.string().min(1), progressFile: z.string().optional(),
   executionPlan: z.string().min(1).optional(),
   client: z.enum(['codex', 'claude', 'gemini', 'grok', 'kimi', 'muse']).default('codex'),
-  timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).default(5),
-  supervisorTimeout: z.string().default('10m'), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
+  timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).optional(),
+  supervisorTimeout: z.string().optional(), resolverTimeout: z.string().optional(), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
   notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),
   recoverBlocked: z.boolean().default(false),
@@ -140,7 +140,7 @@ export class RunManager {
         delete options.executionPlan;
       } else options.executionPlan = executionPlan;
     }
-    parseDuration(options.timeout); supervisorSettings(options);
+    parseDuration(options.timeout); resolverSettings(options);
     const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, queue, idempotencyKey: undefined }));
     for (const id of fs.readdirSync(path.join(this.root, 'runs')).sort()) {
       const r = readRun(this.root, id);

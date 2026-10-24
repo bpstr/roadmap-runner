@@ -23,7 +23,7 @@ const originalWrites = new Map();
 const pendingOutput = new Map<any, string>();
 const oversizedLines = new Set<any>();
 const outputFile = path.join(dir, 'output.log');
-// Capture normalized client output and runner messages even when supervision is disabled.
+// Capture normalized client output and runner messages for every session role.
 for (const stream of [process.stdout, process.stderr]) {
   const original = stream.write.bind(stream); originalWrites.set(stream, original);
   stream.write = ((chunk, ...args) => {
@@ -96,8 +96,9 @@ try {
         if (event.type === 'runner.turn_starting' && event.role === 'worker') { record.roadmap = event.roadmap; record.task = event.task; record.batch = event.batch; }
         record.sourceRevision = event.sourceRevision; record.role = event.role || record.role; record.iteration = event.iteration ?? record.iteration;
         if (event.type === 'runner.blocked') record.roadmapState = 'blocked';
-        if (event.type === 'runner.unblocked' || event.type === 'runner.turn_starting') record.roadmapState = 'in_progress';
+        if (event.type === 'runner.unblocked' || (event.type === 'runner.turn_starting' && event.role === 'worker')) record.roadmapState = 'in_progress';
         if (event.type === 'runner.completed') record.roadmapState = 'complete';
+        if (event.type === 'runner.stopped') record.roadmapState = 'stopped';
         if (event.type === 'runner.usage_paused') { record.waitReason = 'quota'; record.resetAt = event.resetAt; record.deadline = event.deadline; }
         if (event.type === 'runner.capacity_wait') record.waitReason = 'capacity';
         if (event.type === 'runner.recovery_wait') record.waitReason = 'recovery';
@@ -109,6 +110,7 @@ try {
     });
     item.state = result.reason === 'complete' ? 'complete' : result.reason === 'stopped' ? 'stopped' : result.reason === 'blocked' ? 'blocked' : 'failed';
     if (result.reason === 'blocked') record.roadmapState = 'blocked';
+    if (result.reason === 'stopped') record.roadmapState = 'stopped';
     persist();
     if (result.reason !== 'complete' || controller.signal.aborted || record.queueIndex + 1 === record.queue.length) break;
     record.queueIndex += 1;

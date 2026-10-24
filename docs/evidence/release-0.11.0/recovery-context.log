@@ -1,0 +1,116 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ a 32767-byte handoff compacts only at the 32 KiB boundary (669.307083ms)
+✔ a 32768-byte handoff compacts only at the 32 KiB boundary (532.90075ms)
+✔ a 32769-byte handoff compacts only at the 32 KiB boundary (597.630334ms)
+✔ a blocked handoff compacts before recovery stops and leaves a 256 KiB roadmap intact (450.208917ms)
+✔ a complete handoff compacts before exiting without another worker (464.475333ms)
+✔ legacy large handoffs compact separately while detailed evidence remains available (576.746916ms)
+✔ compaction noop stops before implementation and retains the original archive (489.463ms)
+✔ compaction status stops before implementation and retains the original archive (615.286167ms)
+✔ compaction source stops before implementation and retains the original archive (735.321917ms)
+✔ compaction source-capacity stops before implementation and retains the original archive (460.555833ms)
+✔ compaction failure stops before implementation and retains the original archive (377.605333ms)
+✔ compaction timeout stops before implementation and retains the original archive (1148.919875ms)
+✔ worker growth compacts before the next worker without scheduled supervision (572.344417ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (616.3815ms)
+✖ compaction preserves the repeated-failure verdict (837.815375ms)
+✖ compaction preserves productive continuation (515.964875ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.58275ms)
+✔ workers continue useful work without periodic supervisors even with the legacy cadence (704.05925ms)
+✔ repair: blocked worker dispatches resolver then resumes (644.81025ms)
+✔ worker-failure: blocked worker dispatches resolver then resumes (618.634333ms)
+✔ quota: blocked worker dispatches resolver then resumes (949.831542ms)
+✔ capacity: blocked worker dispatches resolver then resumes (1774.041708ms)
+✔ worker loop check sees previous receipts and recovery permits a changed attempt (681.103334ms)
+✔ stop: unresolved recovery persists STOPPED and does not retry on restart (662.689834ms)
+✔ loop-stop: unresolved recovery persists STOPPED and does not retry on restart (772.016791ms)
+✔ missing-decision: unresolved recovery persists STOPPED and does not retry on restart (722.037958ms)
+✔ stale-decision: unresolved recovery persists STOPPED and does not retry on restart (600.187667ms)
+✔ source-blocked: unresolved recovery persists STOPPED and does not retry on restart (648.92025ms)
+✔ resolver-failure: unresolved recovery persists STOPPED and does not retry on restart (695.80575ms)
+✔ timeout: unresolved recovery persists STOPPED and does not retry on restart (836.225542ms)
+✔ an existing BLOCKED handoff dispatches a resolver before any worker (552.768333ms)
+✔ explicit recovery retries a durable stop using the resolver (620.214375ms)
+✔ resolver STOPPED leaves the next queued roadmap pending (490.65175ms)
+✔ SIGINT during resolution preserves the blocker for recovery (494.702333ms)
+✔ STOPPED is header state; status edits preserve fenced examples (0.607875ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 33
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22247.61525
+
+✖ failing tests:
+
+test at test/context-budget.test.js:129:3
+✖ compaction preserves the repeated-failure verdict (837.815375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'WORKER',
+      'COMPACTOR',
+      'WORKER',
+      'COMPACTOR',
+  +   'WORKER',
+  +   'COMPACTOR',
+  +   'WORKER',
+  +   'RESOLVER'
+  -   'SUPERVISOR'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/context-budget.test.js:132:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [
+      'WORKER', 'COMPACTOR',
+      'WORKER', 'COMPACTOR',
+      'WORKER', 'COMPACTOR',
+      'WORKER', 'RESOLVER'
+    ],
+    expected: [ 'WORKER', 'COMPACTOR', 'WORKER', 'COMPACTOR', 'SUPERVISOR' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/context-budget.test.js:129:3
+✖ compaction preserves productive continuation (515.964875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'WORKER',
+      'COMPACTOR',
+      'WORKER',
+      'COMPACTOR',
+  -   'SUPERVISOR',
+      'WORKER'
+    ]
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/context-budget.test.js:132:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'WORKER', 'COMPACTOR', 'WORKER', 'COMPACTOR', 'WORKER' ],
+    expected: [ 'WORKER', 'COMPACTOR', 'WORKER', 'COMPACTOR', 'SUPERVISOR', 'WORKER' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

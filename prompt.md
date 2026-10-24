@@ -18,7 +18,18 @@ credentials into tests, record live fixtures or spend provider credits.
 
 1. Recover the current outcome.
 
-Read the compact handoff and current supervisor correction. When Runner context
+Read the compact handoff and the recent-runs summary named in Runner context.
+Before choosing work, compare previous attempts and their referenced evidence:
+operation/task, failure, relevant implementation and prerequisite inputs, and next
+action. Inspect specific detail receipts only when needed. On the first run an
+empty summary means there are no previous attempts.
+If two or more attempts repeat the same failed operation with unchanged relevant
+inputs and no evidenced repair, set the handoff to Status: BLOCKED, name the loop,
+cite its iterations/receipts and exact unblock condition, then exit immediately.
+The runner will dispatch a resolver. New sessions, source hashes, note churn,
+checkbox counts and elapsed time alone neither prove nor disprove a loop.
+If work has changed or previous attempts have distinct useful outcomes, record
+the changed input/next action and proceed. When Runner context
 names a finite execution authority, read only the selected original task snapshot
 and named batch/prerequisite evidence. That batch determines this invocation's
 scope and actual owning roadmap/task. Otherwise read the pinned source snapshot
@@ -40,7 +51,7 @@ requirements. Read the live file before each targeted edit. Concise delivery pro
 belongs inside standalone `<!-- roadmap-runner:delivery:start -->` and
 `<!-- roadmap-runner:delivery:end -->` markers. Requirements, dependencies,
 priorities and acceptance checkboxes remain outside those markers.
-Reconciliation never postpones a scheduled supervisor.
+Apply the same loop check during requirement reconciliation.
 
 2. Implement one finite deliverable.
 
@@ -59,7 +70,7 @@ alone are not the promised user-visible outcome.
 
 If a prerequisite is unavailable, retain its gate and exact unblock condition once
 and return so the controller can select another ready outcome. Repeated timeout or
-unchanged-outcome attempts require corrective review and an explicit revised plan.
+unchanged-outcome attempts require BLOCKED and a resolver to establish an explicit revised plan.
 
 3. Apply the current verification phase.
 
@@ -91,7 +102,7 @@ limit, save the state and exit for compaction. Handoff size alone is not a reaso
 to set BLOCKED. Keep only current outcome,
 implemented prerequisites, remaining functionality, blockers, next action and
 specific evidence/history pointers. Retrieve historical details on demand. Keep
-one current supervisor review and point to deferred gates in their existing owners.
+one current recovery decision and point to deferred gates in their existing owners.
 The source roadmap may be up to 256 KiB (262144 bytes), inclusive. Preserve its
 requirements; never compress or truncate the source to fit the handoff budget.
 
@@ -106,8 +117,7 @@ form with NEEDS_INFO, PROBLEM or SKIPPED. Remove resolved flags. A local deferra
 does not block unrelated ready work.
 
 Maintain exactly one opening status line before the first second-level heading:
-`Status: IN_PROGRESS`, `Status: BLOCKED` or `Status: COMPLETE`. COMPLETE means all
+`Status: IN_PROGRESS`, `Status: BLOCKED`, `Status: STOPPED` or `Status: COMPLETE`. COMPLETE means all
 original acceptance passed, never merely that the current batches delivered.
-BLOCKED means no authorized useful work remains under the current plan. Explicit
-blocked recovery permits one attempt after the recorded input changes. Summarize
+BLOCKED means no authorized useful work remains under the current plan. BLOCKED dispatches a resolver before further workers. Summarize
 functionality, evidence, remaining work and exit reason concisely.

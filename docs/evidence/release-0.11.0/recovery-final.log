@@ -1,0 +1,164 @@
+TAP version 13
+# Subtest: workers continue useful work without periodic supervisors even with the legacy cadence
+ok 1 - workers continue useful work without periodic supervisors even with the legacy cadence
+  ---
+  duration_ms: 882.211125
+  type: 'test'
+  ...
+# Subtest: repair: blocked worker dispatches resolver then resumes
+ok 2 - repair: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 613.189333
+  type: 'test'
+  ...
+# Subtest: worker-failure: blocked worker dispatches resolver then resumes
+ok 3 - worker-failure: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 570.960083
+  type: 'test'
+  ...
+# Subtest: quota: blocked worker dispatches resolver then resumes
+ok 4 - quota: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 893.140583
+  type: 'test'
+  ...
+# Subtest: capacity: blocked worker dispatches resolver then resumes
+ok 5 - capacity: blocked worker dispatches resolver then resumes
+  ---
+  duration_ms: 1644.869667
+  type: 'test'
+  ...
+# Subtest: worker loop check sees previous receipts and recovery permits a changed attempt
+ok 6 - worker loop check sees previous receipts and recovery permits a changed attempt
+  ---
+  duration_ms: 626.315958
+  type: 'test'
+  ...
+# Subtest: stop: unresolved recovery persists STOPPED and does not retry on restart
+ok 7 - stop: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 619.728417
+  type: 'test'
+  ...
+# Subtest: loop-stop: unresolved recovery persists STOPPED and does not retry on restart
+ok 8 - loop-stop: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 663.885417
+  type: 'test'
+  ...
+# Subtest: missing-decision: unresolved recovery persists STOPPED and does not retry on restart
+ok 9 - missing-decision: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 618.990375
+  type: 'test'
+  ...
+# Subtest: stale-decision: unresolved recovery persists STOPPED and does not retry on restart
+ok 10 - stale-decision: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 600.181542
+  type: 'test'
+  ...
+# Subtest: source-blocked: unresolved recovery persists STOPPED and does not retry on restart
+ok 11 - source-blocked: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 579.540167
+  type: 'test'
+  ...
+# Subtest: resolver-failure: unresolved recovery persists STOPPED and does not retry on restart
+ok 12 - resolver-failure: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 587.108917
+  type: 'test'
+  ...
+# Subtest: timeout: unresolved recovery persists STOPPED and does not retry on restart
+ok 13 - timeout: unresolved recovery persists STOPPED and does not retry on restart
+  ---
+  duration_ms: 790.808
+  type: 'test'
+  ...
+# Subtest: an existing BLOCKED handoff dispatches a resolver before any worker
+ok 14 - an existing BLOCKED handoff dispatches a resolver before any worker
+  ---
+  duration_ms: 515.043959
+  type: 'test'
+  ...
+# Subtest: explicit recovery retries a durable stop using the resolver
+ok 15 - explicit recovery retries a durable stop using the resolver
+  ---
+  duration_ms: 639.2265
+  type: 'test'
+  ...
+# Subtest: resolver STOPPED leaves the next queued roadmap pending
+ok 16 - resolver STOPPED leaves the next queued roadmap pending
+  ---
+  duration_ms: 637.560541
+  type: 'test'
+  ...
+# Subtest: SIGINT during resolution preserves the blocker for recovery
+ok 17 - SIGINT during resolution preserves the blocker for recovery
+  ---
+  duration_ms: 576.22475
+  type: 'test'
+  ...
+# Subtest: STOPPED is header state; status edits preserve fenced examples
+ok 18 - STOPPED is header state; status edits preserve fenced examples
+  ---
+  duration_ms: 0.631834
+  type: 'test'
+  ...
+# Subtest: two consecutive hard worker timeouts dispatch a resolver
+not ok 19 - two consecutive hard worker timeouts dispatch a resolver
+  ---
+  duration_ms: 731.892375
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/recovery-runs.test.js:152:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        'WORKER',
+    -   'WORKER',
+        'RESOLVER',
+        'WORKER'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'WORKER'
+    1: 'WORKER'
+    2: 'RESOLVER'
+    3: 'WORKER'
+  actual:
+    0: 'WORKER'
+    1: 'RESOLVER'
+    2: 'WORKER'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/recovery-runs.test.js:155:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: STOPPED skips saved quota waits and compaction without dispatching a session
+ok 20 - STOPPED skips saved quota waits and compaction without dispatching a session
+  ---
+  duration_ms: 116.54575
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 19
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12962.803666

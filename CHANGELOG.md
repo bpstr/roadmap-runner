@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0 — 2026-10-24
+
+- Remove regular supervisor sessions. Workers begin with a loop check using previous runs, the current handoff and referenced evidence; repeated failures with unchanged relevant inputs set BLOCKED.
+- Automatically dispatch a resolver for global blockers, failed workers, repeated hard timeouts and exhausted finite plans. Require a fresh evidence-backed decision and cleared blocker before resuming workers.
+- Add persistent STOPPED when recovery cannot unblock useful work, including failed, timed-out or invalid resolver outcomes. Stop the entire runner and preserve pending queue entries; explicit recovery retries with a resolver.
+- Add resolver timeout configuration, role/status reporting and recovery instructions. Preserve quota/capacity waits, compaction, checkpoints and legacy attempt evidence; retain deprecated supervisor options as compatibility inputs.
+
+Validation uses prepared local clients only and does not establish live model detection or repair quality.
+
 ## 0.10.8 — 2026-10-24
 
 - Raise the handoff limit to 32 KiB and automatically archive and compact at or above that boundary, including before terminal status checks. Preserve genuine blockers and original evidence.

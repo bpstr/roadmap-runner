@@ -1,0 +1,198 @@
+TAP version 13
+# Roadmap requirements changed; revision 31a7cb3d71d8 will be reconciled by the next worker.
+# Roadmap requirements changed; revision d76106bc0d0f will be reconciled by the next worker.
+# Subtest: progress-file argument and environment are opt-in, with CLI precedence
+ok 1 - progress-file argument and environment are opt-in, with CLI precedence
+  ---
+  duration_ms: 0.755833
+  type: 'test'
+  ...
+# Subtest: default mode preserves the roadmap and creates bounded internal progress state
+ok 2 - default mode preserves the roadmap and creates bounded internal progress state
+  ---
+  duration_ms: 6.117
+  type: 'test'
+  ...
+# Subtest: new nested evidence gets an incomplete scaffold without touching the source
+ok 3 - new nested evidence gets an incomplete scaffold without touching the source
+  ---
+  duration_ms: 3.483667
+  type: 'test'
+  ...
+# Subtest: existing evidence is never truncated or reset by initialization
+ok 4 - existing evidence is never truncated or reset by initialization
+  ---
+  duration_ms: 2.542958
+  type: 'test'
+  ...
+# Subtest: reject source alias: same path
+ok 5 - reject source alias: same path
+  ---
+  duration_ms: 0.671417
+  type: 'test'
+  ...
+# Subtest: reject source alias: normalized path
+ok 6 - reject source alias: normalized path
+  ---
+  duration_ms: 0.652375
+  type: 'test'
+  ...
+# Subtest: reject source alias: symlink
+ok 7 - reject source alias: symlink
+  ---
+  duration_ms: 0.59625
+  type: 'test'
+  ...
+# Subtest: reject source alias: hard link
+ok 8 - reject source alias: hard link
+  ---
+  duration_ms: 0.87725
+  type: 'test'
+  ...
+# Subtest: non-file progress targets are rejected without altering the source
+ok 9 - non-file progress targets are rejected without altering the source
+  ---
+  duration_ms: 0.873167
+  type: 'test'
+  ...
+# Subtest: source edits and deletion are detected without automatic restoration
+ok 10 - source edits and deletion are detected without automatic restoration
+  ---
+  duration_ms: 4.926666
+  type: 'test'
+  ...
+# Subtest: progress replaced with a source alias is rejected at the next boundary
+ok 11 - progress replaced with a source alias is rejected at the next boundary
+  ---
+  duration_ms: 1.968333
+  type: 'test'
+  ...
+# Subtest: prompt keeps literal paths and the latest batching and evidence instructions
+ok 12 - prompt keeps literal paths and the latest batching and evidence instructions
+  ---
+  duration_ms: 0.177833
+  type: 'test'
+  ...
+# Subtest: source/history pollution is rejected before a worker sees it
+ok 13 - source/history pollution is rejected before a worker sees it
+  ---
+  duration_ms: 1.362583
+  type: 'test'
+  ...
+# Subtest: a 256 KiB source is accepted while the progress limits stay smaller
+ok 14 - a 256 KiB source is accepted while the progress limits stay smaller
+  ---
+  duration_ms: 7.713958
+  type: 'test'
+  ...
+# Subtest: a source above 256 KiB is rejected unchanged
+ok 15 - a source above 256 KiB is rejected unchanged
+  ---
+  duration_ms: 1.30025
+  type: 'test'
+  ...
+# Subtest: progress compaction is requested before the hard limit without discarding state
+ok 16 - progress compaction is requested before the hard limit without discarding state
+  ---
+  duration_ms: 2.63775
+  type: 'test'
+  ...
+# Subtest: active progress is capped while archived snapshots preserve prior state
+ok 17 - active progress is capped while archived snapshots preserve prior state
+  ---
+  duration_ms: 2.299583
+  type: 'test'
+  ...
+# Subtest: three iterations update roadmap checkboxes and preserve requirements, ignoring source IN_PROGRESS
+ok 18 - three iterations update roadmap checkboxes and preserve requirements, ignoring source IN_PROGRESS
+  ---
+  duration_ms: 622.156917
+  type: 'test'
+  ...
+# Subtest: three iterations update roadmap checkboxes and preserve requirements, ignoring source COMPLETE
+ok 19 - three iterations update roadmap checkboxes and preserve requirements, ignoring source COMPLETE
+  ---
+  duration_ms: 420.026791
+  type: 'test'
+  ...
+# Subtest: resume skips previously checked tasks and preserves prior delivery evidence
+ok 20 - resume skips previously checked tasks and preserves prior delivery evidence
+  ---
+  duration_ms: 474.657667
+  type: 'test'
+  ...
+# Subtest: stale progress COMPLETE cannot finish with open roadmap tasks
+ok 21 - stale progress COMPLETE cannot finish with open roadmap tasks
+  ---
+  duration_ms: 450.852833
+  type: 'test'
+  ...
+# Subtest: progress BLOCKED dispatches a resolver without ordinary workers
+ok 22 - progress BLOCKED dispatches a resolver without ordinary workers
+  ---
+  duration_ms: 484.613292
+  type: 'test'
+  ...
+# Subtest: conflicting progress statuses fail before launching
+ok 23 - conflicting progress statuses fail before launching
+  ---
+  duration_ms: 120.715667
+  type: 'test'
+  ...
+# Subtest: continue after edit-source, preserving controller edits and prior evidence
+ok 24 - continue after edit-source, preserving controller edits and prior evidence
+  ---
+  duration_ms: 602.090709
+  type: 'test'
+  ...
+# Subtest: continue after edit-capacity, preserving controller edits and prior evidence
+ok 25 - continue after edit-capacity, preserving controller edits and prior evidence
+  ---
+  duration_ms: 1536.775042
+  type: 'test'
+  ...
+# Subtest: stop after delete-source, without another worker or automatic restoration
+ok 26 - stop after delete-source, without another worker or automatic restoration
+  ---
+  duration_ms: 349.016625
+  type: 'test'
+  ...
+# Subtest: stop after delete-progress, without another worker or automatic restoration
+ok 27 - stop after delete-progress, without another worker or automatic restoration
+  ---
+  duration_ms: 399.428292
+  type: 'test'
+  ...
+# Subtest: capacity retry retains progress and source protection
+ok 28 - capacity retry retains progress and source protection
+  ---
+  duration_ms: 1590.094416
+  type: 'test'
+  ...
+# Subtest: a separate compactor reduces a large handoff before implementation
+ok 29 - a separate compactor reduces a large handoff before implementation
+  ---
+  duration_ms: 496.338583
+  type: 'test'
+  ...
+# Subtest: roadmap completion ignores fenced examples and rejects stale handoff completion
+ok 30 - roadmap completion ignores fenced examples and rejects stale handoff completion
+  ---
+  duration_ms: 2.320958
+  type: 'test'
+  ...
+# Subtest: checkbox updates retain the source snapshot without requiring scope reconciliation
+ok 31 - checkbox updates retain the source snapshot without requiring scope reconciliation
+  ---
+  duration_ms: 5.405041
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7650.022958

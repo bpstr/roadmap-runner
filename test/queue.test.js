@@ -24,21 +24,17 @@ import fs from 'node:fs';
 const prompt = process.argv.at(-1);
 const source = JSON.parse(prompt.match(/^Live roadmap[^:]*: (.+)$/m)[1]);
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
-if (prompt.includes('Runner role: SUPERVISOR') && fs.existsSync(source + '.loop')) {
-  const evidence = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
-  fs.writeFileSync(source + '.reviewdir', new URL('.', 'file://' + evidence).pathname);
-  const records = JSON.parse(fs.readFileSync(evidence)).records;
-  const id = prompt.match(/^Review ID: (.+)$/m)[1];
-  fs.appendFileSync(progress, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nLoop: DETECTED\\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\\nLoop attempt: Recheck the missing dependency.\\nLoop failure: The dependency is unavailable.\\nLoop unchanged inputs: The dependency receipt and relevant implementation are unchanged.\\nLoop evidence: Repeated blocked dependency, no progress.\\n');
-  process.exit(0);
+if (prompt.includes('Runner role: RESOLVER')) {
+  fs.writeFileSync(progress, 'Status: STOPPED\\n## Current handoff\\nDependency unavailable.\\n'); process.exit(0);
 }
 fs.appendFileSync(source + '.started', progress + '\\n');
 if (fs.existsSync(source + '.fail')) process.exit(7);
+if (fs.existsSync(source + '.loop') && fs.readFileSync(source + '.started', 'utf8').trim().split('\\n').length >= 3) { fs.writeFileSync(progress, 'Status: BLOCKED\\n'); process.exit(0); }
 if (fs.existsSync(source + '.stall')) {
   fs.writeFileSync(progress, 'Status: IN_PROGRESS\\n## Tasks\\n- [ ] T01 build\\n## Current handoff\\nStill waiting ' + Date.now() + '\\n');
   process.exit(0);
 }
-if (fs.existsSync(source + '.blocked')) fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace('IN_PROGRESS', 'BLOCKED'));
+if (fs.existsSync(source + '.blocked')) { fs.writeFileSync(progress, 'Status: BLOCKED\\n'); process.exit(0); }
 const timer = setInterval(() => {
   if (!fs.existsSync(source + '.release')) return;
   fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('- [ ] Implement fixture', '- [x] Implement fixture'));
@@ -77,7 +73,7 @@ test('queued roadmaps advance in FIFO order, preserve separate progress, and kee
   const active = await f.manager.status(run.id); assert.equal(active.roadmap, fs.realpathSync(second)); assert.equal(active.queueIndex, 1); assert.equal(active.roadmapState, 'in_progress');
   await assert.rejects(f.start([]), /reserved/);
   f.release(second); await wait(() => f.started(third)); f.release(third);
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
   assert.equal(final.exitCode, 0); assert.equal(final.reason, 'complete');
   assert.deepEqual(final.queue.map(item => item.state), ['complete', 'complete', 'complete']);
   assert.equal(final.events.filter(event => event.type === 'runner.completed').length, 1);
@@ -97,7 +93,7 @@ test('macOS sleep prevention spans queue handoff and releases at completion', { 
   f.release(first); await wait(() => f.started(second));
   assert.equal((await f.manager.status(run.id)).sleepInhibition.state, 'active');
   f.release(second);
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
   assert.equal(final.sleepInhibition.state, 'released');
 });
 
@@ -123,13 +119,10 @@ test('a blocked or failed roadmap never starts the next queued roadmap', async t
   for (const mode of ['blocked', 'fail']) {
     const f = fixture(t); const [first, second] = f.roadmaps; fs.writeFileSync(first + '.' + mode, '');
     const run = await f.start([{ roadmap: second }]); await wait(() => f.started(first));
-    if (mode === 'blocked') {
-      await wait(() => fs.readFileSync(run.progressFile, 'utf8').includes('BLOCKED')); await f.manager.stop(run.id);
-    }
     const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
     assert.equal(f.started(second), false); assert.equal(final.queue[1].state, 'pending');
-    assert.equal(final.queue[0].state, mode === 'blocked' ? 'stopped' : 'failed');
-    assert.equal(final.exitCode, mode === 'blocked' ? 130 : 7);
+    assert.equal(final.queue[0].state, 'stopped');
+    assert.equal(final.exitCode, 75);
   }
 });
 
@@ -156,7 +149,7 @@ test('a queued source removed before handoff fails the run and preserves later e
   const f = fixture(t); const [first, second, third] = f.roadmaps;
   const run = await f.start([{ roadmap: second }, { roadmap: third }]);
   fs.rmSync(second); f.release(first);
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
   assert.equal(final.exitCode, 1); assert.equal(final.queue[1].state, 'failed'); assert.equal(final.queue[2].state, 'pending');
   assert.equal(f.started(third), false);
 });
@@ -173,32 +166,31 @@ test('LLM loop detection blocks managed execution and leaves queued work pending
   } finally {
     if (previous === undefined) delete process.env.ROADMAP_RECOVERY_DELAY; else process.env.ROADMAP_RECOVERY_DELAY = previous;
   }
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
-  assert.equal(final.exitCode, 75, final.output || final.reason); assert.equal(final.roadmapState, 'blocked');
-  assert.deepEqual(final.queue.map(item => item.state), ['blocked', 'pending']);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
+  assert.equal(final.exitCode, 75, final.output || final.reason); assert.equal(final.roadmapState, 'stopped');
+  assert.deepEqual(final.queue.map(item => item.state), ['stopped', 'pending']);
   assert.equal(f.started(second), false);
-  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 2);
-  assert.ok(final.events.some(e => e.type === 'runner.blocked' && e.terminal && e.reason === 'loop_detected'));
+  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
+  assert.ok(final.events.some(e => e.type === 'runner.blocked' && !e.terminal));
 });
 
 
-test('fully blocked managed runs stop once, retain blocked status, and leave the queue pending', async t => {
+test('fully blocked managed runs stop once, retain stopped status, and leave the queue pending', async t => {
   const f = fixture(t); const [first, second] = f.roadmaps;
   fs.writeFileSync(f.worker, String.raw`#!/usr/bin/env node
 import fs from 'node:fs';
 const prompt = process.argv.at(-1);
 const progress = prompt.split('Tracking file (progress / delivery evidence):')[1].trim().split('\n')[0];
-fs.appendFileSync('attempts', 'worker\n');
+fs.appendFileSync('attempts', prompt.includes('Runner role: RESOLVER') ? 'resolver\n' : 'worker\n');
 fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Deferred gates\n- BLOCKED T01: native input | Unblock: supplied | Retry: input changed\n');
 `);
   const run = await f.start([{ roadmap: second }]);
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
-  assert.equal(final.exitCode, 75); assert.equal(final.reason, 'blocked');
-  assert.equal(final.roadmapState, 'blocked');
-  assert.deepEqual(final.queue.map(item => item.state), ['blocked', 'pending']);
-  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\n');
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
+  assert.equal(final.exitCode, 75); assert.equal(final.reason, 'stopped');
+  assert.equal(final.roadmapState, 'stopped');
+  assert.deepEqual(final.queue.map(item => item.state), ['stopped', 'pending']);
+  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\nresolver\n');
   assert.equal(f.started(second), false);
-  assert.equal(final.events.at(-1).type, 'runner.blocked');
-  assert.equal(final.events.at(-1).terminal, true);
+  assert.equal(final.events.at(-1).type, 'runner.stopped');
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });

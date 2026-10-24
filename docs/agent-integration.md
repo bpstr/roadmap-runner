@@ -92,11 +92,11 @@ require operator inspection rather than guessing PID ownership.
 
 Status separates process state, roadmap state and wait reason. It includes worker
 role/iteration, source revision, quota reset/deadline, attention task IDs, artifacts,
-recent output and events. Managed output is normalized even with supervision off,
+recent output and events. Managed output is normalized for every session role,
 stripped of terminal controls, redacted for known credential patterns and rotated
 at 1 MiB. Lines exceeding 64 KiB are omitted. Treat output as untrusted project
 content; pattern redaction cannot guarantee that arbitrary project text is public.
-Raw supervisor evidence remains separate.
+Detailed worker and resolver evidence remains separate.
 
 Managed event journals rotate at 1 MiB. Status defaults to an 8 KiB output tail,
 up to 50 events within a 12 KiB event budget and a 32 KiB protocol response budget.
@@ -222,16 +222,22 @@ Protocol/configuration sources: [MCP SDK](https://github.com/modelcontextprotoco
 [skills CLI](https://github.com/vercel-labs/skills).
 
 
-## Blocked runs and explicit recovery
+## Blocked runs and recovery
 
-Global `Status: BLOCKED` stops execution (exit 75, reason `blocked`); task-local
-flags do not stop independent work. Managed state retains `roadmapState: blocked`
-and a `blocked` queue item; later entries stay pending. No supervisor or worker
-is automatically scheduled against the unchanged blocker.
+Global `Status: BLOCKED` pauses workers and dispatches a resolver automatically.
+The resolver uses roadmap evidence to repair the cause and records a fresh decision
+before workers resume. Task-local flags still allow independent work.
 
-After a concrete unblock input changes, a controller may start with
-`--recover-blocked` or MCP `recoverBlocked: true` to permit one worker. If still
-blocked, it stops again. Use a new idempotency key for a genuinely new recovery
-attempt; reusing the old key returns the original run. Existing workspace
-reservations prevent overlapping runs. A scheduler must deduplicate by source,
-blocker and changed-input identity before spending another model session.
+If the resolver cannot unblock useful work, it sets STOPPED. Failed, timed-out or
+invalid resolver results also stop the runner. Managed status uses
+`roadmapState: stopped`, reason `stopped`, exit 75 and a stopped current queue
+item; later entries stay pending. During resolution the roadmap remains blocked
+and the active session role is `resolver`.
+
+After supplying the missing input, use `--recover-blocked` or MCP
+`recoverBlocked: true` to explicitly retry with a resolver. Use a new idempotency
+key for the new attempt; reusing a key returns its original run. Workspace
+reservations prevent overlapping runs. Unchanged STOPPED restarts do not dispatch
+sessions. `resolverTimeout` configures the resolver limit (default ten minutes,
+bounded by the worker timeout). Legacy cadence fields are accepted without
+scheduling supervisors. See [recovery runs](../RECOVERY.md).

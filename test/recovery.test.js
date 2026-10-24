@@ -136,6 +136,15 @@ const fs = require('node:fs');
 const prompt = process.argv.at(-1);
 const source = ${JSON.stringify(f.config.roadmap)};
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
+if (prompt.includes('Runner role: RESOLVER')) {
+  const supplied = fs.existsSync('recovery-input');
+  if (supplied) fs.unlinkSync('recovery-input');
+  fs.writeFileSync(progress, 'Status: ' + (supplied ? 'IN_PROGRESS' : 'STOPPED') + '\\n## Current handoff\\n');
+  fs.writeFileSync(JSON.parse(prompt.match(/^Resolution decision file: (.+)$/m)[1]), JSON.stringify({
+    resolutionId: prompt.match(/^Resolution ID: (.+)$/m)[1], outcome: supplied ? 'resolved' : 'stopped',
+    evidence: 'Prepared input check', nextAction: 'Resume or supply input' }));
+  process.exit(0);
+}
 const count = fs.existsSync('count') ? Number(fs.readFileSync('count')) + 1 : 1;
 fs.writeFileSync('count', String(count));
 if (count === 1) {
@@ -192,7 +201,7 @@ test("weekly CLI quota expires at the configured ceiling without another provide
   assert.equal(f.events().at(-1).type, "runner.failed");
 });
 
-test("blocked CLI emits notification and stops before a repeated worker", t => {
+test("blocked CLI emits notification and unresolved recovery stops before a repeated worker", t => {
   const f = cliFixture(t, "codex", "blocked");
   const hook = path.join(f.dir, "notify.cjs");
   fs.writeFileSync(hook, "#!/usr/bin/env node\nlet input=''; process.stdin.on('data', c => input+=c); process.stdin.on('end', () => { require('node:fs').appendFileSync('notifications', JSON.parse(input).type + '\\n'); process.exitCode=1; });\n");
@@ -202,8 +211,7 @@ test("blocked CLI emits notification and stops before a repeated worker", t => {
   assert.equal(result.status, 75, result.stderr);
   assert.equal(fs.existsSync(path.join(f.dir, "independent-built")), false);
   assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
-  assert.equal(f.events().at(-1).type, "runner.blocked");
-  assert.equal(f.events().at(-1).terminal, true);
+  assert.equal(f.events().at(-1).type, "runner.stopped");
   assert.match(fs.readFileSync(path.join(f.dir, "notifications"), "utf8"), /runner.blocked/);
 });
 
@@ -225,20 +233,21 @@ test("SIGINT during a real quota wait exits promptly and keeps state for restart
 });
 
 
-test("explicit blocked recovery runs one worker and stops again if unchanged", t => {
+test("explicit blocked recovery dispatches a resolver and stops if unchanged", t => {
   const f = cliFixture(t, "codex", "blocked");
   fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
   const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
   assert.equal(result.status, 75, result.stderr);
-  assert.equal(fs.readFileSync(path.join(f.dir, "count"), "utf8"), "1");
-  assert.equal(f.events().at(-1).type, "runner.blocked");
+  assert.equal(fs.existsSync(path.join(f.dir, "count")), false);
+  assert.equal(f.events().at(-1).type, "runner.stopped");
 });
 
 test("explicit recovery can continue after the changed input resolves the blocker", t => {
   const f = cliFixture(t, "codex", "blocked");
   fs.writeFileSync(f.config.tracking.file, "Status: BLOCKED\n## Tasks\n- [ ] A build\n");
   fs.writeFileSync(path.join(f.dir, "count"), "1"); // Prepared changed-input recovery branch.
+  fs.writeFileSync(path.join(f.dir, "recovery-input"), "supplied");
   const result = spawnSync(process.execPath, [...f.args, '--recover-blocked'], f.options);
-  assert.equal(result.status, 9, result.stderr); // Fixture deliberately ends independent work.
+  assert.equal(result.status, 75, result.stderr); // Failed independent work dispatches a resolver, which then stops.
   assert.ok(fs.existsSync(path.join(f.dir, "independent-built")));
 });

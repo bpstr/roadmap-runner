@@ -1,0 +1,77 @@
+{
+  "version": "0.11.0",
+  "scope": "Replace scheduled supervision with worker loop checks and blocker resolver sessions",
+  "transport": "Prepared local CLI clients only; no provider calls or credentials",
+  "plan": [
+    "Build TypeScript and run recovery-runs plus context-budget selectors for the new state transitions and compaction ordering",
+    "Run affected recovery, runner/status, execution, queue and managed/MCP tests after adapting retired supervisor assertions",
+    "Check package contents and documentation references; retain unrelated passing evidence without repeating the full suite"
+  ],
+  "completion": "Selected affected checks pass; resolver stop persists and preserves queue; package includes recovery prompts and no regular supervisor",
+  "results": {
+    "build": {
+      "status": "passed",
+      "log": "build-3.log"
+    },
+    "affected_batch": {
+      "tests": 144,
+      "passed": 137,
+      "failed": 7,
+      "log": "affected.log",
+      "full_suite": false
+    },
+    "failed_selector_repairs": {
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "log": "repaired-selectors.log"
+    },
+    "progress_file_repair": {
+      "tests": 31,
+      "passed": 31,
+      "failed": 0,
+      "log": "progress-2.log",
+      "replaces": "One test-file parse failure from affected.log"
+    },
+    "recovery_after_startup_and_decision_changes": {
+      "tests": 20,
+      "passed": 19,
+      "failed": 1,
+      "log": "recovery-final.log"
+    },
+    "worker_timeout_selector": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "log": "worker-timeout-2.log",
+      "repair": "Assert controller session roles rather than child writes before a hard deadline; use one-second prepared timeout"
+    },
+    "finite_recovery_selector": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "log": "finite-recovery.log"
+    },
+    "package": {
+      "status": "passed",
+      "version": "0.11.0",
+      "files": 66,
+      "packed_bytes": 130320,
+      "log": "package-final.log",
+      "checks": [
+        "version/help",
+        "resolver prompt and documentation included",
+        "retired supervisor files absent"
+      ]
+    }
+  },
+  "retained_evidence": "Reuse compatible passing affected tests from affected.log. Rerun only the six repaired selectors, previously unloaded progress file, recovery paths affected by STOPPED startup/decision-file changes, and new finite recovery case. No full-suite run.",
+  "failure_record": "Original failures retained. Retired supervisor assertions, stopped process-state waits, an over-broad fixture insertion, JSON undefined comparison and child startup timing were corrected; prepared tests do not establish provider quality.",
+  "current_unique_affected_tests": 177,
+  "completion_status": "passed",
+  "process_hygiene": "No browsers or temporary servers started. Existing Assign Vite server preserved. Prepared child processes cleaned up by runner/test teardown.",
+  "disk": {
+    "free_gib_at_check": 38.4,
+    "session_artifacts": "Build output 192 KiB; local logs and release evidence under 1 MiB. No large disposable artifacts created; no broad cleanup performed."
+  }
+}

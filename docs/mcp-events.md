@@ -20,19 +20,19 @@ This is a local executable interface; remote delivery is the hook's responsibili
 
 | Event | Meaning |
 | --- | --- |
-| `runner.turn_starting` | Worker, supervisor or compactor starts; includes `sessionId` and initial `contextBytes` |
+| `runner.turn_starting` | Worker, resolver or compactor starts; includes `sessionId` and initial `contextBytes` |
 | `runner.checkpoint_requested` | Soft deadline archived the handoff and requested an exact resumable checkpoint |
 | `runner.progress_observed` | Source-verified finite implementation delivered; acceptance checkboxes may remain open |
 | `runner.turn_finished` | Session result, elapsed time, model attribution, reported usage and before/after context-file sizes |
-| `runner.blocked` | Global BLOCKED or confirmed failed-attempt loop; exit 75, pending queue preserved |
+| `runner.blocked` | Global blocker pauses workers and dispatches a resolver; terminal is false |
 | `runner.needs_attention` | Task blocked, skipped, problematic or needs an answer while other work can continue |
 | `runner.unblocked` | Previously flagged attention cleared |
-| `runner.stuck` | Current supervisor STUCK report; attention alert deduplicated until a healthy review |
-| `runner.progress_resumed` | Current supervisor HEALTHY report clears stuck notification deduplication |
-| `runner.usage_paused` | Worker/supervisor quota rejected; checkpoint saved |
+| `runner.stuck` | Legacy event retained for replay compatibility |
+| `runner.progress_resumed` | Legacy event retained for replay compatibility |
+| `runner.usage_paused` | Worker/resolver quota rejected; checkpoint saved |
 | `runner.usage_resumed` | Reset wait ended; next session may run |
 | `runner.usage_wait_expired` | Incident wait ceiling reached; exit 75 |
-| `runner.supervisor_deferred` | Timed-out/incomplete review preserved; worker continues |
+| `runner.supervisor_deferred` | Legacy event retained for replay compatibility |
 | `runner.failed` | Worker CLI failure; partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |
 | `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |
@@ -42,7 +42,7 @@ Managed run journals keep event sequences increasing across roadmap handoffs.
 Each roadmap's progress-local journal retains its own sequence and completion
 event. Use the managed run journal when monitoring the whole queue.
 
-Session roles are `worker`, `supervisor` and `compactor`. Compactors use the last
+Session roles are `worker`, `resolver` and `compactor`. Compactors use the last
 worker iteration number (zero before the first worker) and a unique `sessionId`.
 Each attempt also has a durable row in the tracking directory's `sessions.jsonl`;
 managed artifacts expose it as `sessions`, and detailed evidence as `evidence`.
@@ -134,26 +134,22 @@ Assign MCP search (which did not contain these script resources):
 
 - `assign-infra/scripts/claude-roadmap-runner.py`: structured rejected-limit events, explicit zoned reset clocks, durable limit metadata.
 - `claude-assign-todo-loop.py`: keep externally blocked and failed-check task sets, inspect the next task and preserve incomplete task state.
-- `codex-roadmap-loop.sh`: capacity backoff and signal handling; global BLOCKED stops this runner too; explicit recovery is a separate action.
+- `codex-roadmap-loop.sh`: capacity backoff and signal handling; global BLOCKED dispatches a resolver; STOPPED ends the runner.
 
 No Assign data was modified. No live model or notification was dispatched during validation.
 
-There is no checkbox-count or workspace-fingerprint stop. The former
-`no_progress_limit` condition and idle-budget settings are retired. Enabled
-supervision compares attempts at the configured worker interval, even when source
-hashes change. Recent attempt evidence and cadence persist across restarts.
+There is no checkbox-count or workspace-fingerprint stop. Workers compare prior
+attempts and handoff evidence before starting work. Repetitive failed operations
+with unchanged relevant inputs require BLOCKED and a resolver.
 
-Global `BLOCKED` emits a terminal `runner.blocked` event and exits 75 with reason
-`blocked`; it does not emit `runner.failed`. Managed state and queue items retain
-blocked status. `recoverBlocked: true` starts one explicitly requested recovery
-worker after changed inputs; remaining blocked stops again without polling.
+Global BLOCKED emits `runner.blocked` with `terminal: false`, followed by
+`runner.turn_starting` with `role: "resolver"`. Managed roadmap state remains
+blocked during resolution. A valid repair emits `runner.unblocked` with the
+resolution ID and decision-file pointer; workers continue. An unresolved, failed,
+timed-out or invalid resolver emits `runner.stopped`, ends with exit 75/reason
+`stopped`, and leaves later queue entries pending. STOPPED persists across restart;
+`recoverBlocked: true` explicitly retries with a resolver. Ctrl-C still exits 130.
 
-A current supervisor `Loop: DETECTED` verdict also blocks execution, requiring
-at least two observed worker iterations, the repeated attempt and failure, unchanged
-relevant inputs, and concrete receipts. The terminal
-`runner.blocked` event carries `reason: "loop_detected"`, `loopIterations` and a
-bounded `loopEvidence`, `loopAttempt`, `loopFailure` and `loopUnchangedInputs` summaries. Managed execution exits 75, marks the current queue
-item blocked and preserves later entries as pending. An unchanged restart remains
-blocked without a model call; changed requirements or explicit `recoverBlocked`
-permit recovery. Missing, invalid or uncertain loop reports permit continuation. Supervision disabled
-with `--supervisor-every 0` also disables retry-loop detection.
+Quota and capacity retries retain the pending session role and bounded waits.
+Regular supervisor dispatches are removed; historical supervisor events remain
+readable. See [recovery runs](../RECOVERY.md) for the resolver decision contract.

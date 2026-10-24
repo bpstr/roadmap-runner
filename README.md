@@ -37,7 +37,7 @@ This installs:
 roadmap-runner
 ```
 
-There is one Node CLI implementation with versioned worker (`prompt.md`) and supervisor (`supervisor.md`) prompts, so installed copies can be refreshed with the same npm command.
+There is one Node CLI implementation with versioned worker (`prompt.md`) and resolver (`resolver.md`) prompts, so installed copies can be refreshed with the same npm command.
 
 The README cover is a small WebP tracked in `docs/assets/` so it stays with the repository. It is excluded from the npm package by the `files` allowlist. The banner uses an absolute GitHub URL so it also renders on npm, and registry installations download only the package tarball without the artwork or a Git checkout.
 
@@ -71,7 +71,7 @@ The agent should start a managed run, retain its run ID, and create an hourly
 monitor through the host's scheduler. Each check should read the run's status and
 progress, report meaningful changes or required input, and end monitoring when the
 run completes or stops. Hourly monitoring needs a separate host schedule; runner
-supervisor checkpoints occur between worker batches. See [agent integration](docs/agent-integration.md)
+blocker recovery runs occur between worker batches. See [agent integration](docs/agent-integration.md)
 for other supported apps and setup details.
 
 After the host creates the hourly monitor, check its saved Codex registration with
@@ -131,13 +131,12 @@ command, then exit. Noninteractive clients must follow that prompt; the request
 file does not itself send a new chat message. Hard termination sends SIGTERM,
 then escalates after three seconds and verifies descendant cleanup.
 
-Repeated timeouts or unsuccessful finite batches request a corrective review.
-The review compares actual implementation, verification receipts and handoffs;
-checkbox completion and attempt counts do not establish progress or a loop.
-Productive partial work continues. Only an evidenced unchanged failed retry, a
-global BLOCKED outcome or an explicitly exhausted finite plan stops execution.
-Use `--recover-blocked` after repairing a recorded blocker. Codex token limits and
-the configured hard timeout remain unchanged.
+Workers check prior attempts and the handoff before choosing work. Repeated
+failures with unchanged relevant inputs set BLOCKED. A global blocker, failed
+worker, two consecutive hard timeouts or exhausted finite plan dispatches a
+resolver. The resolver repairs the cause and resumes workers, or records STOPPED
+and ends the runner. Useful partial work continues without periodic supervisors.
+See [recovery runs](RECOVERY.md) for the decision contract and restart behavior.
 
 ### Finite implementation plans
 
@@ -155,7 +154,7 @@ contains `{path, sha256}` records that must still match. Paths are workspace-rel
 ```sh
 roadmap-runner start docs/owning-roadmap.md --execution-plan docs/progress.md \
   --progress-file .roadmap-runner/current/progress.md --timeout 45m \
-  --supervisor-every 2 --supervisor-timeout 10m
+  --resolver-timeout 10m
 ```
 
 The controller selects actual owning roadmaps across dependencies, rotates ready
@@ -209,7 +208,7 @@ roadmap-runner queue <run-id> docs/third.md --json
 ```
 
 The next roadmap starts automatically after the current roadmap completes
-successfully. All entries use the same workspace, client, model and supervisor
+successfully. All entries use the same workspace, client, model and resolver
 settings. Each roadmap has a separate progress file and history; `--progress-file`
 on start applies to the first roadmap. The queue command accepts its own
 `--progress-file` for the appended roadmap.
@@ -282,30 +281,21 @@ tests are POSIX-only.
 
 Unexpected client failures stop the runner rather than retrying forever.
 
-## Supervisor checkpoints
+## Recovery runs
 
-By default, a fresh supervisor reviews progress after every five successful or
-timed-out worker sessions, before another worker starts. Capacity-only and quota-only
-attempts are excluded. Completed roadmaps stop; globally blocked roadmaps require explicit recovery.
-Pending requirement reconciliation is reviewed at the normal cadence and remains
-a worker obligation. Delivery-only notes do not change that cadence.
+Every worker begins with a loop check against recent runs and the current handoff.
+An evidenced repetition blocks the runner and dispatches a resolver. The resolver
+uses roadmap evidence to repair the blocker, records the changed condition and
+next action, and clears the way for more workers. When it cannot unblock useful
+work, it sets STOPPED and ends the entire runner, leaving queued work pending.
 
 ```sh
-roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md \
-  --supervisor-every 5 --supervisor-timeout 10m
-# Disable this extra review session:
-roadmap-runner docs/roadmap.md --supervisor-every 0
+roadmap-runner docs/roadmap.md --resolver-timeout 10m
 ```
 
-The supervisor compares bounded run outputs and progress snapshots with actual
-delivery evidence. It diagnoses healthy, slow, stuck or uncertain progress and
-may adjust the next batch's target, order or prerequisite work—not original
-requirements or acceptance criteria. The next worker consumes the review from
-the tracking file. Workers maintain roadmap task states; supervisors flag state/evidence discrepancies without checking implementation tasks.
-
-See [periodic supervision](SUPERVISION.md) for cadence/restart semantics, the
-review contract, output retention/privacy and failure behavior. Reviews reuse
-the selected CLI/model and add inference work; log files are not redacted.
+Recovery is automatic for global blockers. Regular supervisors are removed.
+See [recovery runs](RECOVERY.md) for persisted evidence, resolver decisions,
+transport retries and explicit recovery after STOPPED.
 
 ## Roadmap progress tracking
 
@@ -324,19 +314,19 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
   sessions.jsonl                # usage receipts and context sizes; cold history
 ```
 
-`progress.md` holds current work, blockers, next steps, the latest supervisor target
+`progress.md` holds current work, blockers, next steps, the latest recovery decision
 and short evidence pointers. Its limit is **below 32 KiB** (32768 UTF-8 bytes).
 At or above **32 KiB**, the runner
 archives the original and starts a separate compaction session before the next
-worker or supervisor. The compactor moves detailed evidence to files by task ID or
+worker or resolver. The compactor moves detailed evidence to files by task ID or
 links to specific archived snapshots, preserving unresolved obligations and prior
 validation. It must leave the status unchanged and reduce the handoff below 32 KiB.
-Every worker, supervisor and compactor receives the limits and instructions to move
+Every worker, resolver and compactor receives the limits and instructions to move
 details into referenced evidence files. Handoff size alone is not a reason to set
 BLOCKED. Compaction runs before terminal status checks, preserving genuine blockers.
 If it fails that check, the runner stops with the original archive preserved.
-Compaction does not count as an implementation iteration or supervisor review.
-It uses the shorter of the worker and supervisor timeouts; an expired compaction
+Compaction does not count as an implementation iteration.
+It uses the shorter of the worker and resolver timeouts; an expired compaction
 stops the run with its original snapshot available for recovery.
 
 Existing large handoffs receive the same compaction step on their next run. The
@@ -345,16 +335,16 @@ repair. No requirements are automatically truncated, and no Codex token-window,
 tool-output or auto-compaction settings are changed.
 
 `history/*.md.gz` preserves full boundary snapshots outside the default model
-context. `history.jsonl` is a runner-owned index. Workers and supervisors must not
+context. `history.jsonl` is a runner-owned index. Workers and resolvers must not
 bulk-load history merely to reconstruct chronology; they retrieve a specific older
 snapshot only when current evidence requires it.
 
-Workers and supervisors can retrieve files in `evidence/` or search `history.jsonl`
+Workers and resolvers can retrieve files in `evidence/` or search `history.jsonl`
 by iteration/time and decompress the selected `.md.gz` snapshot. This supports gate
 verification, conflicting-state investigation and failed-attempt diagnosis without
 reloading completed-task narratives on every iteration.
 
-`sessions.jsonl` records each worker, supervisor and compactor attempt, including
+`sessions.jsonl` records each worker, resolver and compactor attempt, including
 failed attempts: session/run IDs, role, iteration, elapsed time, configured or
 client-reported model, and prompt/source/progress byte sizes before and after.
 Codex completed-turn usage and Claude aggregate-result usage are retained as
@@ -377,8 +367,7 @@ API-02.4: verified; detailed receipt in evidence/API-02.4.md.
 Only prose inside valid, standalone blocks is excluded from scope reconciliation.
 Keep criteria, priorities, dependencies and all task checkboxes outside them.
 Malformed blocks, fenced examples and blocks containing checkboxes remain
-scope-sensitive. Delivery-only updates can therefore preserve the supervisor
-cadence; genuine requirements changes still require worker reconciliation.
+scope-sensitive. Delivery-only updates can therefore preserve compatible attempt evidence; genuine requirements changes still require worker reconciliation.
 Split large roadmaps into focused queue items rather than accumulating delivery
 history in their requirements.
 
@@ -393,7 +382,7 @@ The accepted worker prompt is stored separately in `prompt.md` and asks the work
 - one top-level status.
 
 It explicitly forbids append-only iteration narratives, copied diffs, raw CLI/test
-logs, repeated old handoffs and superseded supervisor plans in the active progress
+logs, repeated old handoffs and superseded recovery plans in the active progress
 file. At every iteration it reads the current fixed source snapshot; when progress
 state conflicts with source scope or acceptance criteria, the source wins.
 
@@ -424,27 +413,22 @@ session, the worker may set:
 Status: BLOCKED
 ```
 
-`BLOCKED` is a terminal execution state: the runner preserves progress and stops
-with exit 75 and reason `blocked`, without launching another worker or supervisor.
-Use it only when no authorized work remains ready. A task-local blocker belongs in
-Deferred gates while independent work continues under `IN_PROGRESS`.
+`BLOCKED` pauses workers and automatically dispatches a resolver. Use it when
+no authorized work remains ready or a repeated failed attempt needs intervention.
+Task-local blockers belong in Deferred gates while independent work continues.
+A successful resolver clears the cause, records evidence and resumes workers.
+An unresolved blocker becomes `Status: STOPPED`, ending the runner with exit 75
+and reason `stopped`. Later queue entries remain pending.
 
-After a recorded unblock input changes, request one recovery worker explicitly:
+After supplying the missing input, explicitly retry the stopped recovery:
 
 ```sh
 roadmap-runner start roadmap.md --recover-blocked --json
 ```
 
-MCP uses `recoverBlocked: true`. If that worker remains blocked, the run stops
-again; the option never starts an automatic recovery loop. A required verification
-worker after an interrupted/quota session, or a changed source revision requiring
-reconciliation, may still inspect stale terminal state before trusting it.
-
-Completion remains an agent assertion: the runner reads the header status, not
-independent proof of every acceptance criterion. The three-iteration mock test
-verifies orchestration, not a live model's compliance with the prompt.
-
-Resolve the recorded external blocker, return the progress file to `Status: IN_PROGRESS`, and start the same command again.
+MCP uses `recoverBlocked: true`. This dispatches a resolver. Restarting without
+that option preserves STOPPED and makes no new agent call. Completion and loop
+assessment remain agent assertions; prepared tests verify orchestration.
 
 ## Choose a custom progress path
 
@@ -475,13 +459,11 @@ being truncated or reset. Restart with the same roadmap/path to resume. The same
 32 KiB compaction trigger and 128 KiB emergency limit apply to custom
 progress files.
 
-The progress file's opening-header status controls continuation when no source
-revision needs reconciliation: `COMPLETE` exits successfully and `BLOCKED` stops
-with exit 75; `--recover-blocked` explicitly permits one recovery worker. An interrupted, failed, capacity-only or quota-only session also requires a fresh
-worker to verify any terminal status it left before trusting completion. The roadmap's
-open checkboxes prevent completion even if the handoff says COMPLETE. The same
-header format rules apply. To unblock work,
-update the progress file; controller changes to the source trigger reconciliation instead.
+The progress file's opening-header status controls continuation: COMPLETE exits
+successfully after pending reconciliation and worker verification; BLOCKED
+dispatches a resolver; STOPPED ends the runner. Open roadmap checkboxes prevent
+completion. Interrupted, capacity-only and quota-only sessions still require a
+successful worker before trusting their completion claims.
 
 The runner rejects a progress path that resolves to the source itself, including
 symlink/hard-link aliases. Missing, unreadable, non-file or oversized sources still
@@ -493,22 +475,20 @@ stop explicitly without restoring files. Ordinary roadmap content edits do not.
 drift, revise priorities, add requirements or remove superseded work in the live
 source file while execution continues. No flag, watcher, daemon or new API is needed.
 
-The active worker or supervisor keeps its fixed, runner-owned source snapshot.
+The active worker or resolver keeps its fixed, runner-owned source snapshot.
 Once that session ends, the runner checks the live roadmap again, records its new
 SHA-256 revision, and tells the next worker to reconcile the latest requirements
 before selecting work. Multiple edits between boundaries coalesce to the latest
 published contents. The next worker preserves valid evidence and stable IDs,
 reopens changed criteria, adds new gates, retires removed gates from active work,
-and replaces drifted handoffs and outdated supervisor targets.
+and replaces drifted handoffs and outdated recovery decisions.
 
 Old `COMPLETE` state cannot stop the loop while reconciliation is pending.
-`BLOCKED` stops execution after any required source reconciliation. A fresh worker takes precedence over a scheduled review; a review based
-on superseded requirements cannot stop the new revision with stale status or a
-missing handoff. Pending reconciliation clears only after a successful worker
-session on that same revision. Timeouts, capacity failures, cancellation and old
-sessions cannot acknowledge a newer revision. The worker must set status anew;
-completion and semantic reconciliation remain agent assertions, not independently
-verified proofs.
+A global BLOCKED state dispatches a resolver against current roadmap evidence.
+Pending reconciliation clears only after a successful worker on that revision.
+Timeouts, capacity failures, cancellation and old sessions cannot acknowledge a
+newer revision. Resolver decisions preserve the pending worker verification.
+
 
 Revision metadata is bound to both source and progress paths and survives restarts.
 An edit between invocations therefore reopens old terminal state on the next launch.
@@ -534,7 +514,7 @@ The runner does not merge competing file writes, wait forever after completion,
 or restart an already exited process when a later edit arrives. Run the same command
 again in that case; persisted revision checks handle the changed requirements.
 
-Worker and built-in supervisor prompts still forbid source edits, weakened criteria
+Worker and built-in resolver prompts still forbid source edits, weakened criteria
 and expanded permissions/budgets. The boundary check cannot identify who wrote an
 edit and does not reject content merely because its author is unknown. This is
 **not an OS write sandbox**: approval-free clients retain their filesystem access.
@@ -570,8 +550,10 @@ roadmap-runner <roadmap-file> [options]
 --client <name>        codex, claude, gemini, grok, kimi, muse
 --progress-file <path> override bounded progress-state path; workers never edit source
 --timeout <duration>   default: 90m
---supervisor-every <n>  review every n workers (1-20); default 5, 0 disables
---supervisor-timeout <duration> review timeout; default 10m
+--resolver-timeout <duration> blocker recovery limit; default 10m
+--recover-blocked     explicitly retry a stopped recovery
+--supervisor-every <n> deprecated; no scheduled reviews
+--supervisor-timeout <duration> deprecated resolver-timeout alias
 --model <model>        optional model override
 --effort <level>       optional Codex reasoning effort override
 --client-bin <path>    override selected client executable
@@ -588,8 +570,7 @@ Environment equivalents:
 ```text
 ROADMAP_CLIENT
 ROADMAP_PROGRESS_FILE
-ROADMAP_SUPERVISOR_EVERY
-ROADMAP_SUPERVISOR_TIMEOUT
+ROADMAP_RESOLVER_TIMEOUT
 ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
@@ -773,7 +754,7 @@ The runner preserves progress and writes `<progress-file>.recovery.json` before
 waiting. A short/session limit without a usable reset uses five hours; an unknown
 weekly limit uses the one-day bound. At a known reset within the allowed wait, it
 starts a fresh session with the same configured client/model. The process remains
-running while paused. Worker and supervisor sessions share the incident deadline.
+running while paused. Worker and resolver sessions share the incident deadline.
 A successful non-quota session clears that incident.
 
 The default maximum is **24 hours per consecutive quota incident**, including
@@ -805,34 +786,16 @@ A skipped item remains incomplete and cannot unlock its dependent tasks. The
 runner emits attention events for these flags even with `Status: IN_PROGRESS`.
 An unchanged flag set produces one notification across restarts; a changed reason
 or resolved blocker updates the event state. When the entire ready set is blocked,
-`Status: BLOCKED` stops without another worker or supervisor, preserving the queue.
-Its final `runner.blocked` event has `terminal: true`, and managed status retains
-`roadmapState: blocked`, reason `blocked` and exit 75.
+`Status: BLOCKED` dispatches a resolver. If recovery cannot clear the cause, STOPPED
+ends the runner with exit 75 and keeps later queue entries pending.
 
-A current supervisor review with `Health: STUCK` triggers an attention alert.
-With supervision enabled, the runner reviews recent attempts at the configured
-worker interval, including during source reconciliation. One reconciliation worker
-can run before a due review; further source rewrites cannot defer it again. It stops for a loop only
-when a current review identifies the same failed operation being retried without
-a relevant change to its inputs or approach. A changing source hash, handoff note,
-or unrelated edit cannot by itself justify repeating that attempt.
+Workers check prior attempts for repetition before selecting work. They cite the
+failed operation, unchanged relevant inputs and specific receipts when blocking.
+Open acceptance items may span any number of useful sessions. Recent evidence
+persists across restart. Legacy idle-budget and supervisor cadence settings do
+not disable worker loop checks or automatic recovery.
 
-A `Loop: DETECTED` verdict must cite at least two recorded iterations, name the
-attempt and failure, identify unchanged relevant inputs, and supply concrete
-receipts. It blocks immediately with exit 75 and terminal `runner.blocked`, reason
-`loop_detected`. Pending queue entries remain untouched. A confirmed block survives
-restart; use `--recover-blocked` for one recovery worker after repairing the cause.
-`CLEAR`, `UNCERTAIN` and incomplete reports allow work to continue.
-
-Open acceptance items can span any number of productive implementation,
-investigation or verification sessions. Checkbox counts and workspace fingerprints
-do not determine whether a run stops. Recent attempt evidence and review cadence
-are checkpointed across restarts. Old `ROADMAP_MAX_IDLE_WORKERS`,
-`ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` settings are ignored.
-`--supervisor-every 0` disables model reviews, including retry-loop detection;
-global BLOCKED, client failures and quota limits still retain their own behavior.
-
-Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
+Set `ROADMAP_NOTIFY_BIN`
 to an executable's absolute path to receive each event's JSON on stdin. It is
 invoked directly, without shell interpolation, with a ten-second timeout. Hook
 failure is logged and does not halt roadmap work. Task IDs/statuses are included;
@@ -891,8 +854,8 @@ Other hooks can provide a desktop notification or integrate with a configured
 service. Delivery is best effort; durable consumers replay the journal with their
 own saved cursor. No remote notification service is automatically configured.
 
-A timed-out supervisor or missing written review is recorded and deferred while
-workers continue. Ordinary client/authentication failures and false supervisor
-completion remain explicit errors with preserved evidence.
+A timed-out resolver or missing recovery decision stops the runner with evidence
+preserved. Failed workers dispatch a resolver; unavailable prerequisites may
+require user action before an explicit recovery retry.
 
 See [agent integration](docs/agent-integration.md) for `start`, `stop`, `status`, local MCP and explicit app setup. The bundled [roadmap design skill](skills/write-runner-roadmap/SKILL.md) includes task contracts and a template. Automatic chat wake-up and agent dispatch remain outside this release.

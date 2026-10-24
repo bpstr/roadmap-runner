@@ -47,11 +47,11 @@ for (const initialBytes of [32767, 32768, 32769]) {
   });
 }
 
-test("a blocked handoff compacts before stopping and leaves a 256 KiB roadmap intact", t => {
+test("a blocked handoff compacts before recovery stops and leaves a 256 KiB roadmap intact", t => {
   const f = fixture(t, "compact", false, { initialBytes: 32768, status: "BLOCKED", sourceBytes: 256 * 1024 });
   assert.equal(f.result.status, 75, f.result.stderr);
-  assert.deepEqual(f.calls, ["COMPACTOR"]);
-  assert.match(fs.readFileSync(f.tracking.file, "utf8"), /Status: BLOCKED/);
+  assert.deepEqual(f.calls, ["COMPACTOR", "RESOLVER"]);
+  assert.match(fs.readFileSync(f.tracking.file, "utf8"), /Status: STOPPED/);
   assert.ok(fs.statSync(f.tracking.file).size < 32768);
   assert.equal(fs.readFileSync(f.roadmap, "utf8"), f.source);
   const snapshot = jsonLines(f.tracking.historyFile).find(e => e.kind === "before-compaction").snapshot;
@@ -101,13 +101,13 @@ for (const [mode, error] of [["noop", /did not reach/], ["status", /changed the 
   });
 }
 
-test("worker growth compacts before a due supervisor; delivery notes do not starve review", t => {
+test("worker growth compacts before the next worker without scheduled supervision", t => {
   const f = fixture(t, "grow");
   assert.equal(f.result.status, 0, f.result.stderr);
-  assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "SUPERVISOR", "WORKER"]);
+  assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "WORKER"]);
   const sessions = jsonLines(f.tracking.sessionsFile);
-  assert.deepEqual(sessions.map(s => [s.role, s.iteration]), [["worker", 1], ["compactor", 1], ["supervisor", 1], ["worker", 2]]);
-  assert.equal(new Set(sessions.map(s => s.sessionId)).size, 4);
+  assert.deepEqual(sessions.map(s => [s.role, s.iteration]), [["worker", 1], ["compactor", 1], ["worker", 2]]);
+  assert.equal(new Set(sessions.map(s => s.sessionId)).size, 3);
   assert.ok(sessions[2].contextBytes.before.progress < TARGET_TRACKING_BYTES);
   assert.equal(sessions[2].usage.outputTokens, 12);
   for (let i = 1; i <= f.calls.length; i++) {
@@ -129,12 +129,12 @@ for (const mode of ["loop-detected", "loop-clear"]) {
   test(`compaction preserves ${mode === "loop-detected" ? "the repeated-failure verdict" : "productive continuation"}`, t => {
     const f = fixture(t, mode);
     assert.equal(f.result.status, mode === "loop-detected" ? 75 : 0, f.result.stderr);
-    assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "WORKER", "COMPACTOR", "SUPERVISOR",
-      ...(mode === "loop-clear" ? ["WORKER"] : [])]);
+    assert.deepEqual(f.calls, ["WORKER", "COMPACTOR", "WORKER", "COMPACTOR", "WORKER",
+      ...(mode === "loop-detected" ? ["RESOLVER"] : [])]);
     const events = jsonLines(`${f.tracking.file}.events.jsonl`);
-    assert.equal(events.at(-1).reason, mode === "loop-detected" ? "loop_detected" : undefined);
+    assert.equal(events.at(-1).reason, mode === "loop-detected" ? "resolver_stopped" : undefined);
     assert.equal(jsonLines(f.tracking.sessionsFile).filter(s => s.role === "worker").length,
-      mode === "loop-detected" ? 2 : 3);
+      3);
     assert.equal(events.some(e => e.reason === "no_progress_limit"), false);
     assert.match(fs.readFileSync(f.roadmap, "utf8"), mode === "loop-detected" ? /- \[ \] GATE-1/ : /- \[x\] GATE-1/);
   });

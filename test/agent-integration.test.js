@@ -278,9 +278,9 @@ for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy
   assert.equal(f.messages.filter(message => message.method === 'notifications/resources/updated' && message.params.uri === uri).length, updates);
   await f.disconnect(); assert.equal((await f.manager.status(run.id)).processState, 'running');
   fs.writeFileSync(run.progressFile + '.fail', '');
-  await wait(async () => (await f.manager.status(run.id)).processState === 'exited');
+  await wait(async () => ['exited', 'stopped'].includes((await f.manager.status(run.id)).processState));
   const reconnected = await mcpFixture(t, modern, f); const replay = await read(reconnected, page.cursor);
-  assert.ok(replay.events.some(event => event.type === 'runner.failed' && event.attention));
+  assert.ok(replay.events.some(event => event.type === 'runner.blocked' && event.attention));
   assert.ok(replay.events.every(event => event.sequence > page.cursor)); assert.equal(fs.existsSync(desktop), false);
   const empty = await read(reconnected, replay.cursor); assert.deepEqual(empty.events, []); assert.equal(empty.cursor, replay.cursor);
   await reconnected.disconnect();

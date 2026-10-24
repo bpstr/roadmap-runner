@@ -13,7 +13,7 @@ Tracking mode: ROADMAP_CHECKBOXES
 1. Read the current handoff. Runner context supplies an immutable pre-compaction
    snapshot, the history index and a directory for detailed evidence.
 2. Keep the current active gate, next action, unresolved blockers and retry
-   conditions, outstanding validation/release gates, and latest supervisor target.
+   conditions, outstanding validation/release gates, and latest recovery decision.
    Keep the opening status exactly as it was. Do not implement, run tests, edit
    the roadmap, change checkboxes or declare completion during this session.
 3. Move detailed completed-task evidence, older failures and deferred-gate

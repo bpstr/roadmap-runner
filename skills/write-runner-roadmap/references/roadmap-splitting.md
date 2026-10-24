@@ -65,7 +65,7 @@ with authority and entry conditions explicit.
 For an authorized run, use repeated CLI `--queue` options or the MCP start tool's
 ordered `queue` entries. Append through CLI `queue` or MCP `roadmap_enqueue` only
 when execution is authorized and the new entry's prerequisites fit the existing
-order. All entries share workspace, client/model and supervisor settings; use
+order. All entries share workspace, client/model and resolver settings; use
 separate runs when those settings must differ. Give every entry a distinct source
 and progress path; retain the run ID and inspect `queue` / `queueIndex` for the
 active entry. For example, after execution is authorized:

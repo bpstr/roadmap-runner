@@ -7,7 +7,7 @@ export type QueueItem = { roadmap: string; progressFile: string; state: 'pending
 export type RunRecord = {
   task?: string; batch?: string; id: string; token: string; workspace: string; roadmap: string; progressFile: string;
   processState: 'starting' | 'running' | 'stopping' | 'stopped' | 'exited' | 'unknown';
-  roadmapState: 'in_progress' | 'blocked' | 'complete'; waitReason: string | null;
+  roadmapState: 'in_progress' | 'blocked' | 'complete' | 'stopped'; waitReason: string | null;
   createdAt: string; heartbeat: string; pid?: number; options: any; sequence: number;
   readyAt?: string;
   socket: string; locks: string[]; idempotencyKey?: string; exitCode?: number; reason?: string;

@@ -207,6 +207,10 @@ function run(t, { sourceStatus = "IN_PROGRESS", evidence, mode = "normal", useEn
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const prompt = process.argv.at(-1);
+if (prompt.includes('Runner role: RESOLVER')) {
+  const file = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1];
+  fs.writeFileSync('resolver-calls', '1'); fs.writeFileSync(file, 'Status: STOPPED\\n## Current handoff\\nOriginal blocker retained.\\n'); process.exit(0);
+}
 assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
 assert.match(prompt, /Loaded prompt revision: [a-f0-9]{12}/);
 const source = prompt.match(/Work on this implementation roadmap:\\s*\\n\\s*([^\\n]+)/)[1];
@@ -267,7 +271,7 @@ if (mode === 'edit-capacity' && count === 1) {
     calls: fs.existsSync(path.join(dir, "calls")) ? Number(fs.readFileSync(path.join(dir, "calls"))) : 0 };
 }
 
-for (const sourceStatus of ["IN_PROGRESS", "COMPLETE", "BLOCKED"]) {
+for (const sourceStatus of ["IN_PROGRESS", "COMPLETE"]) {
   test(`three iterations update roadmap checkboxes and preserve requirements, ignoring source ${sourceStatus}`, (t) => {
     const f = run(t, { sourceStatus, useEnv: sourceStatus === "BLOCKED" });
     assert.equal(f.result.status, 0, f.result.stderr);
@@ -298,13 +302,13 @@ test("stale progress COMPLETE cannot finish with open roadmap tasks", (t) => {
   assert.equal(withoutMarks(fs.readFileSync(f.roadmap)), withoutMarks(f.before));
 });
 
-test("progress BLOCKED stops without launching or rescanning", (t) => {
+test("progress BLOCKED dispatches a resolver without ordinary workers", (t) => {
   const evidence = "# Evidence\nStatus: BLOCKED\n\n## Tasks\n- [ ] EX-1\n- [ ] EX-2\n- [ ] EX-3\n\n## Deferred gates\nEX-1 blocked externally.\n";
   const f = run(t, { evidence });
   assert.equal(f.result.status, 75, f.result.stderr);
   assert.equal(f.calls, 0);
-  assert.match(f.result.stdout + f.result.stderr, /Roadmap is BLOCKED/);
-  assert.equal(fs.readFileSync(f.file, "utf8"), evidence);
+  assert.equal(fs.readFileSync(path.join(f.dir, "resolver-calls"), "utf8"), "1");
+  assert.match(fs.readFileSync(f.file, "utf8"), /Status: STOPPED/);
 });
 
 test("conflicting progress statuses fail before launching", (t) => {

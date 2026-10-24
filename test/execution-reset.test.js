@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { ExecutionPlan } from '../lib/execution.js';
 import { prepareTracking } from '../lib/tracking.js';
-import { Supervision, REVIEW_SUMMARY_BYTES } from '../lib/supervision.js';
+import { RunEvidence, RUN_SUMMARY_BYTES } from '../lib/run-evidence.js';
 import { activityTracker } from '../lib/telemetry.js';
 import { runClient } from '../lib/runner.js';
 import { parseArgs } from '../lib/runner.js';
@@ -185,23 +185,18 @@ test('CLI and managed schema carry the finite authority without changing token o
   assert.equal(request.model, undefined);
 });
 
-test('supervisor aggregate stays bounded and due status survives restart and pending requirements', async t => {
-  const f = fixture(t); const config = { every: 20, timeoutMs: 5000, roadmap: path.join(f.dir, 'owner1.md'), tracking: f.tracking, template: 'review' };
-  const review = new Supervision(config);
-  for (let iteration=1; iteration<=20; iteration++) {
-    const output = review.capture(); output.write('stdout', 'x'.repeat(200_000));
-    review.record({ iteration, result: { code: 0 }, output, before: 'a'.repeat(100_000), after: 'b'.repeat(100_000) });
+test('run aggregate and evidence survive restart and pending requirements', t => {
+  const f = fixture(t); const config = { roadmap: path.join(f.dir, 'owner1.md'), tracking: f.tracking };
+  const runs = new RunEvidence(config);
+  for (let iteration = 1; iteration <= 20; iteration++) {
+    const output = runs.capture(); output.write('stdout', 'x'.repeat(200_000));
+    runs.record({ iteration, result: { code: 0 }, output, before: 'a'.repeat(100_000), after: 'b'.repeat(100_000) });
   }
-  assert.ok(fs.statSync(review.evidenceFile).size <= REVIEW_SUMMARY_BYTES);
-  const records = JSON.parse(fs.readFileSync(review.evidenceFile)).records;
-  assert.ok(records.length >= 2); assert.ok(records.every(r => fs.existsSync(r.evidence)));
-  const restarted = new Supervision(config); assert.equal(restarted.due, true);
+  assert.ok(fs.statSync(runs.evidenceFile).size <= RUN_SUMMARY_BYTES);
+  const restarted = new RunEvidence(config); assert.equal(restarted.records.length, 20);
   fs.appendFileSync(config.roadmap, 'Genuine controller requirement\n'); f.tracking.refreshSource();
   assert.equal(f.tracking.needsReconciliation, true);
-  const client = path.join(f.dir, 'review.cjs');
-  fs.writeFileSync(client, '#!/usr/bin/env node\nconst fs=require("node:fs");const p=process.argv.at(-1);fs.appendFileSync(' + JSON.stringify(f.tracking.file) + ',"\\n## Latest supervisor review\\nReview ID: "+p.match(/^Review ID: (.+)$/m)[1]+"\\nHealth: HEALTHY\\n");', { mode: 0o755 });
-  await restarted.review({ options: { client: 'codex', executable: client, capacity: { delayMs: 1, retries: 0 } }, workdir: f.dir, afterIteration: 20 });
-  assert.match(fs.readFileSync(f.tracking.file, 'utf8'), /Health: HEALTHY/);
+  assert.ok(restarted.records.every(r => fs.existsSync(r.evidence)));
 });
 
 test('soft deadline saves exact mock handoff before hard timeout and preserves unfinished source', async t => {
@@ -234,58 +229,39 @@ test('event timing separates concurrent command time, shutdown and unattributed 
   assert.equal(timing.elapsedMs,120); assert.match(timing.attribution,/not-proof-of-inactivity/);
 });
 
-test('repeated unchanged failed finite outcomes stop only after an evidenced loop review', t => {
-  const f = fixture(t); const client = path.join(f.dir, 'nonprogress.cjs');
-  fs.writeFileSync(client, `#!/usr/bin/env node
-const fs=require('node:fs');const p=process.argv.at(-1);
-if(p.includes('Runner role: SUPERVISOR')) {
- fs.appendFileSync('calls','review\\n');
- fs.appendFileSync('progress.md','\\n## Latest supervisor review\\nReview ID: '+p.match(/^Review ID: (.+)$/m)[1]+'\\nHealth: STUCK\\nLoop: DETECTED\\nLoop iterations: 1, 3\\nLoop attempt: deliver-1 implementation.\\nLoop failure: The implementation is still absent.\\nLoop unchanged inputs: Source and prerequisite receipt are unchanged between attempts.\\nLoop evidence: Both deliver-1 attempts returned without implementing the operation.\\nNext: revise finite boundary before retry.\\n');
-} else { fs.appendFileSync('calls',p.match(/^Named deliverable: (.+)$/m)[1]+'\\n'); }
-`, { mode: 0o755 });
-  const result = spawnSync(process.execPath,[cli,path.join(f.dir,'owner1.md'),'--client-bin',client,'--progress-file',f.tracking.file,
-    '--execution-plan',f.file,'--supervisor-every','20','--notify','off'], { cwd:f.dir,encoding:'utf8',timeout:10_000 });
-  assert.equal(result.status,75,result.stderr);
-  assert.deepEqual(fs.readFileSync(path.join(f.dir,'calls'),'utf8').trim().split('\n'),['deliver-1','deliver-2','deliver-1','review']);
-  assert.match(fs.readFileSync(f.tracking.file+'.events.jsonl','utf8'),/loop_detected/);
-});
-
-
-test('supervision retains owner-spanning evidence and migrates both prior checkpoint formats', t => {
+test('run history retains owner-spanning evidence and migrates both prior checkpoint formats', t => {
   const f = fixture(t); const roadmap = path.join(f.dir, 'owner1.md');
   const config = { every: 2, timeoutMs: 5000, roadmap, tracking: f.tracking, template: 'review' };
-  const review = new Supervision(config);
+  const review = new RunEvidence(config);
   for (let iteration = 1; iteration <= 2; iteration++) {
     const output = review.capture(); output.write('stdout', 'Actual implementation receipt ' + iteration);
     review.record({ iteration, result: { code: 0 }, output, before: 'handoff before', after: 'handoff after' });
   }
   review.selectSource(path.join(f.dir, 'owner2.md'), f.tracking); review.checkpoint();
-  const selected = new Supervision(config);
-  assert.equal(selected.due, true); assert.equal(selected.records.length, 2);
-  const stateFile = path.join(f.tracking.stateDir, 'supervision.json');
+  const selected = new RunEvidence(config);
+  assert.equal(selected.records.length, 2);
+  const stateFile = path.join(f.tracking.stateDir, 'runs.json');
   const saved = JSON.parse(fs.readFileSync(stateFile));
   delete saved.version; delete saved.roadmap;
   fs.writeFileSync(stateFile, JSON.stringify(saved));
-  assert.equal(new Supervision(config).due, true, 'unversioned local summaries remain usable');
+  assert.equal(new RunEvidence(config).records.length, 2, 'unversioned local summaries remain usable');
   saved.version = 1; saved.roadmap = roadmap; delete saved.directory;
   saved.records = review.records.map(r => JSON.parse(fs.readFileSync(r.evidence)));
   fs.writeFileSync(stateFile, JSON.stringify(saved));
-  const migrated = new Supervision(config);
+  const migrated = new RunEvidence(config);
   const summary = JSON.parse(fs.readFileSync(migrated.evidenceFile));
   assert.equal(summary.records.length, 2);
   assert.ok(summary.records.every(r => fs.existsSync(r.evidence)));
-  assert.ok(fs.statSync(migrated.evidenceFile).size <= REVIEW_SUMMARY_BYTES);
+  assert.ok(fs.statSync(migrated.evidenceFile).size <= RUN_SUMMARY_BYTES);
 });
 
-test('productive partial finite batches continue after corrective reviews with parent checkboxes open', t => {
+test('productive partial finite batches continue without scheduled reviews with parent checkboxes open', t => {
   const f = fixture(t); const client = path.join(f.dir, 'productive.cjs');
   fs.writeFileSync(client, `#!/usr/bin/env node
 const fs=require('node:fs'),crypto=require('node:crypto');const p=process.argv.at(-1);
-if(p.includes('Runner role: SUPERVISOR')) {
- const file=JSON.parse(p.match(/^Run evidence JSON: (.+)$/m)[1]);
- const records=JSON.parse(fs.readFileSync(file)).records.map(r=>JSON.parse(fs.readFileSync(r.evidence)));
- if(!records.some(r=>r.implementationBefore?.['service.ts']!==r.implementationAfter?.['service.ts']))process.exit(97);
- fs.appendFileSync('progress.md','\\n## Latest supervisor review\\nReview ID: '+p.match(/^Review ID: (.+)$/m)[1]+'\\nHealth: HEALTHY\\nLoop: CLEAR\\nAssessment: Distinct implementation and handoff progress.\\n');
+if(p.includes('Runner role: RESOLVER')) {
+ fs.writeFileSync('progress.md','Status: STOPPED\\n## Current handoff\\nFinite authorized plan exhausted.\\n');
+ fs.writeFileSync(JSON.parse(p.match(/^Resolution decision file: (.+)$/m)[1]), JSON.stringify({resolutionId:p.match(/^Resolution ID: (.+)$/m)[1],outcome:'stopped',evidence:'No ready authorized batches',nextAction:'Controller supplies next batch'}));
 } else {
  const n=fs.existsSync('productive-count')?Number(fs.readFileSync('productive-count'))+1:1;
  if(n>7)process.exit(99);fs.writeFileSync('productive-count',String(n));
@@ -304,30 +280,26 @@ if(p.includes('Runner role: SUPERVISOR')) {
   assert.equal(result.status, 75, result.stderr);
   assert.equal(Number(fs.readFileSync(path.join(f.dir, 'productive-count'))), 6);
   const events = fs.readFileSync(f.tracking.file + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
-  assert.equal(events.at(-1).reason, 'finite_plan_exhausted', 'only the exhausted explicit plan ends this implementation phase');
+  assert.ok(events.some(e => e.reason === 'finite_plan_exhausted'));
+  assert.equal(events.at(-1).reason, 'resolver_stopped');
   assert.equal(events.some(e => e.reason === 'loop_detected' || e.reason === 'replan_required'), false);
   assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /- \[ \]/);
 });
 
 
-test('finite execution respects a global supervisor BLOCKED outcome without requiring loop evidence', t => {
-  const f = fixture(t); const client = path.join(f.dir, 'global-blocked.cjs');
+test('finite execution dispatches a resolver for a global blocker', t => {
+  const f = fixture(t); const client = path.join(f.dir, 'blocked.cjs');
   fs.writeFileSync(client, `#!/usr/bin/env node
 const fs=require('node:fs');const p=process.argv.at(-1);
-if(p.includes('Runner role: SUPERVISOR')) {
- fs.appendFileSync('global-calls','review\\n');
- fs.writeFileSync('progress.md','Status: BLOCKED\\n## Latest supervisor review\\nReview ID: '+p.match(/^Review ID: (.+)$/m)[1]+'\\nHealth: STUCK\\nLoop: UNCERTAIN\\nBlocker: All authorized prerequisites are unavailable.\\n');
-} else fs.appendFileSync('global-calls','worker\\n');
+fs.appendFileSync('global-calls',p.includes('Runner role: RESOLVER')?'resolver\\n':'worker\\n');
+fs.writeFileSync('progress.md',p.includes('Runner role: RESOLVER')?'Status: STOPPED\\n':'Status: BLOCKED\\n');
 `, { mode: 0o755 });
   const result = spawnSync(process.execPath, [cli, path.join(f.dir, 'owner1.md'), '--client-bin', client,
-    '--progress-file', f.tracking.file, '--execution-plan', f.file, '--supervisor-every', '1', '--notify', 'off'],
+    '--progress-file', f.tracking.file, '--execution-plan', f.file, '--notify', 'off'],
     { cwd: f.dir, encoding: 'utf8', timeout: 10000 });
   assert.equal(result.status, 75, result.stderr);
-  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'global-calls'), 'utf8').trim().split('\n'), ['worker', 'review']);
-  const events = fs.readFileSync(f.tracking.file + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
-  assert.equal(events.at(-1).reason, 'blocked');
+  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'global-calls'), 'utf8').trim().split('\n'), ['worker', 'resolver']);
 });
-
 
 test('quota and capacity rejections do not consume finite implementation attempts', t => {
   const f = fixture(t); const batch = f.execution.select(); f.execution.context(batch);
@@ -336,4 +308,40 @@ test('quota and capacity rejections do not consume finite implementation attempt
     assert.equal(outcome.attempts, 0); assert.equal(outcome.delivered, false); assert.equal(outcome.reviewRequired, false);
   }
   assert.equal(f.execution.finish(batch, { code: 0 }).attempts, 1);
+});
+
+test('a resolver repairs blocked finite batches and workers continue across owners', t => {
+  const f = fixture(t); f.plan.batches.forEach(batch => { batch.implementation = 'blocked'; }); save(f.file, f.plan);
+  const client = path.join(f.dir, 'finite-resolver.cjs');
+  fs.writeFileSync(client, String.raw`#!/usr/bin/env node
+const fs = require('node:fs'), crypto = require('node:crypto');
+const prompt = process.argv.at(-1), resolving = prompt.includes('Runner role: RESOLVER');
+fs.appendFileSync('finite-calls', resolving ? 'resolver\n' : 'worker\n');
+const text = fs.readFileSync('authority.md', 'utf8');
+const plan = JSON.parse(text.match(/` + '```' + String.raw`roadmap-runner-execution\n([\s\S]*?)\n` + '```' + String.raw`/)[1]);
+if (resolving) {
+  const first = plan.batches.every(batch => batch.implementation === 'blocked');
+  if (first) plan.batches.forEach(batch => { batch.implementation = 'not_started'; });
+  fs.writeFileSync('progress.md', first ? 'Status: IN_PROGRESS\n## Current handoff\nPrerequisite prepared receipt is available.\n' : 'Status: STOPPED\n');
+  fs.writeFileSync(JSON.parse(prompt.match(/^Resolution decision file: (.+)$/m)[1]), JSON.stringify({
+    resolutionId: prompt.match(/^Resolution ID: (.+)$/m)[1], outcome: first ? 'resolved' : 'stopped',
+    evidence: first ? 'Prepared prerequisite receipt' : 'Finite plan exhausted', nextAction: first ? 'Implement the two existing batches' : 'Controller supplies further authorized work' }));
+} else {
+  const batch = plan.batches.find(batch => batch.id === prompt.match(/^Named deliverable: (.+)$/m)[1]);
+  fs.writeFileSync('service.ts', 'export const delivered = ' + JSON.stringify(batch.id) + ';\n');
+  batch.implementation = 'implemented';
+  batch.implementationEvidence = [{ path: 'service.ts', sha256: crypto.createHash('sha256').update(fs.readFileSync('service.ts')).digest('hex') }];
+}
+fs.writeFileSync('authority.md', '# Authority\n\n` + '```' + String.raw`roadmap-runner-execution\n' + JSON.stringify(plan) + '\n` + '```' + String.raw`\n');
+`, { mode: 0o755 });
+  const result = spawnSync(process.execPath, [cli, path.join(f.dir, 'owner1.md'), '--client-bin', client,
+    '--progress-file', f.tracking.file, '--execution-plan', f.file, '--timeout', '5s', '--notify', 'off'],
+    { cwd: f.dir, encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'finite-calls'), 'utf8').trim().split('\n'), ['resolver', 'worker', 'worker', 'resolver']);
+  assert.ok(fs.readFileSync(f.file, 'utf8').includes('"implementation":"implemented"'));
+  assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /- \[ \]/);
+  const events = fs.readFileSync(f.tracking.file + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
+  assert.ok(events.some(event => event.type === 'runner.unblocked' && event.role === 'resolver'));
+  assert.equal(events.filter(event => event.type === 'runner.progress_observed').length, 2);
 });

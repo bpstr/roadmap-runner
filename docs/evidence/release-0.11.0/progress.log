@@ -1,0 +1,37 @@
+TAP version 13
+# file:///Users/bpstr/Github/roadmap-runner/test/progress.test.js:121
+#   const file = prompt.match(/Tracking file \\\\(progress \\\\/ delivery evidence\\\\):\\\\s*\\\\n\\\\s*([^\\\\n]+)/)[1];
+#                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# SyntaxError: Invalid regular expression: /Tracking file \\\\(progress \\\\/: Unterminated group
+#     at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:89:18)
+#     at \#translate (node:internal/modules/esm/loader:434:20)
+#     at afterLoad (node:internal/modules/esm/loader:502:29)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:507:12)
+#     at \#getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:560:36)
+#     at afterResolve (node:internal/modules/esm/loader:607:52)
+#     at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:613:12)
+#     at node:internal/modules/esm/loader:632:32
+#     at TracingChannel.tracePromise (node:diagnostics_channel:362:14)
+# Node.js v24.19.0
+# Subtest: test/progress.test.js
+not ok 1 - test/progress.test.js
+  ---
+  duration_ms: 40.193625
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/progress.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 44.807666
