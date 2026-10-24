@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.7 — 2026-10-24
+
+- Allow requirements-only source roadmaps up to 256 KiB at startup and between sessions. Keep the separate handoff's 16 KiB target, 24 KiB compaction trigger and 128 KiB emergency ceiling unchanged.
+
 ## 0.10.6 — 2026-10-24
 
 - Compare named implementation inputs, receipts and handoffs for retry loops. Attempt counters request review; checkbox completion never establishes progress.

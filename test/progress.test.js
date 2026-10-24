@@ -136,11 +136,28 @@ test("source/history pollution is rejected before a worker sees it", (t) => {
   assert.throws(() => prepareTracking(roadmap, "", dir), /compact requirements-only roadmap/);
 });
 
-test("a 350 KB source is rejected unchanged even though older versions accepted it", t => {
+test("a 256 KiB source is accepted while the progress limits stay smaller", t => {
   const { dir, roadmap } = workspace(t);
-  const contents = "# Roadmap\n" + "x".repeat(350000);
+  const padSource = bytes => example + " ".repeat(bytes - Buffer.byteLength(example));
+  const initial = padSource(200 * 1024);
+  fs.writeFileSync(roadmap, initial);
+  const tracking = prepareTracking(roadmap, "", dir);
+  assert.equal(MAX_TRACKING_BYTES, 128 * 1024);
+  assert.equal(COMPACT_TRACKING_BYTES, 24 * 1024);
+  const updated = padSource(256 * 1024);
+  fs.writeFileSync(roadmap, updated);
+  assert.doesNotThrow(() => tracking.refreshSource());
+  assert.doesNotThrow(() => prepareTracking(roadmap, "", dir));
+  assert.equal(fs.readFileSync(roadmap, "utf8"), updated);
+  fs.writeFileSync(tracking.file, "x".repeat(128 * 1024 + 1));
+  assert.throws(() => tracking.assertBounded(), /active progress file exceeded/);
+});
+
+test("a source above 256 KiB is rejected unchanged", t => {
+  const { dir, roadmap } = workspace(t);
+  const contents = "# Roadmap\n".padEnd(256 * 1024 + 1, "x");
   fs.writeFileSync(roadmap, contents);
-  assert.equal(MAX_SOURCE_BYTES, 128 * 1024);
+  assert.equal(MAX_SOURCE_BYTES, 256 * 1024);
   assert.throws(() => prepareTracking(roadmap, "", dir), /source roadmap exceeded/);
   assert.equal(fs.readFileSync(roadmap, "utf8"), contents);
   assert.equal(fs.existsSync(path.join(dir, ".roadmap-runner")), false);

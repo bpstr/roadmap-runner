@@ -309,9 +309,7 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 ## Roadmap progress tracking
 
-The source roadmap owns **task checkboxes, acceptance criteria and concise delivery status**. Workers tick tasks only after their original criteria pass, reopen tasks invalidated by concrete evidence, and preserve unrelated controller edits. A fixed read-only snapshot binds each session to its acceptance criteria; controller requirement changes are adopted between sessions. Checkbox/status updates alone do not trigger scope reconciliation. A tracking-file COMPLETE cannot finish a run while live roadmap tasks remain unchecked. A source larger than **128 KiB** is rejected at every
-boundary as a likely polluted context file; restore or prepare a compact requirements-
-only roadmap instead of feeding historical delivery logs back into the model.
+The source roadmap owns **task checkboxes, acceptance criteria and concise delivery status**. Workers tick tasks only after their original criteria pass, reopen tasks invalidated by concrete evidence, and preserve unrelated controller edits. A fixed read-only snapshot binds each session to its acceptance criteria; controller requirement changes are adopted between sessions. Checkbox/status updates alone do not trigger scope reconciliation. A tracking-file COMPLETE cannot finish a run while live roadmap tasks remain unchecked. Requirements-only sources may be up to **256 KiB**; larger sources are rejected at every boundary. Keep execution history in the separate handoff, whose smaller compaction and emergency limits remain unchanged.
 
 Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 
