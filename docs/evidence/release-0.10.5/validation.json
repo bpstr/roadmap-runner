@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-24",
+  "scope": "PR 8 failed-attempt loop correction only; preserve/exclude concurrent local main commits 0631192 and 56ae2ee",
+  "base": "fdee29793070952a95b5e93d96a32a4df2175f27",
+  "fix": "7a3f73ccf2d1ddf2a14b490db6e8d4b68c4f7fb2",
+  "retained": "Historical initial correction has 86 passing affected outcomes. Reuse only results whose inputs and affected dependencies remain compatible; controller reconciliation follow-up is validated separately.",
+  "changed_inputs": "Release package version and dated changelog only; re-run package inspection.",
+  "release_gate": ".github/workflows/ci.yml requires full prepared suite, package and whitespace on Node 20/22/24 across Ubuntu/macOS. CI is the explicit full-suite gate; no duplicate local full suite.",
+  "inference": "Prepared local executable clients and mocked transports only; no paid tests, credentials or live fixture recording.",
+  "publication": {
+    "github": "After all six CI jobs pass; attach npm tarball built from merged remote main.",
+    "npm": "Read-only npm whoami returned E401; authentication unchanged."
+  },
+  "controller_edit_follow_up": {
+    "reason": "All six release jobs failed; CI exposed stale COMPLETE/BLOCKED/IN_PROGRESS controller-reconciliation priority and obsolete supervisor-capacity reviews. Original failure output retained compressed.",
+    "changed_inputs": "Permit one persisted reconciliation worker before a due review; further source hashes cannot defer again. A new controller revision supersedes an in-flight supervisor capacity/quota retry.",
+    "local_selectors": [
+      "test/source-loop.test.js",
+      "test/roadmap-updates.test.js",
+      "test/supervisor.test.js (loop and controller-edit selectors)"
+    ],
+    "retained": "Reuse compatible recovery, queue, compaction and supervisor parser/normal scheduling results.",
+    "full_run_gate": "The existing six-job release CI gate must pass after this runtime change. No duplicate local full suite.",
+    "results": {
+      "reconciliation_tests": "29 passed, 0 failed, 0 skipped",
+      "supervisor_selectors": "See supervisor-follow-up.log.gz",
+      "build": "passed",
+      "package": "passed"
+    },
+    "input_sha256": {
+      "src/lifecycle.ts": "050d6519010a87a24778de9b2e827e62f6cdf327c217ddb01cce5c336f353081",
+      "lib/supervision.js": "0ace26bad9ef5581b951edc4e27a8e657a01798204b2efceaf3cc72d75087ac8",
+      "test/source-loop.test.js": "1e8c51f1aba7384eecdfe4eb2e0e8cd538616b6a5540b51b821d6e8912f0c6b6",
+      "test/supervisor.test.js": "3c31673fb6e486b0fe39ad729ba863a599fe83baaedf8602b4e26f129e26bfd9",
+      "test/roadmap-updates.test.js": "2dcfdc08ddda1375088cefd1b56f526944b5d22071e003db74a3da794e4b6e6f"
+    }
+  }
+}

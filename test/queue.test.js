@@ -29,7 +29,7 @@ if (prompt.includes('Runner role: SUPERVISOR') && fs.existsSync(source + '.loop'
   fs.writeFileSync(source + '.reviewdir', new URL('.', 'file://' + evidence).pathname);
   const records = JSON.parse(fs.readFileSync(evidence)).records;
   const id = prompt.match(/^Review ID: (.+)$/m)[1];
-  fs.appendFileSync(progress, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nLoop: DETECTED\\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\\nLoop evidence: Repeated blocked dependency, no progress.\\n');
+  fs.appendFileSync(progress, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nLoop: DETECTED\\nLoop iterations: ' + records.slice(-2).map(r => r.iteration).join(', ') + '\\nLoop attempt: Recheck the missing dependency.\\nLoop failure: The dependency is unavailable.\\nLoop unchanged inputs: The dependency receipt and relevant implementation are unchanged.\\nLoop evidence: Repeated blocked dependency, no progress.\\n');
   process.exit(0);
 }
 fs.appendFileSync(source + '.started', progress + '\\n');
@@ -162,32 +162,6 @@ test('a queued source removed before handoff fails the run and preserves later e
 });
 
 
-test('no-progress limit is terminal in managed status and preserves the pending queue', async t => {
-  const f = fixture(t); const [first, second] = f.roadmaps;
-  fs.writeFileSync(first + '.stall', '');
-  const settings = { ROADMAP_MAX_IDLE_WORKERS: '3', ROADMAP_RECOVERY_DELAY: '1', ROADMAP_RECOVERY_MAX_DELAY: '1' };
-  const previous = Object.fromEntries(Object.keys(settings).map(key => [key, process.env[key]]));
-  let run;
-  try {
-    Object.assign(process.env, settings);
-    run = await f.start([{ roadmap: second }]);
-  } finally {
-    for (const [key, value] of Object.entries(previous)) {
-      if (value === undefined) delete process.env[key]; else process.env[key] = value;
-    }
-  }
-  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
-  assert.equal(final.exitCode, 75);
-  assert.equal(final.reason, 'no_progress_limit');
-  assert.deepEqual(final.queue.map(item => item.state), ['failed', 'pending']);
-  assert.equal(f.started(second), false);
-  assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
-  assert.match(fs.readFileSync(final.progressFile, 'utf8'), /Status: IN_PROGRESS/);
-  assert.ok(final.events.some(e => e.type === 'runner.stuck' && e.terminal && e.reason === 'no_progress_limit'));
-  assert.equal(final.events.at(-1).reason, 'no_progress_limit');
-  for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
-});
-
 test('LLM loop detection blocks managed execution and leaves queued work pending', async t => {
   const f = fixture(t); const [first, second] = f.roadmaps;
   fs.writeFileSync(first + '.stall', ''); fs.writeFileSync(first + '.loop', '');
@@ -195,7 +169,7 @@ test('LLM loop detection blocks managed execution and leaves queued work pending
   let run;
   try {
     process.env.ROADMAP_RECOVERY_DELAY = '1';
-    run = await f.start([{ roadmap: second }], undefined, { supervisorEvery: 5 });
+    run = await f.start([{ roadmap: second }], undefined, { supervisorEvery: 2 });
   } finally {
     if (previous === undefined) delete process.env.ROADMAP_RECOVERY_DELAY; else process.env.ROADMAP_RECOVERY_DELAY = previous;
   }

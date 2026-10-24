@@ -61,7 +61,7 @@ if (supervisor) {
     const decision = mode === 'loop-clear' ? 'CLEAR' : mode === 'loop-uncertain' ? 'UNCERTAIN' : 'DETECTED';
     const id = mode === 'loop-stale' ? 'obsolete' : reviewId;
     const iterations = mode === 'loop-invalid' ? '998, 999' : cited;
-    fs.appendFileSync(tracking, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nHealth: STUCK\\nLoop: ' + decision + '\\nLoop iterations: ' + iterations + '\\nLoop evidence: Same dependency was rechecked without a changed prerequisite or implementation.\\n');
+    fs.appendFileSync(tracking, '\\n## Latest supervisor review\\nReview ID: ' + id + '\\nHealth: STUCK\\nLoop: ' + decision + '\\nLoop iterations: ' + iterations + '\\nLoop attempt: Recheck the missing dependency.\\nLoop failure: The dependency is unavailable.\\nLoop unchanged inputs: The dependency receipt and relevant implementation are unchanged.\\nLoop evidence: Same dependency was rechecked without a changed prerequisite or implementation.\\n');
     process.exit(0);
   }
   if (mode === 'supervisor-usage' && n === 1) {
@@ -94,6 +94,11 @@ if (supervisor) {
     const target = mode === 'worker-capacity' ? n - (n > 2 ? 1 : 0) : n;
     if (mode.startsWith('loop-') && mode !== 'loop-periodic') {
       if (mode === 'loop-source-churn') fs.appendFileSync(roadmap, '\\nCurrent delivery: source reconciliation ' + n + '.\\n');
+      if (n >= 6 && ['loop-clear', 'loop-uncertain', 'loop-invalid', 'loop-stale'].includes(mode)) {
+        fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replaceAll('- [ ]', '- [x]'));
+        fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace(/Status: (IN_PROGRESS|BLOCKED)/, 'Status: COMPLETE'));
+      }
+      if (n > 8) process.exit(99);
       process.exit(0);
     }
     if (target >= ${total}) fs.writeFileSync(roadmap, fs.readFileSync(roadmap, 'utf8').replaceAll('- [ ]', '- [x]'));
@@ -138,11 +143,15 @@ test('only the current supervisor review can report stuck, excluding examples an
 
 test('loop decisions require a current review, two observed turns and concrete evidence', () => {
   const records = [{ iteration: 1, code: 0 }, { iteration: 2, code: 0 }];
-  const report = '## Latest supervisor review\nReview ID: current\nLoop: DETECTED\nLoop iterations: 1, 2\nLoop evidence: Same unchanged blocker, no implementation.\n';
+  const report = '## Latest supervisor review\nReview ID: current\nLoop: DETECTED\nLoop iterations: 1, 2\nLoop attempt: Recheck the missing dependency.\nLoop failure: The dependency is unavailable.\nLoop unchanged inputs: The dependency receipt and relevant implementation are unchanged.\nLoop evidence: Same unchanged blocker, no implementation.\n';
   assert.deepEqual(currentReviewLoop(report, 'current', records).iterations, [1, 2]);
+  for (const field of ['Loop attempt', 'Loop failure', 'Loop unchanged inputs']) {
+    assert.equal(currentReviewLoop(report.replace(new RegExp(field + ':.*\\n'), ''), 'current', records), null);
+  }
+  assert.deepEqual(currentReviewLoop(report, 'current', [{ iteration: 1, code: 7 }, { iteration: 2, code: 0 }]).iterations, [1, 2]);
   for (const text of [report.replace('current', 'stale'), '```md\n' + report + '```\n',
     report.replace('1, 2', '1, 1'), report.replace('1, 2', '1, 99'),
-    report.replace('Loop evidence: Same unchanged blocker, no implementation.', ''),
+    report.replace('Loop attempt: Recheck the missing dependency.\nLoop failure: The dependency is unavailable.\nLoop unchanged inputs: The dependency receipt and relevant implementation are unchanged.\nLoop evidence: Same unchanged blocker, no implementation.', ''),
     report + 'Loop: CLEAR\n', report + '## Latest supervisor review\nReview ID: newer\nLoop: CLEAR\n']) {
     assert.equal(currentReviewLoop(text, 'current', records), null);
   }
@@ -150,28 +159,28 @@ test('loop decisions require a current review, two observed turns and concrete e
 
 for (const mode of ['loop-detected', 'loop-source-churn', 'loop-periodic']) {
   test(`${mode} blocks immediately and preserves the decision on restart`, t => {
-    const f = fixture(t, { mode, total: 6, every: mode === 'loop-periodic' ? 2 : 5 });
+    const f = fixture(t, { mode, total: 6, every: 2 });
     const result = run(f);
     assert.equal(result.status, 75, result.stderr);
-    assert.deepEqual(events(f), ['W1', 'W2', 'S1']);
+    const expected = mode === 'loop-source-churn' ? ['W1', 'W2', 'W3', 'S1'] : ['W1', 'W2', 'S1'];
+    assert.deepEqual(events(f), expected);
     const journal = fs.readFileSync(f.tracking + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(journal.at(-1).type, 'runner.blocked');
     assert.equal(journal.at(-1).reason, 'loop_detected');
-    assert.deepEqual(journal.at(-1).loopIterations, [1, 2]);
+    assert.deepEqual(journal.at(-1).loopIterations, mode === 'loop-source-churn' ? [2, 3] : [1, 2]);
     const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
     assert.ok(evidence.records.every(r => r.sourceBefore.sha256 && r.sourceAfter.sha256 && r.trackingBefore.sha256));
     assert.equal(run(f).status, 75);
-    assert.deepEqual(events(f), ['W1', 'W2', 'S1'], 'unchanged restart launches no worker or model review');
+    assert.deepEqual(events(f), expected, 'unchanged restart launches no worker or model review');
   });
 }
 
 for (const mode of ['loop-clear', 'loop-uncertain', 'loop-invalid', 'loop-stale']) {
-  test(`${mode} cannot override the deterministic stop`, t => {
-    const f = fixture(t, { mode, total: 6 });
+  test(`${mode} cannot stop productive workers`, t => {
+    const f = fixture(t, { mode, total: 6, every: 2 });
     const result = run(f);
-    assert.equal(result.status, 75, result.stderr);
-    assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
-    assert.match(result.stderr, /No completed checklist progress for 3 workers/);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3', 'W4', 'S2', 'W5', 'W6']);
   });
 }
 
@@ -227,7 +236,7 @@ for (const preserved of [true]) {
     assert.deepEqual(events(f), ['W1','W2','W3','W4','W5','S1','W6','W7','W8','W9','W10','S2','W11']);
     const journal = fs.readFileSync(f.tracking + ".events.jsonl", "utf8").trim().split("\n").map(JSON.parse);
     const stuck = journal.filter(event => event.type === "runner.stuck");
-    assert.equal(stuck.length, 2);
+    assert.equal(stuck.length, 1, "the same STUCK assessment is deduplicated until a healthy review");
     assert.ok(stuck.every(event => event.attention && event.reasonCode === "supervisor_stuck"));
     assert.match(fs.readFileSync(f.tracking, 'utf8'), /Next delivery target: repair the canonical transport harness/);
     assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
@@ -267,23 +276,21 @@ test('custom cadence and disabled supervision', (t) => {
   assert.equal(events(disabled).filter(x => x.startsWith('S')).length, 0);
 });
 
-test('an explicit larger idle budget allows supervisor review of no-op workers', (t) => {
+test('open tasks and unchanged files continue until the scheduled review', (t) => {
   const f = fixture(t, { mode: 'noop', total: 6 });
-  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '6';
   const result = run(f); assert.equal(result.status, 0, result.stderr);
   const data = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
-  assert.equal(data.records.length, 2);
+  assert.equal(data.records.length, 5);
   assert.ok(data.records.every(r => !r.trackingChanged));
   assert.ok(fs.existsSync(path.join(f.dir, 'consumed-supervisor-target')));
 });
 
-test('the default idle budget stops no-op workers before a later supervisor checkpoint', t => {
+test('legacy idle limits do not stop long productive runs', t => {
   const f = fixture(t, { mode: 'noop', total: 6 });
-  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '3';
+  f.options.env.ROADMAP_MAX_IDLE_WORKERS = '1';
   const result = run(f);
-  assert.equal(result.status, 75, result.stderr);
-  assert.deepEqual(events(f), ['W1', 'W2', 'S1', 'W3']);
-  assert.match(result.stderr, /No completed checklist progress for 3 workers/);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(events(f), ['W1', 'W2', 'W3', 'W4', 'W5', 'S1', 'W6']);
 });
 
 test('worker capacity retries are excluded from cadence and counted in review context', (t) => {

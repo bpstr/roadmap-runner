@@ -1,0 +1,12 @@
+{
+  "src/lifecycle.ts": "67a73f20684842676904f53ffe7d6f09f9148748079b215414bb30021b58ed53",
+  "lib/recovery.js": "55af9347fb3c6f3703cf427cc83c44c8c93d39bae2c8fe8b9f1d51d38debf35e",
+  "lib/supervision.js": "5cb94b637e587be4dd386db9ed625be5450a912bbe691b3e1c705366f5a99310",
+  "supervisor.md": "056570f8a95cd5662c2524266d1a7f659cad87b4ecab26c4e109c9005d242b5d",
+  "test/source-loop.test.js": "b51d2c6efadd2d3f3bd10b0f6e10e4002b3d46d5274a8d73293b7bf76e160aed",
+  "test/supervisor.test.js": "a62c89c07785af06c18bc51b3c9e246de324f85ab8514e7e5ef1b9198460cedf",
+  "test/recovery.test.js": "d1d09d23208c5692900c505fb33284fbf07c36e23a5b285f7cd78d6f059a5e75",
+  "test/queue.test.js": "d950d268da6914a3183d4b28ab301b57024b10eeda49f499e77ae57befe88347",
+  "test/context-budget.test.js": "8c8fb476519bb4a0d7bca08b185171e0747861b89ca031065f03394282afc8ce",
+  "test/fixtures/context-client.cjs": "32aacb4bd073cacfb1e1e7beaa8192522b72d0a26a7003d11beb772a581be9f8"
+}

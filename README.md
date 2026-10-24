@@ -807,48 +807,27 @@ Its final `runner.blocked` event has `terminal: true`, and managed status retain
 `roadmapState: blocked`, reason `blocked` and exit 75.
 
 A current supervisor review with `Health: STUCK` triggers an attention alert.
-The runner stops with exit **75** and reason `no_progress_limit` after **three
-consecutive workers without completed checklist progress**, preserving progress,
-receipts, archives and unfinished queued roadmaps. It emits a terminal
-`runner.stuck` event followed by `runner.failed`, so this stop is visible in CLI,
-managed status and MCP even when desktop notifications are disabled. Resolve the
-blocker, then adopt a controller requirement amendment or use `--recover-blocked`
-for one explicit recovery worker. An unchanged restart preserves the exhausted
-budget and stops before another worker, supervisor or compactor.
+With supervision enabled, the runner reviews recent attempts at the configured
+worker interval, including during source reconciliation. One reconciliation worker
+can run before a due review; further source rewrites cannot defer it again. It stops for a loop only
+when a current review identifies the same failed operation being retried without
+a relevant change to its inputs or approach. A changing source hash, handoff note,
+or unrelated edit cannot by itself justify repeating that attempt.
 
-With supervision enabled, two idle workers also trigger one small LLM loop check
-before the next worker, including during repeated source reconciliation. It reuses
-bounded recent source/progress snapshots, worker outcomes and the prior review,
-with a maximum 60-second timeout. A current `Loop: DETECTED` verdict must cite at
-least two observed iterations and concrete evidence; it immediately blocks the
-runner (exit 75, terminal `runner.blocked`, reason `loop_detected`). Pending queue
-entries remain untouched. An unchanged restart stays blocked; a controller
-requirement amendment or explicit `--recover-blocked` permits recovery after repair.
-`CLEAR`, `UNCERTAIN`, missing or invalid reports never renew the deterministic
-budget. `--supervisor-every 0` disables LLM reviews while keeping the hard stop.
+A `Loop: DETECTED` verdict must cite at least two recorded iterations, name the
+attempt and failure, identify unchanged relevant inputs, and supply concrete
+receipts. It blocks immediately with exit 75 and terminal `runner.blocked`, reason
+`loop_detected`. Pending queue entries remain untouched. A confirmed block survives
+restart; use `--recover-blocked` for one recovery worker after repairing the cause.
+`CLEAR`, `UNCERTAIN` and incomplete reports allow work to continue.
 
-Progress means increasing the number of completed tasks in the authoritative
-live roadmap, above the persisted high-water mark. Stable task IDs (or full labels
-when no ID exists) identify distinct tasks. For a source without checkboxes, the
-progress checklist supplies this measure. Reopening and rechecking the same tasks,
-mirrored handoff checkboxes, changed notes, and new unchecked tasks do not reset
-the budget. Fenced examples are ignored. A controller requirement amendment adopted
-between sessions grants one fresh budget. Checkbox/status edits and source rewrites
-during workers or supervisors, including hash-bearing delivery summaries, cannot
-continually renew it. Delivery summaries belong in progress, outside the source.
-This is a checklist-based
-orchestration guard, not independent validation that claimed implementation is
-correct. Workers should record validated implementation units as completed
-children rather than stretching one unchecked unit across many sessions.
-
-The counter persists across process restarts. An explicit restart permits a fresh
-worker to verify changed external inputs; another no-progress result still uses
-the retained counter. `ROADMAP_MAX_IDLE_WORKERS` adjusts the limit (1–100; default
-3). After two idle workers, an attention alert and bounded backoff precede the
-remaining attempt. `ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY`
-control that delay in seconds (defaults 60 and 900; range 1–3600). Prose-only
-handoffs also consume the budget; initialize a checklist and record validated
-units rather than relying on narrative changes as progress.
+Open acceptance items can span any number of productive implementation,
+investigation or verification sessions. Checkbox counts and workspace fingerprints
+do not determine whether a run stops. Recent attempt evidence and review cadence
+are checkpointed across restarts. Old `ROADMAP_MAX_IDLE_WORKERS`,
+`ROADMAP_RECOVERY_DELAY` and `ROADMAP_RECOVERY_MAX_DELAY` settings are ignored.
+`--supervisor-every 0` disables model reviews, including retry-loop detection;
+global BLOCKED, client failures and quota limits still retain their own behavior.
 
 Events are appended to `<progress-file>.events.jsonl`. Set `ROADMAP_NOTIFY_BIN`
 to an executable's absolute path to receive each event's JSON on stdin. It is
