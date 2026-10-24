@@ -132,8 +132,13 @@ export class RunManager {
     if (request.executionPlan) {
       const executionPlan = canonicalPath(path.resolve(workspace, request.executionPlan));
       if (!within(workspace, executionPlan) || !fs.statSync(executionPlan).isFile()) throw new Error('Execution plan must be a file inside the authorized workspace');
-      if (queue.length > 1) throw new Error('A finite execution plan cannot be combined with a serial roadmap queue');
-      options.executionPlan = executionPlan;
+      // A queue retains its original acceptance and completion semantics. Its
+      // bounded implementation plan supplies evidenced delivery progress between
+      // deferred acceptance gates; it does not complete a queued roadmap.
+      if (queue.length > 1) {
+        options.deliveryPlan = executionPlan;
+        delete options.executionPlan;
+      } else options.executionPlan = executionPlan;
     }
     parseDuration(options.timeout); supervisorSettings(options);
     const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, queue, idempotencyKey: undefined }));

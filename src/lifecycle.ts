@@ -77,6 +77,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
   let tracking = prepareTracking(roadmap, options.progressFile, workdir);
   const execution = options.executionPlan ? new ExecutionPlan(options.executionPlan, workdir, tracking) : null;
+  const queuedDelivery = options.deliveryPlan ? new ExecutionPlan(options.deliveryPlan, workdir, tracking) : null;
   if (!onEvent) {
     notifications = new Notifications(options, `${tracking.file}.notifications.json`);
     onEvent = event => notifications.enqueue(event);
@@ -118,8 +119,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
   while (true) {
     if (signal.aborted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
-    const batch = execution?.select();
-    if (batch && path.resolve(workdir, batch.roadmap) !== roadmap) {
+    const batch = execution?.select() ?? queuedDelivery?.select();
+    if (execution && batch && path.resolve(workdir, batch.roadmap) !== roadmap) {
       roadmap = path.resolve(workdir, batch.roadmap);
       tracking = prepareTracking(roadmap, tracking.file, workdir);
       recovery.tracking = tracking; recovery.roadmap = roadmap;
@@ -217,7 +218,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
     const iterationPrompt = compacting
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
-      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${execution ? execution.context(batch) : tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${execution ? execution.context(batch) : batch && queuedDelivery ? queuedDelivery.context(batch) : tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const before = tracking.contextBytes(iterationPrompt);
     await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, task: batch?.task, batch: batch?.id, contextBytes: before });
     const result = await runClient({
@@ -260,7 +261,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
-    if (!compacting && execution) execution.remember(batch, completedHandoff, receipt);
+    if (!compacting && batch) (execution ?? queuedDelivery)?.remember(batch, completedHandoff, receipt);
     tracking.assertBounded();
     if (compacting && afterSource !== sourceContents) {
       recovery.requireWorker();
@@ -275,7 +276,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
     if (result.cleanupIncomplete) fail('Client process cleanup could not be confirmed; unfinished files preserved.', 75);
-    const delivery = !compacting && execution ? execution.finish(batch, result) : null;
+    const delivery = !compacting && batch ? (execution ?? queuedDelivery)?.finish(batch, result) : null;
     if (!compacting) {
       recovery.state.consecutiveTimeouts = result.timedOut ? (recovery.state.consecutiveTimeouts || 0) + 1 : 0;
       if (delivery?.replan || recovery.state.consecutiveTimeouts >= 2) recovery.state.replanRequired = true;
@@ -333,7 +334,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const afterStatus = tracking.deliveryStatus(roadmapStatus(after));
     if (afterStatus !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, afterStatus, iteration);
     if (!execution && (afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
-      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
+      await recovery.idle(beforeProgress, afterProgress, revisionChanged, delivery?.delivered === true);
     }
     console.log(`Iteration ${iteration} completed.`);
     console.log();

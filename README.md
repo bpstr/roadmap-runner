@@ -839,6 +839,17 @@ orchestration guard, not independent validation that claimed implementation is
 correct. Workers should record validated implementation units as completed
 children rather than stretching one unchecked unit across many sessions.
 
+For a serial queue with deferred acceptance gates, `--execution-plan FILE` can
+also supply the existing fixed implementation baseline and up to three bounded
+delivery batches. The runner selects those batches without replacing queue
+order or closing original acceptance. A newly implemented batch renews the idle
+budget only after its hand-authored source hashes match the current files and
+show a change from the first-attempt snapshot. Each batch counts once across
+restarts. Declared configuration batches may use explicitly named JSON source
+files; generated output, test changes and status notes do not count. After the
+bounded batches, ordinary roadmap selection and the checklist guard continue.
+Queue advancement still requires the current roadmap's acceptance to complete.
+
 The counter persists across process restarts. An explicit restart permits a fresh
 worker to verify changed external inputs; another no-progress result still uses
 the retained counter. `ROADMAP_MAX_IDLE_WORKERS` adjusts the limit (1–100; default

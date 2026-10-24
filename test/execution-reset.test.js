@@ -14,6 +14,7 @@ import { runClient } from '../lib/runner.js';
 import { parseArgs } from '../lib/runner.js';
 import { Recovery, recoverySettings } from '../lib/recovery.js';
 import { startSchema } from '../dist/run-manager.js';
+import { RunManager } from '../dist/run-manager.js';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 const hash = text => createHash('sha256').update(text).digest('hex');
@@ -34,6 +35,76 @@ function fixture(t) {
   save(file, plan);
   return { dir, tracking, file, plan, execution: new ExecutionPlan(file, dir, tracking) };
 }
+
+test('a verified delivery counts once and configuration must be an explicit changed source', t => {
+  const f = fixture(t);
+  const config = path.join(f.dir, 'policy.json');
+  fs.writeFileSync(config, '{"assigned":false}\n');
+  f.plan.batches[0].kind = 'configuration';
+  f.plan.batches[0].sourcePointers = ['policy.json'];
+  save(f.file, f.plan);
+  const batch = f.execution.select(); f.execution.context(batch);
+  fs.writeFileSync(config, '{"assigned":true}\n');
+  f.plan.batches[0].implementation = 'implemented';
+  f.plan.batches[0].implementationEvidence = [{path:'policy.json', sha256:'0'.repeat(64)}];
+  save(f.file, f.plan);
+  assert.throws(() => f.execution.finish(batch, {code:0}), /does not match/);
+  f.plan.batches[0].implementationEvidence = [{path:'status.json', sha256:'0'.repeat(64)}];
+  save(f.file, f.plan);
+  assert.throws(() => f.execution.finish(batch, {code:0}), /churn/);
+  f.plan.batches[0].implementationEvidence = [{path:'policy.json', sha256:hash(fs.readFileSync(config))}];
+  save(f.file, f.plan);
+  assert.equal(f.execution.finish(batch, {code:0}).delivered, true);
+  assert.equal(f.execution.finish(batch, {code:0}).delivered, false, 'replayed evidence cannot reset the guard');
+  assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /\[ \]/);
+});
+
+test('a queued implementation plan renews the guard without closing original acceptance', async t => {
+  const f = fixture(t);
+  const client = path.join(f.dir, 'prepared-delivery.cjs');
+  fs.writeFileSync(client, `#!/usr/bin/env node
+const fs=require('node:fs'), crypto=require('node:crypto'), path=require('node:path');
+const prompt=process.argv.at(-1);
+const authority=${JSON.stringify(f.file)};
+const count=path.join(${JSON.stringify(f.dir)},'prepared-count');
+const n=fs.existsSync(count)?Number(fs.readFileSync(count))+1:1;
+fs.writeFileSync(count,String(n));
+if(n>4)process.exit(99);
+const named=prompt.match(/^Named deliverable: (.+)$/m);
+if(named){
+ const text=fs.readFileSync(authority,'utf8');
+ const plan=JSON.parse(text.match(/\x60\x60\x60roadmap-runner-execution\\n([\\s\\S]*?)\\n\x60\x60\x60/)[1]);
+ const batch=plan.batches.find(b=>b.id===named[1]);
+ fs.writeFileSync('service.ts','export const stage = '+n+';\\n');
+ batch.implementation='implemented';
+ batch.implementationEvidence=[{path:'service.ts',sha256:crypto.createHash('sha256').update(fs.readFileSync('service.ts')).digest('hex')}];
+ fs.writeFileSync(authority,'# Authority\\n\\n\x60\x60\x60roadmap-runner-execution\\n'+JSON.stringify(plan)+'\\n\x60\x60\x60\\n');
+ if(fs.readFileSync('owner1.md','utf8').includes('[x]'))process.exit(98);
+}else{
+ const source=n===3?'owner1.md':'owner2.md';
+ fs.writeFileSync(source,fs.readFileSync(source,'utf8').replace('[ ]','[x]'));
+ fs.writeFileSync(n===3?'progress.md':'progress2.md','Status: COMPLETE\\n');
+}
+`, {mode:0o755});
+  const manager = new RunManager(f.dir, path.join(f.dir, 'registry'));
+  let run;
+  t.after(async () => { if(run) { try { await manager.stop(run.id); } catch {} } });
+  run = await manager.start({workspace:f.dir, roadmap:'owner1.md', progressFile:'progress.md',
+    executionPlan:'authority.md', queue:[{roadmap:'owner2.md',progressFile:'progress2.md'}],
+    notify:'off', supervisorEvery:0, timeout:'5s'}, {executable:client,
+    recovery:{...recoverySettings({}),maxIdleWorkers:1,delayMs:1,maxDelayMs:1}});
+  const deadline=Date.now()+15000;
+  let final;
+  while(Date.now()<deadline){
+    final=await manager.status(run.id);
+    if(final.processState==='exited')break;
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.equal(final.processState,'exited');
+  assert.equal(final.reason,'complete',final.output);
+  assert.equal(Number(fs.readFileSync(path.join(f.dir,'prepared-count'))),4);
+  assert.deepEqual(final.queue.map(entry=>entry.state),['complete','complete']);
+});
 
 test('finite baseline rotates real owners and rejects denominator drift and generator-only delivery', t => {
   const f = fixture(t); const first = f.execution.select();
