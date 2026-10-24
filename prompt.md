@@ -84,11 +84,16 @@ and existing baseline entries; record the requested hand-authored source evidenc
 Tick an acceptance checkbox only after all its criteria and required validation
 pass. Reopen it when concrete evidence invalidates the receipt.
 
-Replace the handoff in place, targeting less than 16 KiB. At 24 KiB the runner
-archives it and requires separate compaction. Keep only current outcome,
+Replace the handoff in place, keeping it below 32 KiB (32768 UTF-8 bytes; measure
+with `wc -c`). At or above 32 KiB the runner archives it and starts separate
+compaction. Move details into referenced evidence files; if it still reaches the
+limit, save the state and exit for compaction. Handoff size alone is not a reason
+to set BLOCKED. Keep only current outcome,
 implemented prerequisites, remaining functionality, blockers, next action and
 specific evidence/history pointers. Retrieve historical details on demand. Keep
 one current supervisor review and point to deferred gates in their existing owners.
+The source roadmap may be up to 256 KiB (262144 bytes), inclusive. Preserve its
+requirements; never compress or truncate the source to fit the handoff budget.
 
 Before the soft checkpoint deadline save edited paths, exact remaining work, the
 next command/action and reusable/failed evidence, then exit. Preserve partial files

@@ -29,8 +29,10 @@ if (role === 'COMPACTOR') {
   if (mode !== 'noop') {
     const evidence = JSON.parse(prompt.match(/^Detailed evidence directory: (.+)$/m)[1]);
     fs.writeFileSync(path.join(evidence, 'GATE-2.md'), old);
-    fs.writeFileSync(progress, '# Handoff\nStatus: ' + (mode === 'status' ? 'COMPLETE' : 'IN_PROGRESS') +
-      '\n\n## Current handoff\nGATE-2: preserve the release receipt; details: ' + path.join(evidence, 'GATE-2.md') + '\n');
+    const status = mode === 'status' ? 'COMPLETE' : old.match(/^Status: (.+)$/m)[1];
+    const handoff = '# Handoff\nStatus: ' + status +
+      '\n\n## Current handoff\nGATE-2: preserve the release receipt; details: ' + path.join(evidence, 'GATE-2.md') + '\n';
+    fs.writeFileSync(progress, mode === 'compact-wide' ? handoff.padEnd(31 * 1024, 'e') : handoff);
   }
 } else if (role === 'SUPERVISOR') {
   const review = prompt.match(/^Review ID: (.+)$/m)[1];
@@ -38,7 +40,7 @@ if (role === 'COMPACTOR') {
   if (mode.startsWith('loop')) fs.appendFileSync(progress, 'Loop: ' + (mode === 'loop-detected' ? 'DETECTED' : 'CLEAR') +
     '\nLoop iterations: 1, 2\nLoop attempt: Repeat the same dependency check.\nLoop failure: The required transport is still missing.\nLoop unchanged inputs: No transport or dependency receipt changed.\nLoop evidence: Both workers report the same missing transport and only rewrote delivery receipts.\n');
 } else {
-  assert.ok(fs.statSync(progress).size < 24 * 1024);
+  assert.ok(fs.statSync(progress).size < 32 * 1024);
   if (process.env.CONTEXT_TEST_RECONCILE === 'yes') assert.match(prompt, /Roadmap reconciliation required: YES/);
   const n = calls.filter(r => r === 'WORKER').length;
   let source = fs.readFileSync(roadmap, 'utf8');
@@ -50,7 +52,7 @@ if (role === 'COMPACTOR') {
   const complete = (mode === 'loop-clear' && n >= 3) || (!mode.startsWith('loop') && (mode !== 'grow' || n === 2));
   if (complete) fs.writeFileSync(roadmap, source.replaceAll('- [ ]', '- [x]'));
   let handoff = '# Handoff\nStatus: ' + (complete ? 'COMPLETE' : 'IN_PROGRESS') + '\n\n## Current handoff\nGATE-2: release receipt required.\n';
-  if (!complete) handoff = handoff.padEnd(24 * 1024 + 100, 'e');
+  if (!complete) handoff = handoff.padEnd(32 * 1024 + 100, 'e');
   fs.writeFileSync(progress, handoff);
 }
 console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 1000, cached_input_tokens: 800, output_tokens: 12 } }));

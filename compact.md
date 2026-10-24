@@ -23,7 +23,11 @@ Tracking mode: ROADMAP_CHECKBOXES
    Keep concrete pointers for unresolved obligations and retained passing checks
    so the next worker can retrieve proof without rerunning unchanged checks.
 4. Replace the handoff with the compact current state and those pointers. Measure
-   its UTF-8 byte size and meet the target in Runner context. If it cannot fit
+   its UTF-8 byte size with `wc -c` and keep it strictly below 32 KiB (32768 bytes).
+   Handoff size alone is not a reason to set BLOCKED: move details into evidence
+   files and retain usable references. The source roadmap has a separate 256 KiB
+   (262144-byte) inclusive limit; preserve it without compression or truncation.
+   If the handoff cannot fit
    without losing required state or usable references, explain the blocker and
    stop. The runner checks the size before starting further implementation.
 

@@ -1,0 +1,63 @@
+Roadmap requirements changed; revision a6a7c577811a will be reconciled by the next worker.
+Roadmap requirements changed; revision aa7c6a6476f4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 595c3c2547c5 will be reconciled by the next worker.
+Roadmap requirements changed; revision 569c06c974a4 will be reconciled by the next worker.
+Roadmap requirements changed; revision 173adc2b7852 will be reconciled by the next worker.
+✔ a 32767-byte handoff compacts only at the 32 KiB boundary (685.527208ms)
+✔ a 32768-byte handoff compacts only at the 32 KiB boundary (387.638833ms)
+✔ a 32769-byte handoff compacts only at the 32 KiB boundary (406.291917ms)
+✔ a blocked handoff compacts before stopping and leaves a 256 KiB roadmap intact (380.095125ms)
+✔ legacy large handoffs compact separately while detailed evidence remains available (427.595583ms)
+✔ compaction noop stops before implementation and retains the original archive (341.812792ms)
+✔ compaction status stops before implementation and retains the original archive (366.958583ms)
+✔ compaction source stops before implementation and retains the original archive (353.494916ms)
+✔ compaction source-capacity stops before implementation and retains the original archive (392.343083ms)
+✔ compaction failure stops before implementation and retains the original archive (343.36475ms)
+✔ compaction timeout stops before implementation and retains the original archive (1127.067209ms)
+✔ worker growth compacts before a due supervisor; delivery notes do not starve review (638.975584ms)
+✔ compaction cannot acknowledge pending requirements before the worker sees them (421.980542ms)
+✔ compaction preserves the repeated-failure verdict (498.366333ms)
+✔ compaction preserves productive continuation (516.597042ms)
+✔ only valid delivery notes are excluded from scope reconciliation (15.456042ms)
+Roadmap requirements changed; revision 31a7cb3d71d8 will be reconciled by the next worker.
+Roadmap requirements changed; revision d76106bc0d0f will be reconciled by the next worker.
+✔ progress-file argument and environment are opt-in, with CLI precedence (0.74225ms)
+✔ default mode preserves the roadmap and creates bounded internal progress state (3.666541ms)
+✔ new nested evidence gets an incomplete scaffold without touching the source (2.64375ms)
+✔ existing evidence is never truncated or reset by initialization (3.008167ms)
+✔ reject source alias: same path (0.747958ms)
+✔ reject source alias: normalized path (0.65375ms)
+✔ reject source alias: symlink (0.603666ms)
+✔ reject source alias: hard link (0.958833ms)
+✔ non-file progress targets are rejected without altering the source (0.630958ms)
+✔ source edits and deletion are detected without automatic restoration (4.367292ms)
+✔ progress replaced with a source alias is rejected at the next boundary (1.976292ms)
+✔ prompt keeps literal paths and the latest batching and evidence instructions (0.16375ms)
+✔ source/history pollution is rejected before a worker sees it (1.036583ms)
+✔ a 256 KiB source is accepted while the progress limits stay smaller (8.224459ms)
+✔ a source above 256 KiB is rejected unchanged (1.18325ms)
+✔ progress compaction is requested before the hard limit without discarding state (2.734167ms)
+✔ active progress is capped while archived snapshots preserve prior state (2.882125ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source IN_PROGRESS (638.707959ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source COMPLETE (455.493ms)
+✔ three iterations update roadmap checkboxes and preserve requirements, ignoring source BLOCKED (778.935792ms)
+✔ resume skips previously checked tasks and preserves prior delivery evidence (660.125167ms)
+✔ stale progress COMPLETE cannot finish with open roadmap tasks (615.076958ms)
+✔ progress BLOCKED stops without launching or rescanning (121.396084ms)
+✔ conflicting progress statuses fail before launching (110.702208ms)
+✔ continue after edit-source, preserving controller edits and prior evidence (555.220791ms)
+✔ continue after edit-capacity, preserving controller edits and prior evidence (1669.159708ms)
+✔ stop after delete-source, without another worker or automatic restoration (762.801958ms)
+✔ stop after delete-progress, without another worker or automatic restoration (734.212375ms)
+✔ capacity retry retains progress and source protection (1843.583542ms)
+✔ a separate compactor reduces a large handoff before implementation (678.499041ms)
+✔ roadmap completion ignores fenced examples and rejects stale handoff completion (2.495125ms)
+✔ checkbox updates retain the source snapshot without requiring scope reconciliation (7.391916ms)
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17074.642833

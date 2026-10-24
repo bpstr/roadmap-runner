@@ -131,8 +131,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.assertBounded();
     const contents = fs.readFileSync(tracking.file, "utf8");
     const status = tracking.deliveryStatus(roadmapStatus(contents));
+    const compacting = tracking.needsCompaction;
 
-    if (recovery.state.loopBlockedRevision === tracking.requirementsRevision) {
+    if (!compacting && recovery.state.loopBlockedRevision === tracking.requirementsRevision) {
       if (!recoveryRequested) {
         await recovery.event("runner.blocked", { terminal: true, reason: "loop_detected", iteration });
         return { code: 75, reason: "blocked" };
@@ -141,7 +142,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       recovery.save();
     }
 
-    if (!execution && status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
+    if (!compacting && !execution && status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       recovery.success();
       await recovery.event("runner.completed", { iteration });
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
@@ -149,14 +150,13 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
 
     const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
-    const terminalBlocked = blockedRecovery && !recovery.state.requiresWorker && !recovery.state.quota && !recoveryRequested;
+    const terminalBlocked = !compacting && blockedRecovery && !recovery.state.requiresWorker && !recovery.state.quota && !recoveryRequested;
     await recovery.attention(contents, status, iteration, terminalBlocked);
     if (terminalBlocked) {
       console.warn("Roadmap is BLOCKED; stopping without another worker or supervisor. Resolve the recorded unblock condition, then use --recover-blocked for one explicit recovery attempt.");
       return { code: 75, reason: "blocked" };
     }
 
-    const compacting = tracking.needsCompaction;
     // Review attempts on cadence even during source reconciliation. Hash churn
     // must neither postpone review nor count as proof that an attempt improved.
     const corrective = recovery.state.reviewRequested === true;
@@ -180,7 +180,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       }
       continue; // Re-read the supervisor's handoff/status before another worker.
     }
-    if (execution && !batch) {
+    if (!compacting && execution && !batch) {
       await recovery.event('runner.blocked', { terminal: true, reason: 'finite_plan_exhausted', iteration });
       console.log('No ready batch remains in the finite plan. Implementation acceptance is unchanged; controller replanning is required.');
       return { code: 75, reason: 'blocked' };

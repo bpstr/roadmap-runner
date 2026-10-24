@@ -12,13 +12,15 @@ const cli = fileURLToPath(new URL("../bin/roadmap-runner.js", import.meta.url));
 const notes = text => `<!-- roadmap-runner:delivery:start -->\n${text}\n<!-- roadmap-runner:delivery:end -->`;
 const jsonLines = file => fs.readFileSync(file, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
 
-function fixture(t, mode = "compact", reconcile = false) {
+function fixture(t, mode = "compact", reconcile = false, { initialBytes = 97 * 1024, status = "IN_PROGRESS", sourceBytes = 0 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-context-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const roadmap = path.join(dir, "roadmap.md");
-  fs.writeFileSync(roadmap, `# Requirements\n- [ ] GATE-1: first criterion\n- [ ] GATE-2: second criterion\n\n${notes("No delivery yet.")}\n`);
+  const source = `# Requirements\n- [ ] GATE-1: first criterion\n- [ ] GATE-2: second criterion\n\n${notes("No delivery yet.")}\n`
+    .replaceAll("[ ]", status === "COMPLETE" ? "[x]" : "[ ]").padEnd(sourceBytes, " ");
+  fs.writeFileSync(roadmap, source);
   const tracking = prepareTracking(roadmap, path.join(dir, "progress.md"), dir);
-  const initial = "# Handoff\nStatus: IN_PROGRESS\n\n## Deferred gates\nGATE-2: preserve the release receipt.\n".padEnd(97 * 1024, "e");
+  const initial = `# Handoff\nStatus: ${status}\n\n## Deferred gates\nGATE-2: preserve the release receipt.\n`.padEnd(initialBytes, "e");
   if (mode !== "grow" && !mode.startsWith("loop")) fs.writeFileSync(tracking.file, initial);
   if (reconcile) fs.appendFileSync(roadmap, "\nController criterion added.\n");
   const worker = path.join(dir, "prepared.cjs");
@@ -33,8 +35,37 @@ function fixture(t, mode = "compact", reconcile = false) {
       CONTEXT_TEST_RECONCILE: reconcile ? "yes" : "no" },
   });
   assert.equal(result.error, undefined);
-  return { dir, roadmap, tracking, initial, result, calls: JSON.parse(fs.readFileSync(path.join(dir, "calls.json"))) };
+  return { dir, roadmap, tracking, source, initial, result, calls: JSON.parse(fs.readFileSync(path.join(dir, "calls.json"))) };
 }
+
+for (const initialBytes of [32767, 32768, 32769]) {
+  test(`a ${initialBytes}-byte handoff compacts only at the 32 KiB boundary`, t => {
+    const f = fixture(t, "compact-wide", false, { initialBytes });
+    assert.equal(f.result.status, 0, f.result.stderr);
+    assert.deepEqual(f.calls, [...(initialBytes >= 32768 ? ["COMPACTOR"] : []), "WORKER"]);
+    if (initialBytes >= 32768) assert.equal(jsonLines(f.tracking.sessionsFile)[0].contextBytes.after.progress, 31 * 1024);
+  });
+}
+
+test("a blocked handoff compacts before stopping and leaves a 256 KiB roadmap intact", t => {
+  const f = fixture(t, "compact", false, { initialBytes: 32768, status: "BLOCKED", sourceBytes: 256 * 1024 });
+  assert.equal(f.result.status, 75, f.result.stderr);
+  assert.deepEqual(f.calls, ["COMPACTOR"]);
+  assert.match(fs.readFileSync(f.tracking.file, "utf8"), /Status: BLOCKED/);
+  assert.ok(fs.statSync(f.tracking.file).size < 32768);
+  assert.equal(fs.readFileSync(f.roadmap, "utf8"), f.source);
+  const snapshot = jsonLines(f.tracking.historyFile).find(e => e.kind === "before-compaction").snapshot;
+  assert.equal(gunzipSync(fs.readFileSync(path.join(f.tracking.stateDir, snapshot))).toString(), f.initial);
+});
+
+test("a complete handoff compacts before exiting without another worker", t => {
+  const f = fixture(t, "compact", false, { initialBytes: 32768, status: "COMPLETE" });
+  assert.equal(f.result.status, 0, f.result.stderr);
+  assert.deepEqual(f.calls, ["COMPACTOR"]);
+  assert.match(fs.readFileSync(f.tracking.file, "utf8"), /Status: COMPLETE/);
+  assert.ok(fs.statSync(f.tracking.file).size < 32768);
+  assert.equal(fs.readFileSync(f.roadmap, "utf8"), f.source);
+});
 
 test("legacy large handoffs compact separately while detailed evidence remains available", t => {
   const f = fixture(t);
@@ -79,6 +110,13 @@ test("worker growth compacts before a due supervisor; delivery notes do not star
   assert.equal(new Set(sessions.map(s => s.sessionId)).size, 4);
   assert.ok(sessions[2].contextBytes.before.progress < TARGET_TRACKING_BYTES);
   assert.equal(sessions[2].usage.outputTokens, 12);
+  for (let i = 1; i <= f.calls.length; i++) {
+    const prompt = fs.readFileSync(path.join(f.dir, `prompt-${i}`), "utf8");
+    assert.match(prompt, /Handoff limit: 32768 UTF-8 bytes \(32 KiB\)/);
+    assert.match(prompt, /Handoff size alone is not a reason to set BLOCKED/);
+    assert.match(prompt, /Source roadmap limit: 262144 UTF-8 bytes \(256 KiB\), inclusive/);
+    assert.match(prompt, /must not compress or truncate the source roadmap/);
+  }
 });
 
 test("compaction cannot acknowledge pending requirements before the worker sees them", t => {

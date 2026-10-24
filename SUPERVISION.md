@@ -120,10 +120,14 @@ That ID verifies that a handoff was written, not that its reasoning is correct.
 
 ## Output retention, context bounds and privacy
 
-The handoff targets less than 16 KiB. At 24 KiB, a separate compaction session
+The handoff stays below 32 KiB (32768 UTF-8 bytes). At or above 32 KiB, a separate compaction session
 archives and reduces it before a worker or supervisor starts; 128 KiB remains the
 emergency read limit. Detailed evidence stays available through per-task files and
 specific historical snapshots. Compaction does not count toward the review cadence.
+All session prompts explain the limit, evidence pointers and automatic compaction;
+size alone is not a reason to set BLOCKED. Compaction precedes terminal status checks
+and preserves genuine blockers. Source roadmaps allow up to 256 KiB, inclusive,
+and are never compressed or truncated by handoff compaction.
 Explicitly marked delivery-only roadmap notes do not postpone supervision; actual
 scope changes still require reconciliation. A source snapshot is refreshed
 between sessions and remains the authority when a handoff or proposed

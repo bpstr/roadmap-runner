@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.10.8 — 2026-10-24
 
+- Raise the handoff limit to 32 KiB and automatically archive and compact at or above that boundary, including before terminal status checks. Preserve genuine blockers and original evidence.
+- Tell every worker, supervisor and compactor the exact byte limits, how to move details into referenced evidence, and that handoff size alone is not a reason to set BLOCKED.
+- Keep source roadmaps up to 256 KiB unchanged during compaction; larger sources are rejected without compression or truncation.
 - Raise the selected execution batch summary limit from 12 KiB to 32 KiB so retained implementation and recovery evidence can fit in the next worker's context.
 
 ## 0.10.7 — 2026-10-24

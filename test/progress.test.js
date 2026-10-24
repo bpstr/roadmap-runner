@@ -143,7 +143,7 @@ test("a 256 KiB source is accepted while the progress limits stay smaller", t =>
   fs.writeFileSync(roadmap, initial);
   const tracking = prepareTracking(roadmap, "", dir);
   assert.equal(MAX_TRACKING_BYTES, 128 * 1024);
-  assert.equal(COMPACT_TRACKING_BYTES, 24 * 1024);
+  assert.equal(COMPACT_TRACKING_BYTES, 32 * 1024);
   const updated = padSource(256 * 1024);
   fs.writeFileSync(roadmap, updated);
   assert.doesNotThrow(() => tracking.refreshSource());
@@ -167,6 +167,11 @@ test("progress compaction is requested before the hard limit without discarding 
   const { dir, roadmap } = workspace(t);
   const tracking = prepareTracking(roadmap, "", dir);
   assert.equal(tracking.compactionContext(), "");
+  const unicode = "é".repeat(COMPACT_TRACKING_BYTES / 2 - 1) + "x";
+  fs.writeFileSync(tracking.file, unicode);
+  assert.equal(tracking.needsCompaction, false);
+  fs.appendFileSync(tracking.file, "x");
+  assert.equal(tracking.needsCompaction, true);
   const contents = "# Progress\nStatus: IN_PROGRESS\n- [ ] GATE-1: preserve criterion\n".padEnd(COMPACT_TRACKING_BYTES, "x");
   fs.writeFileSync(tracking.file, contents);
   tracking.archive({ kind: "worker", iteration: 55 });

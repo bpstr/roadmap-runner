@@ -166,8 +166,12 @@ using the worker's `- STATUS TASK-ID: reason | Unblock: condition | Retry: trigg
 format. Retarget independent ready work. Preserve unchecked acceptance criteria for
 all deferred tasks; a skipped prerequisite cannot unlock its dependent tasks.
 
-Keep the handoff below 16 KiB where possible. At 24 KiB the runner starts a separate
-compaction session before another worker or review. Replace the current review in
+Keep the handoff below 32 KiB (32768 UTF-8 bytes; measure with `wc -c`). At or above
+32 KiB the runner archives it and starts a separate compaction session before
+another worker or review. Save the state for compaction if it reaches the limit;
+handoff size alone is not a reason to set BLOCKED. The source roadmap allows up to
+256 KiB (262144 bytes), inclusive; preserve its requirements without compression
+or truncation. Replace the current review in
 place; store detailed findings in the evidence directory and keep short pointers.
 Retrieve specific evidence files, session metrics or compressed historical snapshots
 when needed to verify progress, resolve conflicting state or investigate failures.

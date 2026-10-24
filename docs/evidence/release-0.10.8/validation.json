@@ -1,0 +1,48 @@
+{
+  "scope": "32 KiB handoff limit with automatic compaction and explicit agent instructions; unchanged 256 KiB source roadmap input; release 0.10.8 including the existing 32 KiB selected-batch summary change.",
+  "inference": "Prepared executable clients only. No providers, proxies, secrets or fixture recording.",
+  "development_checks": [
+    "Build TypeScript once before the affected tests",
+    "test/progress.test.js and test/context-budget.test.js: UTF-8 boundary, startup and worker-growth compaction, immutable archives, prompt guidance, genuine blockers and untouched 256 KiB source",
+    "Selected blocked/recovery and finite-execution regressions, selected-batch summary limit, oversized replacement-source rejection",
+    "Package contents and packaged CLI version/help; whitespace"
+  ],
+  "retained_evidence": "Reuse unaffected behavior from the 0.10.6 release CI and prior validation. No local full-suite run.",
+  "completion": "Affected checks pass, package reports 0.10.8, release CI passes, GitHub release and package publication status are verified.",
+  "release_gate": "The existing .github/workflows/ci.yml six-job Node 20/22/24 Linux/macOS matrix runs the full prepared suite and package checks on the release commit. This explicit cross-platform release gate is the reason for the broad CI run; narrower local checks cover development.",
+  "results": [
+    {
+      "check": "TypeScript build",
+      "result": "passed",
+      "log": "build.log"
+    },
+    {
+      "check": "Handoff and source bounds",
+      "passed": 48,
+      "failed": 0,
+      "skipped": 0,
+      "log": "handoff-tests.log"
+    },
+    {
+      "check": "Blocked recovery, finite global BLOCKED, selected batch size and oversized source replacement",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "log": "regression-tests.log"
+    },
+    {
+      "check": "Completed handoff compaction",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "terminal-test.log"
+    },
+    {
+      "check": "Package and CLI",
+      "result": "passed: version 0.10.8, 65 files; no inference",
+      "log": "package.log"
+    }
+  ],
+  "follow_up": "Added one completed-handoff regression after the initial pass. Only its selector ran; fixture default behavior is unchanged, so the 53 earlier passing checks are retained.",
+  "npm_registry": "Saved npm authentication returns HTTP 401 from npm whoami; credentials preserved. No registry publication claimed. Prepare an installable tarball for GitHub release."
+}

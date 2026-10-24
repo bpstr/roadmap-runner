@@ -309,7 +309,7 @@ the selected CLI/model and add inference work; log files are not redacted.
 
 ## Roadmap progress tracking
 
-The source roadmap owns **task checkboxes, acceptance criteria and concise delivery status**. Workers tick tasks only after their original criteria pass, reopen tasks invalidated by concrete evidence, and preserve unrelated controller edits. A fixed read-only snapshot binds each session to its acceptance criteria; controller requirement changes are adopted between sessions. Checkbox/status updates alone do not trigger scope reconciliation. A tracking-file COMPLETE cannot finish a run while live roadmap tasks remain unchecked. Requirements-only sources may be up to **256 KiB**; larger sources are rejected at every boundary. Keep execution history in the separate handoff, whose smaller compaction and emergency limits remain unchanged.
+The source roadmap owns **task checkboxes, acceptance criteria and concise delivery status**. Workers tick tasks only after their original criteria pass, reopen tasks invalidated by concrete evidence, and preserve unrelated controller edits. A fixed read-only snapshot binds each session to its acceptance criteria; controller requirement changes are adopted between sessions. Checkbox/status updates alone do not trigger scope reconciliation. A tracking-file COMPLETE cannot finish a run while live roadmap tasks remain unchecked. Requirements-only sources may be up to **256 KiB** (262144 UTF-8 bytes), inclusive; larger sources are rejected unchanged at every boundary. The runner never compresses or truncates the source roadmap. Keep execution history in the separate handoff.
 
 Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 
@@ -325,11 +325,15 @@ Without `--progress-file`, Roadmap Runner creates workspace-local state under:
 ```
 
 `progress.md` holds current work, blockers, next steps, the latest supervisor target
-and short evidence pointers. Its target is **below 16 KiB**. At **24 KiB**, the runner
+and short evidence pointers. Its limit is **below 32 KiB** (32768 UTF-8 bytes).
+At or above **32 KiB**, the runner
 archives the original and starts a separate compaction session before the next
 worker or supervisor. The compactor moves detailed evidence to files by task ID or
 links to specific archived snapshots, preserving unresolved obligations and prior
-validation. It must leave the status unchanged and reduce the handoff below 16 KiB.
+validation. It must leave the status unchanged and reduce the handoff below 32 KiB.
+Every worker, supervisor and compactor receives the limits and instructions to move
+details into referenced evidence files. Handoff size alone is not a reason to set
+BLOCKED. Compaction runs before terminal status checks, preserving genuine blockers.
 If it fails that check, the runner stops with the original archive preserved.
 Compaction does not count as an implementation iteration or supervisor review.
 It uses the shorter of the worker and supervisor timeouts; an expired compaction
@@ -468,7 +472,7 @@ A missing progress file (and its parent directories) is created with an
 `IN_PROGRESS` scaffold. The worker derives its checklist from the source; the
 scaffold is not proof of completion. An existing progress file is reused without
 being truncated or reset. Restart with the same roadmap/path to resume. The same
-16 KiB target, 24 KiB compaction trigger and 128 KiB emergency limit apply to custom
+32 KiB compaction trigger and 128 KiB emergency limit apply to custom
 progress files.
 
 The progress file's opening-header status controls continuation when no source

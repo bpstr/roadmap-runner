@@ -1,0 +1,3 @@
+npm error code E401
+npm error 401 Unauthorized - GET https://registry.npmjs.org/-/whoami
+npm error A complete log of this run can be found in: /Users/bpstr/.npm/_logs/2026-10-24T17_07_46_342Z-debug-0.log

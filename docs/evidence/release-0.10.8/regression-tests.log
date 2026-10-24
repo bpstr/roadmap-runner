@@ -1,0 +1,13 @@
+✔ selected batch context accepts 32 KiB and rejects excess UTF-8 bytes (7.780042ms)
+✔ finite execution respects a global supervisor BLOCKED outcome without requiring loop evidence (895.5415ms)
+✔ blocked CLI emits notification and stops before a repeated worker (1634.480125ms)
+✔ explicit blocked recovery runs one worker and stops again if unchanged (1031.688542ms)
+✔ unreadable, non-file and oversized replacement sources remain errors (4.253375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3757.950542
