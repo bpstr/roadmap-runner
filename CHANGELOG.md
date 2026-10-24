@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.10.5 — 2026-10-24
 
 - Remove checkbox-count and workspace-fingerprint stop conditions. Productive work can continue across sessions while acceptance items remain open.
 - Review repeated failed attempts at the configured supervisor interval, including during source-hash reconciliation. Require the repeated operation, failure, unchanged relevant inputs and concrete receipts before a loop stop.

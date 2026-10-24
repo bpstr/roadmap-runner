@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-24",
+  "scope": "PR 8 failed-attempt loop correction only; preserve/exclude concurrent local main commits 0631192 and 56ae2ee",
+  "base": "fdee29793070952a95b5e93d96a32a4df2175f27",
+  "fix": "7a3f73ccf2d1ddf2a14b490db6e8d4b68c4f7fb2",
+  "retained": "86 affected checks with compatible input hashes recorded in ../failed-attempt-loops/validation.md and inputs.json. No unchanged local test reruns.",
+  "changed_inputs": "Release package version and dated changelog only; re-run package inspection.",
+  "release_gate": ".github/workflows/ci.yml requires full prepared suite, package and whitespace on Node 20/22/24 across Ubuntu/macOS. CI is the explicit full-suite gate; no duplicate local full suite.",
+  "inference": "Prepared local executable clients and mocked transports only; no paid tests, credentials or live fixture recording.",
+  "publication": {
+    "github": "After all six CI jobs pass; attach npm tarball built from merged remote main.",
+    "npm": "Read-only npm whoami returned E401; authentication unchanged."
+  }
+}
