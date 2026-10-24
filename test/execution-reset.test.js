@@ -199,7 +199,8 @@ test('soft deadline saves exact mock handoff before hard timeout and preserves u
 const fs=require('node:fs');
 fs.writeFileSync('unfinished.ts','export const unfinished = true;');
 console.log(JSON.stringify({type:'item.started',item:{id:'command',type:'command_execution'}}));
-setInterval(()=>{ if(fs.existsSync(${JSON.stringify(request)})) fs.writeFileSync('progress.md','Status: IN_PROGRESS\\n\\n## Remaining functionality\\nFinish return branch in unfinished.ts; reuse compile receipt.\\n'); },10);
+let saved=false;
+setInterval(()=>{ if(!saved && fs.existsSync(${JSON.stringify(request)})) { fs.writeFileSync('progress.md.tmp','Status: IN_PROGRESS\\n\\n## Remaining functionality\\nFinish return branch in unfinished.ts; reuse compile receipt.\\n'); fs.renameSync('progress.md.tmp','progress.md'); saved=true; } },10);
 `, { mode: 0o755 });
   const result = await runClient({ client: 'codex', executable: client, workdir: f.dir, prompt: 'prepared deadline', timeoutMs: 4000,
     checkpointAtMs: 3000, terminationGraceMs: 50, onCheckpoint: data => { fs.writeFileSync(request, JSON.stringify(data)); return request; } });

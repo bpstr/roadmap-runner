@@ -39,5 +39,11 @@
     "lib/supervision.js": "ca8936880d613c56df407405298d2ca2d2c913f245d2870f307512de135f40dc",
     "lib/recovery.js": "e075dfd2c03af5d388fb88615ae5f608ce04e9b011abac4a97ddd38639a0eb14",
     "supervisor.md": "906f81ae30ca835e36f0ff51d7f21ef3b2e6a57700edfd2a1569027968343716"
+  },
+  "checkpoint_fixture_follow_up": {
+    "initial_ci": "40103447811: Node 22 Ubuntu had 256 passed, 1 failed, 3 platform skips; failure was the repeatedly truncating mock handoff racing hard termination.",
+    "change": "Write the prepared checkpoint handoff atomically once; keep the process alive until hard termination. Runtime unchanged.",
+    "local_selector": "test/execution-reset.test.js: soft deadline saves exact mock handoff",
+    "release_gate_reason": "The changed shared fixture runs in all six matrix jobs; the existing six-job release gate must pass on the final release commit. No local full-suite rerun."
   }
 }

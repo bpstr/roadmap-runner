@@ -33,7 +33,7 @@
   },
   "soft deadline saves exact mock handoff before hard timeout and preserves unfinished source": {
     "passed": true,
-    "log": "execution-follow-up.log"
+    "log": "checkpoint-follow-up.log.gz"
   },
   "event timing separates concurrent command time, shutdown and unattributed silence": {
     "passed": true,
