@@ -171,7 +171,7 @@ cannot bypass recovery by marking its batch implemented.
 The baseline identity is frozen in `execution-state.json`; scope expansion needs
 an explicit controller migration. No serial queue may accompany an execution
 plan. The entire authority is never injected: selected contracts are limited to
-12 KiB, original task snapshots to 24 KiB, and review summaries to 16 KiB. Large
+32 KiB, original task snapshots to 24 KiB, and review summaries to 16 KiB. Large
 source/evidence history remains available by targeted path. Startup reports the
 loaded prompt revision; replacing installed files does not update a running process.
 

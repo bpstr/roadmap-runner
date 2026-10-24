@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Raise the selected execution batch summary limit from 12 KiB to 32 KiB so retained implementation and recovery evidence can fit in the next worker's context.
+
 ## 0.10.7 — 2026-10-24
 
 - Allow requirements-only source roadmaps up to 256 KiB at startup and between sessions. Keep the separate handoff's 16 KiB target, 24 KiB compaction trigger and 128 KiB emergency ceiling unchanged.

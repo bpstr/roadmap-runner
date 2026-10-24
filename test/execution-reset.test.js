@@ -107,6 +107,18 @@ if(named){
   assert.equal(final.events.filter(event => event.type === 'runner.progress_observed' && event.kind === 'implementation').length, 2);
 });
 
+test('selected batch context accepts 32 KiB and rejects excess UTF-8 bytes', t => {
+  const f = fixture(t); const batch = f.execution.select();
+  batch.notes = '';
+  const contract = () => JSON.stringify({ ...batch, parent: f.execution.plan.parents.find(p => p.id === batch.task), previousAttempt: null });
+  const remaining = 32 * 1024 - Buffer.byteLength(contract());
+  batch.notes = 'é'.repeat(Math.floor(remaining / 2)) + 'x'.repeat(remaining % 2);
+  assert.equal(Buffer.byteLength(contract()), 32 * 1024);
+  assert.match(f.execution.context(batch), /Selected original task snapshot/);
+  batch.notes += 'x';
+  assert.throws(() => f.execution.context(batch), /Selected batch summary exceeds 32 KiB/);
+});
+
 test('finite baseline rotates real owners and rejects denominator drift and generator-only delivery', t => {
   const f = fixture(t); const first = f.execution.select();
   assert.match(f.execution.context(first), /Selected original task snapshot/);
