@@ -808,7 +808,8 @@ Its final `runner.blocked` event has `terminal: true`, and managed status retain
 
 A current supervisor review with `Health: STUCK` triggers an attention alert.
 With supervision enabled, the runner reviews recent attempts at the configured
-worker interval, including during source reconciliation. It stops for a loop only
+worker interval, including during source reconciliation. One reconciliation worker
+can run before a due review; further source rewrites cannot defer it again. It stops for a loop only
 when a current review identifies the same failed operation being retried without
 a relevant change to its inputs or approach. A changing source hash, handoff note,
 or unrelated edit cannot by itself justify repeating that attempt.

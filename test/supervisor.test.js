@@ -162,15 +162,16 @@ for (const mode of ['loop-detected', 'loop-source-churn', 'loop-periodic']) {
     const f = fixture(t, { mode, total: 6, every: 2 });
     const result = run(f);
     assert.equal(result.status, 75, result.stderr);
-    assert.deepEqual(events(f), ['W1', 'W2', 'S1']);
+    const expected = mode === 'loop-source-churn' ? ['W1', 'W2', 'W3', 'S1'] : ['W1', 'W2', 'S1'];
+    assert.deepEqual(events(f), expected);
     const journal = fs.readFileSync(f.tracking + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(journal.at(-1).type, 'runner.blocked');
     assert.equal(journal.at(-1).reason, 'loop_detected');
-    assert.deepEqual(journal.at(-1).loopIterations, [1, 2]);
+    assert.deepEqual(journal.at(-1).loopIterations, mode === 'loop-source-churn' ? [2, 3] : [1, 2]);
     const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
     assert.ok(evidence.records.every(r => r.sourceBefore.sha256 && r.sourceAfter.sha256 && r.trackingBefore.sha256));
     assert.equal(run(f).status, 75);
-    assert.deepEqual(events(f), ['W1', 'W2', 'S1'], 'unchanged restart launches no worker or model review');
+    assert.deepEqual(events(f), expected, 'unchanged restart launches no worker or model review');
   });
 }
 

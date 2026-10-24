@@ -89,7 +89,7 @@ test('hash-only retries cannot postpone review and a confirmed repeated failure 
   const f = fixture(t, 'hash-failure');
   const result = f.run();
   assert.equal(result.status, 75, result.stderr);
-  assert.equal(f.count('workers'), 2);
+  assert.equal(f.count('workers'), 3);
   assert.equal(f.count('reviews'), 1);
   const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'review-1.json')));
   assert.ok(evidence.records.every(r => r.sourceBefore.sha256 !== r.sourceAfter.sha256));
@@ -98,10 +98,10 @@ test('hash-only retries cannot postpone review and a confirmed repeated failure 
   assert.match(event.loopFailure, /transport is missing/);
   assert.match(event.loopUnchangedInputs, /only the source delivery hash changed/);
   assert.equal(f.run().status, 75);
-  assert.equal(f.count('workers'), 2);
+  assert.equal(f.count('workers'), 3);
   assert.equal(f.count('reviews'), 1);
   assert.equal(f.run(['--recover-blocked']).status, 75);
-  assert.equal(f.count('workers'), 3, 'explicit recovery grants exactly one worker before another failed-attempt review');
+  assert.equal(f.count('workers'), 4, 'explicit recovery grants exactly one worker before another failed-attempt review');
 });
 
 test('attempt evidence and review cadence survive a failed invocation', t => {
@@ -110,12 +110,13 @@ test('attempt evidence and review cadence survive a failed invocation', t => {
   assert.equal(first.status, 7, first.stderr);
   assert.equal(f.count('workers'), 2);
   assert.equal(f.count('reviews'), 0);
+  const checkpoint = JSON.parse(fs.readFileSync(path.join(f.dir, '.roadmap-runner', fs.readdirSync(path.join(f.dir, '.roadmap-runner'))[0], 'supervision.json')));
+  assert.equal(checkpoint.records.at(-1).code, 7, 'the failed attempt receipt survives the invocation');
   const restarted = f.run();
   assert.equal(restarted.status, 75, restarted.stderr);
-  assert.equal(f.count('workers'), 4, 'the first successful attempt still counts toward the review interval');
+  assert.equal(f.count('workers'), 5, 'the first successful attempt still counts toward the review interval');
   const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'review-1.json')));
-  assert.deepEqual(evidence.records.map(r => r.iteration), [2, 3, 4]);
-  assert.equal(evidence.records[0].code, 7, 'the failed attempt receipt is retained');
+  assert.deepEqual(evidence.records.map(r => r.iteration), [3, 4, 5]);
 });
 
 test('disabling supervision does not leave a checkbox or file-based stopping condition', t => {

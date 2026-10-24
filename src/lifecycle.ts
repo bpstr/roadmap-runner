@@ -145,7 +145,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     // Review attempts on cadence even during source reconciliation. Hash churn
     // must neither postpone review nor count as proof that an attempt improved.
     const loopCheck = tracking.needsReconciliation;
-    if (!compacting && !recoveryRequested && supervisor?.due) {
+    const reconcileFirst = !compacting && !recoveryRequested && supervisor?.due &&
+      supervisor.reconcileBeforeReview();
+    if (!compacting && !recoveryRequested && supervisor?.due && !reconcileFirst) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
       const review = await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery, loopCheck });

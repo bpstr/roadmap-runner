@@ -40,7 +40,8 @@ COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
 `blocked`, without another worker or supervisor; use it only when no authorized
 work remains ready. Independent work continues under IN_PROGRESS with task-local deferrals.
 Reviews run at the configured worker interval even while source reconciliation is
-pending. A review compares failed attempts and relevant changes, including actual
+pending. One reconciliation worker may precede a due review; this deferral is
+persisted and cannot be renewed by another source hash. A review compares failed attempts and relevant changes, including actual
 implementation, dependency, approach and requirement changes. Source/hash churn
 cannot postpone the review. No checkbox-count or workspace-byte condition stops
 productive long-running work.

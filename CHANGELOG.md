@@ -4,6 +4,7 @@
 
 - Remove checkbox-count and workspace-fingerprint stop conditions. Productive work can continue across sessions while acceptance items remain open.
 - Review repeated failed attempts at the configured supervisor interval, including during source-hash reconciliation. Require the repeated operation, failure, unchanged relevant inputs and concrete receipts before a loop stop.
+- Preserve one worker reconciliation attempt ahead of a due review after requirement edits; further hash rewrites cannot postpone review.
 - Persist recent attempt evidence and review cadence across restarts. Retire idle-budget settings while retaining quota waits, global BLOCKED, explicit recovery and queued work.
 
 ## 0.10.4 — 2026-10-23
