@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 export type QueueItem = { roadmap: string; progressFile: string; state: 'pending' | 'running' | 'complete' | 'failed' | 'stopped' | 'blocked' };
 export type RunRecord = {
-  id: string; token: string; workspace: string; roadmap: string; progressFile: string;
+  task?: string; batch?: string; id: string; token: string; workspace: string; roadmap: string; progressFile: string;
   processState: 'starting' | 'running' | 'stopping' | 'stopped' | 'exited' | 'unknown';
   roadmapState: 'in_progress' | 'blocked' | 'complete'; waitReason: string | null;
   createdAt: string; heartbeat: string; pid?: number; options: any; sequence: number;

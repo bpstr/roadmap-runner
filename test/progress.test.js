@@ -118,14 +118,14 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.ok(prompt.includes(`Work on this implementation roadmap:\n\n${roadmap}\n`));
   assert.ok(prompt.includes(`Tracking file (progress / delivery evidence):\n\n${file}\n`));
   assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
-  assert.match(prompt, /Tick verified tasks directly in the live roadmap/);
-  assert.match(prompt, /handoff in the tracking file and detailed evidence in the evidence directory/);
-  assert.match(prompt, /one concrete outcome/);
-  assert.match(prompt, /canonical harness first/);
-  assert.match(prompt, /roughly 60 minutes of\s+implementation/);
-  assert.match(prompt, /loaded prompt\s+revision/);
-  assert.match(prompt, /each run may process only one checkbox/);
-  assert.match(prompt, /original gate IDs and criteria/);
+  assert.match(prompt, /Tick an acceptance checkbox only after all its criteria/);
+  assert.match(prompt, /Retrieve historical details on demand/);
+  assert.match(prompt, /one finite deliverable/);
+  assert.match(prompt, /actual transport\/domain boundary and canonical/);
+  assert.match(prompt, /30–45-minute implementation budget/);
+  assert.match(prompt, /soft checkpoint deadline/);
+  assert.match(prompt, /without new checkboxes or\s+scheduling tasks/);
+  assert.match(prompt, /original task IDs, acceptance criteria/);
   assert.doesNotMatch(prompt, /Update the roadmap and stop|status log in the roadmap|EDIT_ROADMAP/);
 });
 

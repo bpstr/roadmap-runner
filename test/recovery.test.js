@@ -108,7 +108,7 @@ test("changed attention flags notify once, remain unfinished, and clear on recov
 
 test("unchanged workers back off with a bounded delay and reset after changed evidence", async t => {
   const f = fixture(t, { delayMs: 10, maxDelayMs: 20, maxIdleWorkers: 10 });
-  for (let i = 0; i < 5; i++) await f.recovery.idle("unchanged", "unchanged");
+  for (let i = 0; i < 5; i++) await f.recovery.idle("- [ ] T01 build", "- [ ] T01 build");
   assert.deepEqual(f.waits, [10, 20, 20, 20]);
   await f.recovery.idle("- [ ] T01 build", "- [x] T01 build");
   assert.equal(f.recovery.state.idle, 0);
@@ -118,21 +118,21 @@ test("unchanged workers back off with a bounded delay and reset after changed ev
 
 test("stuck attention is emitted once across restarts and rearmed after progress resumes", async t => {
   const f = fixture(t, { delayMs: 1, maxDelayMs: 1, maxIdleWorkers: 10 });
-  await f.recovery.idle("private progress", "private progress");
+  await f.recovery.idle("private progress\n- [ ] T01 build", "private progress\n- [ ] T01 build");
   assert.equal(fs.existsSync(f.recovery.eventsFile), false);
-  await f.recovery.idle("private progress", "private progress");
+  await f.recovery.idle("private progress\n- [ ] T01 build", "private progress\n- [ ] T01 build");
   let alerts = f.events().filter(event => event.type === "runner.stuck");
   assert.equal(alerts.length, 1);
   assert.equal(alerts[0].attention, true);
   assert.equal(alerts[0].unchangedWorkers, 2);
   assert.ok(!JSON.stringify(alerts).includes("private progress"));
   const restarted = new Recovery(f.config);
-  await restarted.idle("private progress", "private progress");
+  await restarted.idle("private progress\n- [ ] T01 build", "private progress\n- [ ] T01 build");
   assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 1);
   await restarted.idle("- [ ] T01 build", "- [x] T01 build");
   assert.equal(f.events().at(-1).type, "runner.progress_resumed");
-  await restarted.idle("private progress", "private progress");
-  await restarted.idle("private progress", "private progress");
+  await restarted.idle("private progress\n- [ ] T01 build", "private progress\n- [ ] T01 build");
+  await restarted.idle("private progress\n- [ ] T01 build", "private progress\n- [ ] T01 build");
   assert.equal(f.events().filter(event => event.type === "runner.stuck").length, 2);
   await restarted.idle("same", "same", true);
   assert.equal(f.events().at(-1).type, "runner.progress_resumed");
@@ -141,7 +141,7 @@ test("stuck attention is emitted once across restarts and rearmed after progress
 test("a supervisor stuck report stays active until a worker changes progress", async t => {
   const f = fixture(t, { delayMs: 1, maxDelayMs: 1, maxIdleWorkers: 10 });
   await f.recovery.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });
-  await f.recovery.idle("same", "same");
+  await f.recovery.idle("- [ ] T01 build", "- [ ] T01 build");
   assert.equal(f.recovery.state.stuck, true);
   const restarted = new Recovery(f.config);
   await restarted.reportStuck({ reason: "supervisor_stuck", attentionFingerprint: "review" });

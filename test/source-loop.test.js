@@ -81,8 +81,8 @@ for (const mode of ['complete-churn', 'open-churn', 'blocked-churn', 'timeout-ch
     const result = spawnSync(process.execPath, f.args, f.options);
     assert.equal(result.error, undefined);
     assert.equal(result.status, 75, result.stderr);
-    assert.equal(f.count(), 3);
-    assert.equal(f.events().at(-1).reason, 'no_progress_limit');
+    assert.equal(f.count(), mode === 'timeout-churn' ? 2 : 3);
+    assert.equal(f.events().at(-1).reason, mode === 'timeout-churn' ? 'replan_required' : 'no_progress_limit');
     assert.ok(fs.existsSync(f.source));
     assert.ok(fs.existsSync(f.progress));
     if (mode === 'complete-churn') {

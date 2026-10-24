@@ -93,6 +93,7 @@ try {
       onEvent: event => {
         event = { ...event, sequence: ++record.sequence };
         if (event.type === 'runner.completed' && record.queueIndex + 1 < record.queue.length) event.type = 'runner.roadmap_completed';
+        if (event.type === 'runner.turn_starting' && event.role === 'worker') { record.roadmap = event.roadmap; record.task = event.task; record.batch = event.batch; }
         record.sourceRevision = event.sourceRevision; record.role = event.role || record.role; record.iteration = event.iteration ?? record.iteration;
         if (event.type === 'runner.blocked') record.roadmapState = 'blocked';
         if (event.type === 'runner.unblocked' || event.type === 'runner.turn_starting') record.roadmapState = 'in_progress';

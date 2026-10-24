@@ -40,6 +40,7 @@ Management options:
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
   --progress-file <path> Override the bounded progress-state path; workers never edit source
+  --execution-plan <path> Select at most three finite outcomes from an existing progress authority
   --timeout <duration>   Per-run timeout. Default: 90m
   --supervisor-every <n> Review after n workers (1-20); default 5, 0 disables
   --supervisor-timeout <duration> Review timeout; default 10m
@@ -127,7 +128,7 @@ const main = async () => {
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), supervisorTimeout: options.supervisorTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

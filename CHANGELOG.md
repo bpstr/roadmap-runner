@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.5 — 2026-10-24
+
+- Bound aggregate review summaries and persist supervision cadence across restart; pending requirements and delivery notes cannot starve review.
+- Add fixed task/operation execution baselines, three-batch dependency selection, source delivery evidence, rotation and corrective replan stops.
+- Add soft checkpoints, retained unfinished-source recovery, observed activity timing and verified process-group cleanup; preserve source snapshots and failed evidence.
+- Keep Codex token limits and the default hard timeout unchanged. Finite batches use 30–45-minute implementation budgets.
+
 ## 0.10.4 — 2026-10-23
 
 - Add a small supervisor LLM loop check after two idle workers. Compare bounded prior progress, source snapshots and worker outcomes; block immediately on a current, evidenced loop verdict. Keep the deterministic stop budget, pending queues and blocked state across unchanged restarts. Cap the extra check at 60 seconds and one per stagnation episode; supervision-off still disables model reviews.

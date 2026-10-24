@@ -159,7 +159,7 @@ for (const mode of ['loop-detected', 'loop-source-churn', 'loop-periodic']) {
     assert.equal(journal.at(-1).reason, 'loop_detected');
     assert.deepEqual(journal.at(-1).loopIterations, [1, 2]);
     const evidence = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
-    assert.ok(evidence.records.every(r => r.sourceBefore.sha256 && r.sourceAfter.sha256 && r.trackingBefore.sha256));
+    assert.ok(evidence.records.every(summary => { const r = JSON.parse(fs.readFileSync(summary.evidence)); return r.sourceBefore.sha256 && r.sourceAfter.sha256 && r.trackingBefore.sha256; }));
     assert.equal(run(f).status, 75);
     assert.deepEqual(events(f), ['W1', 'W2', 'S1'], 'unchanged restart launches no worker or model review');
   });
@@ -236,7 +236,8 @@ for (const preserved of [true]) {
       const data = JSON.parse(fs.readFileSync(path.join(f.dir, `evidence-${review}.json`), 'utf8'));
       assert.deepEqual(data.records.map(r => r.iteration), review === 1 ? [1,2,3,4,5] : [6,7,8,9,10]);
       assert.equal(data.trackingFile, f.tracking);
-      for (const r of data.records) {
+      for (const summary of data.records) {
+        const r = JSON.parse(fs.readFileSync(summary.evidence));
         assert.ok((r.stdout.head + r.stdout.tail).includes(`OUTPUT worker ${r.iteration}`));
         assert.ok((r.stderr.head + r.stderr.tail).includes(`STDERR worker ${r.iteration}`));
         assert.ok(r.elapsedMs >= 0); assert.match(r.promptRevision, /^[a-f0-9]{12}$/);
@@ -244,7 +245,9 @@ for (const preserved of [true]) {
       }
     }
     const logs = path.dirname(fs.readFileSync(path.join(f.dir, 'evidence-path'), 'utf8'));
-    assert.deepEqual(fs.readdirSync(logs).sort(), ['recent-runs.json', 'supervisor-output.json']);
+    assert.ok(fs.existsSync(path.join(logs, 'recent-runs.json')));
+    assert.ok(fs.existsSync(path.join(logs, 'supervisor-output.json')));
+    assert.ok(fs.readdirSync(logs).some(name => name.startsWith('worker-')));
     if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(logs, 'recent-runs.json')).mode & 0o777, 0o600);
   });
 }
@@ -307,7 +310,7 @@ test('text adapter participates in the same supervisor loop', (t) => {
   const f = fixture(t, { client: 'claude', total: 6 });
   const result = run(f); assert.equal(result.status, 0, result.stderr);
   const data = JSON.parse(fs.readFileSync(path.join(f.dir, 'evidence-1.json')));
-  assert.match(data.records[0].stdout.head, /OUTPUT worker 1/);
+  assert.match(JSON.parse(fs.readFileSync(data.records[0].evidence)).stdout.head, /OUTPUT worker 1/);
 });
 
 test('supervisor capacity retries the review, not a worker', (t) => {
@@ -381,7 +384,8 @@ test('SIGINT during supervisor exits 130 without another worker', { skip: proces
 });
 
 test('rolling evidence stays bounded across many verbose runs', (t) => {
-  const s = new Supervision({ every: 5, timeoutMs: 1000, roadmap: '/source', tracking: { file: '/progress' }, template: '' });
+  const dir = workspace(t); const evidenceDir = path.join(dir, 'evidence'); fs.mkdirSync(evidenceDir);
+  const s = new Supervision({ every: 5, timeoutMs: 1000, roadmap: '/source', tracking: { file: path.join(dir, 'progress'), stateDir: dir, evidenceDir }, template: '' });
   t.after(() => fs.rmSync(s.directory, { recursive: true, force: true }));
   for (let iteration = 1; iteration <= 30; iteration++) {
     const output = s.capture(); output.write('stdout', 'x'.repeat(OUTPUT_BYTES * 10)); output.write('stderr', 'y'.repeat(OUTPUT_BYTES * 3));
@@ -390,8 +394,8 @@ test('rolling evidence stays bounded across many verbose runs', (t) => {
   }
   const data = JSON.parse(fs.readFileSync(s.evidenceFile));
   assert.deepEqual(data.records.map(r => r.iteration), [26,27,28,29,30]);
-  assert.ok(fs.statSync(s.evidenceFile).size < 300000);
-  assert.ok(data.records.every(r => r.stdout.omittedBytes > 0 && r.trackingBefore.omittedBytes > 0));
+  assert.ok(fs.statSync(s.evidenceFile).size < 16 * 1024);
+  assert.ok(data.records.every(summary => { const r = JSON.parse(fs.readFileSync(summary.evidence)); return r.stdout.omittedBytes > 0 && r.trackingBefore.omittedBytes > 0; }));
 });
 
 test('supervisor prompt binds evidence, scope, read-only source and next-run expectation', () => {
@@ -405,12 +409,12 @@ test('supervisor prompt binds evidence, scope, read-only source and next-run exp
   assert.match(prompt, /forbid another identical feature-level test/);
   assert.match(prompt, /ALL remaining gates/);
   const worker = fs.readFileSync(path.join(root, 'prompt.md'), 'utf8');
-  assert.match(worker, /Read the Latest supervisor review/);
-  assert.match(worker, /Keep the declared batch outcome stable/);
-  assert.match(worker, /canonical harness/);
-  assert.match(worker, /Target a handoff below 16 KiB/);
-  assert.match(worker, /source wins/);
-  assert.match(worker, /Implementation before feature verification/);
-  assert.match(worker, /do not rerun the same failed feature check until/);
-  assert.match(worker, /verification-only next iteration is allowed only/);
+  assert.match(worker, /current supervisor correction/);
+  assert.match(worker, /batch determines this invocation's\s+scope/);
+  assert.match(worker, /canonical\s+fixtures/);
+  assert.match(worker, /targeting less than 16 KiB/);
+  assert.match(worker, /overrides conflicting handoff prose/);
+  assert.match(worker, /During development-before-qualification/);
+  assert.match(worker, /rerun only invalidated\/failed coverage/);
+  assert.match(worker, /A new session or commit does not invalidate passing proof/);
 });

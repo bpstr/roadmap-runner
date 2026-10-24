@@ -162,10 +162,14 @@ const capacity = () => {
 if (role === 'S') {
   const evidence = JSON.parse(prompt.match(/^Run evidence JSON: (.+)$/m)[1]);
   fs.writeFileSync('review-directory', require('node:path').dirname(evidence));
-  publish();
-  fs.writeFileSync(progress, '# State\\nStatus: COMPLETE\\n\\n## Evidence\\nPrior proof.\\n');
-  if (mode === 'supervisor-capacity-edit') capacity();
-  // No Review ID: this obsolete review must not prevent reconciliation.
+  if (mode.startsWith('supervisor-')) {
+    publish();
+    fs.writeFileSync(progress, '# State\\nStatus: COMPLETE\\n\\n## Evidence\\nPrior proof.\\n');
+    if (mode === 'supervisor-capacity-edit') capacity();
+    // No Review ID: this obsolete review must not prevent reconciliation.
+  } else {
+    fs.writeFileSync(progress, '# State\\nStatus: IN_PROGRESS\\n\\nPrior proof.\\n## Latest supervisor review\\nReview ID: '+prompt.match(/^Review ID: (.+)$/m)[1]+'\\nHealth: HEALTHY\\n');
+  }
 } else if (n === 1 && ['worker-edit', 'capacity-edit', 'failure-edit', 'timeout-edit'].includes(mode)) {
   publish();
   fs.writeFileSync(progress, '# State\\nStatus: ${staleStatus}\\n\\n## Evidence\\nPrior proof.\\n');
@@ -193,7 +197,7 @@ if (role === 'S') {
   Object.assign(env, { ROADMAP_CAPACITY_RETRIES: "1", ROADMAP_CAPACITY_DELAY: "1", ROADMAP_CAPACITY_MAX_DELAY: "1" });
   const args = [path.join(root, "bin/roadmap-runner.js"), f.roadmap,
     "--progress-file", f.progress, "--client-bin", mock, "--supervisor-every", String(every)];
-  if (mode === "timeout-edit") args.push("--timeout", "500ms");
+  if (mode === "timeout-edit") args.push("--timeout", "1500ms");
   t.after(() => {
     const marker = path.join(f.dir, "review-directory");
     if (fs.existsSync(marker)) fs.rmSync(fs.readFileSync(marker, "utf8"), { recursive: true, force: true });
@@ -214,10 +218,11 @@ for (const staleStatus of ["COMPLETE", "BLOCKED", "IN_PROGRESS"]) {
     const result = run(f);
     assert.equal(result.status, 0, result.stderr);
     const seen = observations(f);
-    assert.deepEqual(seen.map(x => x.role), ["W", "W"]);
+    assert.deepEqual(seen.map(x => x.role), ["W", "S", "W"]);
     assert.equal(seen[0].text, original);
     assert.equal(seen[1].text, revised);
     assert.equal(seen[1].pending, true);
+    assert.equal(seen[2].pending, true, 'supervision does not acknowledge worker reconciliation');
     assert.match(result.stdout, /Roadmap requirements changed/);
     assert.match(fs.readFileSync(f.progress, "utf8"), /NEW verified/);
     assert.equal(fs.readFileSync(f.roadmap, "utf8"), revised.replace("- [ ] NEW", "- [x] NEW"));
@@ -246,7 +251,7 @@ for (const mode of ["capacity-edit", "timeout-edit"]) {
     assert.equal(observations(f).length, 2);
     assert.equal(observations(f)[1].text, revised);
     if (mode === "capacity-edit") assert.match(result.stdout, /retry 1\/1/);
-    else assert.match(result.stdout, /starting a fresh session/);
+    else assert.match(result.stdout, /preserve checkpoint and apply bounded recovery/);
   });
 }
 

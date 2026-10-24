@@ -16,6 +16,7 @@ export const queueItemSchema = z.object({ roadmap: z.string().min(1), progressFi
 
 export const startSchema = z.object({
   workspace: z.string().min(1), roadmap: z.string().min(1), progressFile: z.string().optional(),
+  executionPlan: z.string().min(1).optional(),
   client: z.enum(['codex', 'claude', 'gemini', 'grok', 'kimi', 'muse']).default('codex'),
   timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).default(5),
   supervisorTimeout: z.string().default('10m'), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
@@ -128,6 +129,12 @@ export class RunManager {
     const queue = [this.resolveQueueItem({ roadmap, progressFile }, foreground), ...request.queue.map(item => this.resolveQueueItem(item, foreground))];
     this.validateQueue(queue);
     const options = { ...parseArgs([], {}), ...request, roadmap: optionRoadmap, progressFile: optionProgress, ...trustedOptions };
+    if (request.executionPlan) {
+      const executionPlan = canonicalPath(path.resolve(workspace, request.executionPlan));
+      if (!within(workspace, executionPlan) || !fs.statSync(executionPlan).isFile()) throw new Error('Execution plan must be a file inside the authorized workspace');
+      if (queue.length > 1) throw new Error('A finite execution plan cannot be combined with a serial roadmap queue');
+      options.executionPlan = executionPlan;
+    }
     parseDuration(options.timeout); supervisorSettings(options);
     const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, queue, idempotencyKey: undefined }));
     for (const id of fs.readdirSync(path.join(this.root, 'runs')).sort()) {

@@ -9,6 +9,7 @@ import { Recovery, recoverySettings, checklistProgress } from "../lib/recovery.j
 import { Supervision, supervisorSettings } from "../lib/supervision.js";
 import { prepareTracking, renderPrompt, TARGET_TRACKING_BYTES } from "../lib/tracking.js";
 import { sessionMetrics } from "../lib/telemetry.js";
+import { ExecutionPlan } from "../lib/execution.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
   capacityRetrySettings,
@@ -42,7 +43,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     options = { ...options, capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
     options.supervision = supervisorSettings(options);
 
-  const roadmap = path.isAbsolute(options.roadmap)
+  let roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
     : path.resolve(workdir, options.roadmap);
 
@@ -74,8 +75,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
   }
 
-  const tracking = prepareTracking(roadmap, options.progressFile, workdir);
-  const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
+  let tracking = prepareTracking(roadmap, options.progressFile, workdir);
+  const execution = options.executionPlan ? new ExecutionPlan(options.executionPlan, workdir, tracking) : null;
   if (!onEvent) {
     notifications = new Notifications(options, `${tracking.file}.notifications.json`);
     onEvent = event => notifications.enqueue(event);
@@ -97,13 +98,18 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
   console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
-  console.log(`Prompt:    ${PROMPT_REVISION} (60-minute implementation batches)`);
+  console.log(`Prompt:    ${PROMPT_REVISION} (30–45-minute implementation batches)`);
   console.log(`Supervisor: ${supervisor ? `every ${options.supervision.every} workers; timeout ${options.supervisorTimeout}` : "disabled"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
 
   console.log(`Events:    ${recovery.eventsFile}`);
   await recovery.restore({ startup: true });
+  if (options.recoverBlocked) {
+    delete recovery.state.replanRequired;
+    recovery.state.consecutiveTimeouts = 0;
+    recovery.save();
+  }
 
   let iteration = 0;
   let capacityFailures = 0;
@@ -112,6 +118,13 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
 
   while (true) {
     if (signal.aborted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
+    const batch = execution?.select();
+    if (batch && path.resolve(workdir, batch.roadmap) !== roadmap) {
+      roadmap = path.resolve(workdir, batch.roadmap);
+      tracking = prepareTracking(roadmap, tracking.file, workdir);
+      recovery.tracking = tracking; recovery.roadmap = roadmap;
+      if (supervisor) supervisor.selectSource(roadmap, tracking);
+    }
     tracking.refreshSource(iteration);
     tracking.assertBounded();
     const contents = fs.readFileSync(tracking.file, "utf8");
@@ -126,14 +139,14 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       recovery.save();
     }
 
-    if (status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
+    if (!execution && status === "complete" && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       recovery.success();
       await recovery.event("runner.completed", { iteration });
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
       return { code: 0, reason: "complete" };
     }
 
-    const blockedRecovery = status === "blocked" && !tracking.needsReconciliation;
+    const blockedRecovery = !execution && status === "blocked" && !tracking.needsReconciliation;
     const terminalBlocked = blockedRecovery && !recovery.state.requiresWorker && !recovery.state.quota && !recoveryRequested;
     await recovery.attention(contents, status, iteration, terminalBlocked);
     if (terminalBlocked) {
@@ -151,11 +164,16 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const loopCheck = supervisor && !supervisor.loopChecked && supervisor.records.length >= 2 &&
       recovery.state.idle >= 2 && recovery.state.progressRevision === tracking.requirementsRevision;
     // A small early review inspects repeated reconciliation before the hard stop.
-    if (!compacting && supervisor && (loopCheck || (supervisor.due && !tracking.needsReconciliation))) {
+    const corrective = recovery.state.replanRequired === true;
+    if (!compacting && supervisor && (corrective || loopCheck || supervisor.due)) {
       console.log(`===== supervisor after iteration ${iteration} =====`);
       console.log(`Run evidence: ${supervisor.evidenceFile}`);
       if (loopCheck) supervisor.loopChecked = true;
-      const review = await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery, loopCheck });
+      const review = await supervisor.review({ options: { ...options, signal }, workdir, afterIteration: iteration, recovery, loopCheck: corrective || loopCheck });
+      if (corrective) {
+        await recovery.event('runner.blocked', { terminal: true, reason: 'replan_required', iteration });
+        return { code: 75, reason: 'blocked' };
+      }
       if (review?.loop) {
         recovery.state.loopBlockedRevision = tracking.requirementsRevision;
         recovery.save();
@@ -164,6 +182,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
         return { code: 75, reason: "blocked" };
       }
       continue; // Re-read the supervisor's handoff/status before another worker.
+    }
+    if (corrective && !compacting) {
+      await recovery.event('runner.blocked', { terminal: true, reason: 'replan_required', iteration });
+      return { code: 75, reason: 'blocked' };
+    }
+    if (execution && !batch) {
+      await recovery.event('runner.blocked', { terminal: true, reason: 'finite_plan_exhausted', iteration });
+      console.log('No ready batch remains in the finite plan. Implementation acceptance is unchanged; controller replanning is required.');
+      return { code: 75, reason: 'blocked' };
     }
 
     if (!compacting) iteration += 1;
@@ -181,11 +208,18 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       recovery.state.progressRevision !== tracking.requirementsRevision;
     if (!compacting) recoveryRequested = false; // One explicit recovery worker.
     const snapshot = compacting ? tracking.archive({ kind: "before-compaction", iteration }) : null;
+    const sessionTimeoutMs = compacting ? Math.min(timeoutMs, parseDuration(options.supervisorTimeout)) : timeoutMs;
+    const checkpointAtMs = Math.max(1, Math.min((batch?.budgetMinutes ?? 40) * 60_000,
+      sessionTimeoutMs - Math.min(300_000, sessionTimeoutMs * 0.15)));
+    const checkpointFile = path.join(tracking.evidenceDir, `${sessionId}-checkpoint.json`);
+    const deadlineContext = `Soft checkpoint deadline (UTC): ${new Date(Date.now() + checkpointAtMs).toISOString()}\nHard termination deadline (UTC): ${new Date(Date.now() + sessionTimeoutMs).toISOString()}\n` +
+      `Checkpoint request file: ${JSON.stringify(checkpointFile)}\nAt the soft deadline stop implementation, save exact remaining functionality, edited paths, failed/passing evidence and the next command in the current handoff, then exit. Check the clock after commands; do not start work that cannot finish before the checkpoint. Do not repeat broad discovery or unchanged checks on recovery.\n`;
+    const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
     const iterationPrompt = compacting
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
-      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\nRecovery verification required: ${recovery.state.requiresWorker ? "YES: re-evaluate any terminal status or completion evidence left by the interrupted/failed session before selecting work" : "NO"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${execution ? execution.context(batch) : tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nBlocked recovery mode: ${blockedRecovery ? "YES" : "NO"}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const before = tracking.contextBytes(iterationPrompt);
-    await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, contextBytes: before });
+    await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, task: batch?.task, batch: batch?.id, contextBytes: before });
     const result = await runClient({
       signal,
       onProcess: options.onProcess,
@@ -195,14 +229,24 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       workdir,
       model: options.model,
       effort: options.effort,
-      timeoutMs: compacting ? Math.min(timeoutMs, parseDuration(options.supervisorTimeout)) : timeoutMs,
+      timeoutMs: sessionTimeoutMs,
+      checkpointAtMs,
+      onCheckpoint: compacting ? undefined : async request => {
+        const handoff = tracking.archive({ kind: 'soft-checkpoint', iteration });
+        fs.writeFileSync(checkpointFile, JSON.stringify({ ...request, sessionId, task: batch?.task, batch: batch?.id,
+          sourceRevision, handoff, progressFile: tracking.file,
+          instruction: 'Resume recorded unfinished work; source files are preserved in place. This controller snapshot is not an agent completion claim.' }) + '\n', { mode: 0o600 });
+        recovery.state.checkpointFile = checkpointFile; recovery.save();
+        await recovery.event('runner.checkpoint_requested', { role, iteration, sessionId, checkpointFile, handoff });
+        return checkpointFile;
+      },
       onOutput: output?.write,
     });
 
     const elapsedMs = Math.round(performance.now() - started);
     const metrics = sessionMetrics(result, { client: options.client, effort: options.effort, startedAt, elapsedMs,
       before, after: tracking.contextBytes(iterationPrompt) });
-    const receipt = { sessionId, role, iteration, sourceRevision, promptRevision, code: result.code,
+    const receipt = { sessionId, role, iteration, sourceRevision, promptRevision, task: batch?.task, batch: batch?.id, code: result.code,
       timedOut: result.timedOut, interrupted: result.interrupted, ...metrics };
     tracking.recordSession({ runId: recovery.runId, ...receipt });
     await recovery.event("runner.turn_finished", receipt);
@@ -212,30 +256,38 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const sourceHasTasks = checklistProgress(sourceContents).total || checklistProgress(afterSource).total;
     const beforeProgress = sourceHasTasks ? sourceContents : contents;
     const afterProgress = sourceHasTasks ? afterSource : after;
-    tracking.archive({ kind: role, iteration, metadata: {
+    const completedHandoff = tracking.archive({ kind: role, iteration, metadata: {
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
+    if (!compacting && execution) execution.remember(batch, completedHandoff, receipt);
     tracking.assertBounded();
     if (compacting && afterSource !== sourceContents) {
       recovery.requireWorker();
       fail(`source roadmap changed during handoff compaction; source and handoff preserved, original handoff at ${snapshot}. Inspect the change before restarting.`);
     }
     if (!compacting) supervisor?.record({
-      iteration, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
+      iteration, task: batch?.task, batch: batch?.id, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
       before: contents, after,
       sourceBefore: sourceContents, sourceAfter: afterSource,
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
     if (result.error) fail(`failed to start ${options.client}: ${result.error.message}`);
+    if (result.cleanupIncomplete) fail('Client process cleanup could not be confirmed; unfinished files preserved.', 75);
+    const delivery = !compacting && execution ? execution.finish(batch, result) : null;
+    if (!compacting) {
+      recovery.state.consecutiveTimeouts = result.timedOut ? (recovery.state.consecutiveTimeouts || 0) + 1 : 0;
+      if (delivery?.replan || recovery.state.consecutiveTimeouts >= 2) recovery.state.replanRequired = true;
+      recovery.save();
+    }
 
     if (result.timedOut) {
       await recovery.event("runner.turn_limit_reached", { role, iteration });
       if (compacting) fail(`handoff compaction timed out; original state preserved at ${snapshot}`);
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
-      await recovery.idle(beforeProgress, afterProgress, revisionChanged);
-      console.log(`Iteration ${iteration} hit the ${options.timeout} limit; starting a fresh session.`);
+      if (!execution && !recovery.state.replanRequired) await recovery.idle(beforeProgress, afterProgress, revisionChanged);
+      console.log(`Iteration ${iteration} hit the ${options.timeout} limit; preserve checkpoint and apply bounded recovery.`);
       console.log();
       continue;
     }
@@ -280,7 +332,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.finishWorker(sourceRevision, result);
     const afterStatus = tracking.deliveryStatus(roadmapStatus(after));
     if (afterStatus !== "blocked" || tracking.needsReconciliation) await recovery.attention(after, afterStatus, iteration);
-    if ((afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
+    if (!execution && (afterStatus !== "blocked" || tracking.needsReconciliation) && (afterStatus !== "complete" || tracking.needsReconciliation)) {
       await recovery.idle(beforeProgress, afterProgress, revisionChanged);
     }
     console.log(`Iteration ${iteration} completed.`);

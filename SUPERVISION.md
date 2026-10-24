@@ -40,8 +40,8 @@ COMPLETE exits successfully. Global BLOCKED stops with exit 75 and reason
 `blocked`, without another worker or supervisor; use it only when no authorized
 work remains ready. Independent work continues under IN_PROGRESS with task-local
 deferrals. Three workers without checklist progress also stop with exit 75 and
-`no_progress_limit`. Progress is a new high-water count of closed live-roadmap
-tasks. Unchanged notes, mirrored handoff checkboxes, and source rewrites during
+`no_progress_limit`. Progress is a new high-water count of closed original live-roadmap
+tasks; appended child checkboxes do not extend the frozen acceptance baseline. Unchanged notes, mirrored handoff checkboxes, and source rewrites during
 workers or supervisors do not reset that budget. A controller acceptance amendment
 adopted between sessions grants one bounded reconciliation budget.
 After two idle workers, enabled supervision performs one small loop check for that
@@ -65,13 +65,13 @@ notes and next delivery targets remain in the tracking file across restarts.
 An external controller can revise the live roadmap to correct drift while a worker
 or review is running. The active session uses its fixed source snapshot; it is not
 cancelled, and controller edits are never restored over. At the next boundary the
-runner records the new revision and gives a worker priority over any pending review
-to reconcile requirements, valid evidence, priorities and stale terminal state.
+runner records the new revision. Due supervision runs even while reconciliation
+is pending; the next worker reconciles requirements, evidence and stale state.
 
 A review based on a superseded revision is archived but cannot stop revised work
 with its COMPLETE/BLOCKED status or missing handoff. Ordinary client failures and
-timeouts still stop as documented below. Changes during a supervisor capacity wait
-are picked up before another review attempt; reconciliation takes priority then too.
+timeouts still stop as documented below. Genuine requirement changes during a failed capacity attempt defer that obsolete
+review once to a worker; delivery-only changes do not bypass review retries.
 Revision metadata and pending reconciliation survive restarts, independently of the
 supervisor cadence/window. Workers and this built-in supervisor still must not edit
 the source; external-controller authority is separate from these roles.
@@ -133,18 +133,17 @@ under the workspace-local `.roadmap-runner/.../history/` directory at worker and
 supervisor boundaries; they are cold audit history and are not bulk-loaded into
 ordinary worker/supervisor context.
 
-The supervisor keeps only the last N worker records in its review window. Each stdout/stderr excerpt keeps
-at most 16 KiB of input bytes (head + tail); each tracking snapshot keeps 8 KiB.
-`omittedBytes` makes truncation explicit. Codex capture includes raw JSON events,
-not only the terminal's filtered agent messages. Other adapters are captured while
-continuing to stream to the terminal. No growing transcript is passed in argv.
+The automatically loaded `recent-runs.json` is capped at 16 KiB in aggregate.
+It contains outcome/timing metadata and pointers to per-worker captures, not
+stacked progress snapshots. Each cold output capture keeps at most 16 KiB per
+stream and 8 KiB per tracking snapshot, with explicit omitted-byte counts.
 
-The bounded `recent-runs.json` and latest `supervisor-output.json` live in a unique
-`roadmap-runner-review-*` directory under the OS temporary directory, outside the
-repository. The evidence path is printed at review time. Files use owner-only
-permissions on POSIX and are overwritten rather than appended throughout a run.
-They are retained for diagnosis after exit; OS temporary-directory cleanup or
-manual removal controls lifetime across separate runner invocations.
+Review files live in the tracking evidence directory. Cadence and evidence-window
+pointers persist in `supervision.json`, so restart cannot reset a due review.
+The next review reads only targeted cold captures. Session receipts record observed
+command/tool/edit/shutdown intervals, first output, longest output silence and
+unattributed time; silence is not proof of inactivity, and overlapping activities
+are not double-counted. Historical sessions without these events remain unknown.
 
 **Outputs are not redacted.** They can contain source code, paths, credentials or
 other sensitive tool output. The supervisor can read these files through the same

@@ -115,66 +115,62 @@ Kimi is exposed because Campfire already has a working adapter, but its current 
 
 ## Batch size
 
-The worker targets roughly 60 minutes of implementation per session, followed by
-verification and the roadmap handoff. Discovery and verification time are separate
-from that target; the per-run hard timeout still applies.
+Each worker receives one named deliverable with a finite implementation boundary,
+a 30–45-minute implementation budget, completion criteria and an exact checkpoint.
+Keep prerequisite discovery to five minutes. Reuse compatible evidence; a new
+session or status note does not justify repeating unchanged checks. Original
+acceptance remains open wherever required verification is deferred.
 
-A checkbox is a progress unit, not a session boundary. Runs group several related
-ready children under the same parent and continue within that group after a small
-child finishes. **Implementation comes before feature verification:** the worker
-must not burn fresh iterations rerunning the same acceptance/integration test while
-the relevant implementation is unchanged. A failed feature test becomes durable
-evidence; the next iteration normally implements or repairs the missing behavior,
-and the failed test may be rerun only after a relevant artifact changes. Explicit
-verification/diagnostic roadmap tasks and changed external/environmental conditions
-are narrow exceptions. Checks run after the coding batch, with failed checks repeated
-after repairs. Runs can finish earlier when the parent closes or no related work is
-actionable. Explicit stricter roadmap run limits still apply.
+The default hard timeout remains 90 minutes for compatibility. It is a ceiling,
+not the implementation target. The prompt supplies an absolute soft deadline at
+the batch budget (40 minutes by default), leaving at least five minutes or 15% of
+the configured timeout for checkpointing. At that deadline the runner archives
+the current handoff and writes a checkpoint request. The CLI prompt requires the
+worker to save exact remaining functionality, edited files, evidence and its next
+command, then exit. Noninteractive clients must follow that prompt; the request
+file does not itself send a new chat message. Hard termination sends SIGTERM,
+then escalates after three seconds and verifies descendant cleanup.
 
-Before coding, the worker records a Batch plan with the outcome, parent gate,
-related child IDs, shared setup, checks and exit criteria. Completing a child or
-adding a smaller follow-up does not redefine that outcome. Integration batches
-compose the required canonical harness first and reuse it across source families.
+Two consecutive timeouts trigger corrective supervision and a stopped replan
+boundary. With a finite execution plan, two unsuccessful attempts at the same
+outcome do too, even across restart. Use `--recover-blocked` only after explicit
+replanning; it grants one recovery attempt. Codex token limits are unchanged.
 
-Startup output and each worker prompt include the loaded prompt hash. This lets
-logs distinguish older cached instructions from current ones. The handoff includes
-the batch outcome and an explicit exit reason, particularly when ending early.
+### Finite implementation plans
 
-The dated handoff records approximate discovery, implementation and verification
-durations so repeated bootstrap overhead can be assessed. The target is prompt
-guidance; the runner does not impose a 60-minute forced termination.
-
-### Default session limit
-
-The default is **90 minutes per worker session**. The intent is to allow enough
-uninterrupted time to deliver a meaningful feature or coherent milestone, rather
-than repeatedly paying for discovery and
-handoff after tiny fragments of work. This is a practical tuning recommendation,
-not a measured universal optimum.
+Use the existing progress authority for a fixed task/operation baseline and at
+most three current batches. Its single `roadmap-runner-execution` JSON block has
+`version: 1`, `denominator`, `operationDenominator`, original `parents`, original
+`operations`, and `batches`. Each parent records `id`, `roadmap`, `operations`,
+`implementation` (`not_started`, `partial`, `implemented`, `blocked`), `missing`
+and `evidence`; verification stays separate. Each operation has `id` and `owner`.
+Each batch names `id`, `task`, `roadmap`, `implementation`, `budgetMinutes`
+(30/35/40/45), `deliverable`, `boundary`, `completion`, `checkpoint`,
+`prerequisites` and existing `sourcePointers`. Optional `prerequisiteEvidence`
+contains `{path, sha256}` records that must still match. Paths are workspace-relative.
 
 ```sh
-roadmap-runner docs/roadmap.md --timeout 90m
-# Equivalent environment setting:
-ROADMAP_TIMEOUT=90m roadmap-runner docs/roadmap.md
+roadmap-runner start docs/owning-roadmap.md --execution-plan docs/progress.md \
+  --progress-file .roadmap-runner/current/progress.md --timeout 45m \
+  --supervisor-every 2 --supervisor-timeout 10m
 ```
 
-This is the **total worker-session budget**, including discovery, implementation,
-feature verification and the compact handoff. The approximate 60-minute
-implementation target above is a planning aid within that budget, not a mandatory
-stopping point. Continue related work toward
-the declared outcome while leaving time for verification and handoff before the
-configured timeout. If the feature cannot fit, leave an honest partial handoff;
-do not weaken its acceptance criteria or label unverified work complete.
+The controller selects actual owning roadmaps across dependencies, rotates ready
+outcomes after checkpoints, and stops when the finite plan is exhausted. It never
+adds planning children or treats generated/status-only work as implementation.
+To record delivery, update the batch and original owner and supply
+`implementationEvidence: [{path, sha256}]`; at least one declared source pointer
+must have changed since the first attempt. Those first-attempt hashes survive
+recovery, so unfinished implementation need not be rewritten. Generated files,
+tests and delivery notes cannot supply that evidence. A failed/timed-out attempt
+cannot bypass recovery by marking its batch implemented.
 
-Ninety minutes is an allowance, **not a minimum duration**. Finish earlier when the
-planned outcome is delivered, no related authorized work can advance, or a stricter
-roadmap rule applies. Do not pad the session with repeated tests, unrelated work,
-or verbose delivery logs. The one-checkbox smoke-test exception remains unchanged.
-
-CLI and managed starts default to **90m**; `--timeout`, `ROADMAP_TIMEOUT`, or an
-explicit managed timeout can override it. Timeout cleanup grace is additional.
-Supervisor cadence and its separate timeout are unchanged: every five workers is
-not an hourly review.
+The baseline identity is frozen in `execution-state.json`; scope expansion needs
+an explicit controller migration. No serial queue may accompany an execution
+plan. The entire authority is never injected: selected contracts are limited to
+12 KiB, original task snapshots to 24 KiB, and review summaries to 16 KiB. Large
+source/evidence history remains available by targeted path. Startup reports the
+loaded prompt revision; replacing installed files does not update a running process.
 
 ## Roadmap queues
 
@@ -287,9 +283,9 @@ Unexpected client failures stop the runner rather than retrying forever.
 
 By default, a fresh supervisor reviews progress after every five successful or
 timed-out worker sessions, before another worker starts. Capacity-only and quota-only
-attempts are excluded. Completed roadmaps stop; blocked roadmaps continue through
-recovery workers and scheduled reviews. Source changes first require a fresh worker
-to reconcile the revised requirements.
+attempts are excluded. Completed roadmaps stop; globally blocked roadmaps require explicit recovery.
+Pending requirement reconciliation is reviewed at the normal cadence and remains
+a worker obligation. Delivery-only notes do not change that cadence.
 
 ```sh
 roadmap-runner docs/roadmap.md --progress-file docs/delivery-evidence.md \
@@ -560,6 +556,8 @@ The JSON stream is filtered so normal terminal output stays concise while errors
 The worker prompt explicitly disables implementation subagents. Long throughput comes from repeated fresh sessions, not from one 8–10 hour nested agent call.
 
 ## Options
+
+`--execution-plan <path>` (or `ROADMAP_EXECUTION_PLAN`) selects a finite plan in the existing progress authority.
 
 ```text
 roadmap-runner <roadmap-file> [options]
