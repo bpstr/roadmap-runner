@@ -3,17 +3,22 @@
 From 0.11.0, Roadmap Runner dispatches workers, blocker resolvers and handoff
 compactors. Regular supervisor sessions are removed.
 
-Each worker starts by reading the current handoff and the bounded recent-runs
-summary. It compares attempted operations, failures and relevant implementation
-or prerequisite inputs. It follows specific evidence pointers when needed.
-Two or more failed attempts with unchanged relevant inputs require a global
-`Status: BLOCKED` handoff with the cited attempts and unblock condition. Useful
-partial work can continue; counters, checkbox totals and note changes alone do
-not establish a loop. Loop assessment remains an agent judgment.
+Each worker starts with its task continuation packet, using the handoff for legacy
+obligations and the recent-runs summary when diagnosing ambiguous state or failure.
+Two structured failed attempts with the same operation, signature, acceptance
+revision and unchanged declared complete inputs defer that task before another
+general worker is launched. Other ready tasks can continue. Incomplete input
+coverage stays an agent judgment; counters, checkbox totals and note changes alone
+do not establish a loop. Global `Status: BLOCKED` means no useful authorized
+alternative remains. Historical failed receipts are retained after a resolver
+authorizes a fresh attempt.
 
 A global blocker pauses workers and dispatches a resolver automatically. This
-also applies to failed workers, two consecutive hard timeouts and exhausted finite
-plans. Task-local blockers allow independent ready work to continue. Quota and
+also applies to failed workers and two consecutive hard timeouts. Normal finite
+plan exhaustion returns `needs_next_batch` or `awaiting_verification` without a
+resolver; exit 0 records a successful scheduling boundary, not acceptance completion.
+These states do not advance a queued roadmap. Task-local blockers allow independent
+ready work to continue. Quota and
 capacity rejections use the existing bounded waits and preserve the session role.
 
 The resolver reads the roadmap, handoff and attempt evidence, repairs what it can
@@ -43,7 +48,10 @@ Recent worker receipts persist in `runs.json` and bounded evidence summaries;
 older `supervision.json` checkpoints migrate on use. Detailed failed evidence and
 archived handoffs remain available. Resolver sessions have their own session IDs,
 metrics, events and archived handoffs. Handoffs still compact at 32 KiB before a
-session or terminal status check; source roadmaps retain their 256 KiB limit.
+session or terminal status check, now targeting below 8 KiB; source roadmaps retain
+their 256 KiB limit. Useful partial outcomes from quota-interrupted sessions remain
+in task memory and recent evidence, without counting capacity rejection as a failed
+operation. See [task continuity](docs/task-continuity.md) for the structured contract.
 
 Prepared local clients validate orchestration and state transitions. They do not
 establish live model loop-detection or repair quality.

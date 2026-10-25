@@ -125,15 +125,19 @@ The default hard timeout remains 90 minutes for compatibility. It is a ceiling,
 not the implementation target. The prompt supplies an absolute soft deadline at
 the batch budget (40 minutes by default), leaving at least five minutes or 15% of
 the configured timeout for checkpointing. At that deadline the runner archives
-the current handoff and writes a checkpoint request. The CLI prompt requires the
-worker to save exact remaining functionality, edited files, evidence and its next
-command, then exit. Noninteractive clients must follow that prompt; the request
+the current handoff and writes a checkpoint request. Workers save a session-bound
+structured result and acknowledge the request with its exact ID and result path.
+Only a fresh validated result counts as an acknowledged checkpoint; saving the
+request file alone does not. The CLI prompt requires the worker to save exact
+remaining functionality, edited files, evidence and its next command, then exit.
+Noninteractive clients must follow that prompt; the request
 file does not itself send a new chat message. Hard termination sends SIGTERM,
 then escalates after three seconds and verifies descendant cleanup.
 
-Workers check prior attempts and the handoff before choosing work. Repeated
-failures with unchanged relevant inputs set BLOCKED. A global blocker, failed
-worker, two consecutive hard timeouts or exhausted finite plan dispatches a
+Workers begin with their task-specific continuation packet and consult history
+when current evidence requires it. Structured repeated failures with a complete
+declared input scope defer that task while independent work proceeds. A global
+blocker, failed worker or two consecutive hard timeouts dispatches a
 resolver. The resolver repairs the cause and resumes workers, or records STOPPED
 and ends the runner. Useful partial work continues without periodic supervisors.
 See [recovery runs](RECOVERY.md) for the decision contract and restart behavior.
@@ -157,8 +161,12 @@ roadmap-runner start docs/owning-roadmap.md --execution-plan docs/progress.md \
   --resolver-timeout 10m
 ```
 
-The controller selects actual owning roadmaps across dependencies, rotates ready
-outcomes after checkpoints, and stops when the finite plan is exhausted. It never
+The controller selects actual owning roadmaps across dependencies and continues a
+productive partial task with an exact next action for up to eight consecutive
+attempts. Legacy or stale outcomes retain rotation. Normal finite-plan exhaustion
+returns `needs_next_batch` or `awaiting_verification` with exit 0, preserving open
+acceptance and pending queue entries without a diagnostic resolver session. A real
+blocked ready set still dispatches a resolver. The controller never
 adds planning children or treats generated/status-only work as implementation.
 To record delivery, update the batch and original owner and supply
 `implementationEvidence: [{path, sha256}]`; at least one declared source pointer
@@ -178,8 +186,10 @@ loaded prompt revision; replacing installed files does not update a running proc
 
 ### Split large plans before running
 
-Workers reread the active roadmap every session. Breaking a huge file into small
-tasks still leaves each worker with a huge input. For a large plan, write focused
+Structured roadmaps with unambiguous `### Task ID` sections are indexed and dispatched
+one task at a time, together with shared constraints and prerequisite references.
+General IDs such as `AUTH-01` and `API-01.2` share the same parser. Unsupported or
+ambiguous documents retain the existing whole-roadmap selection path. For a large plan, write focused
 roadmap files for coherent milestones, then queue those files in dependency order.
 Keep the overall index with the controller and give each worker only the current
 milestone, its constraints and concise references to prerequisite evidence.
@@ -320,7 +330,8 @@ At or above **32 KiB**, the runner
 archives the original and starts a separate compaction session before the next
 worker or resolver. The compactor moves detailed evidence to files by task ID or
 links to specific archived snapshots, preserving unresolved obligations and prior
-validation. It must leave the status unchanged and reduce the handoff below 32 KiB.
+validation. It must leave the status unchanged and reduce the handoff below **8 KiB**,
+leaving headroom before the next 32 KiB compaction trigger.
 Every worker, resolver and compactor receives the limits and instructions to move
 details into referenced evidence files. Handoff size alone is not a reason to set
 BLOCKED. Compaction runs before terminal status checks, preserving genuine blockers.
@@ -521,9 +532,27 @@ edit and does not reject content merely because its author is unknown. This is
 The external controller is a separately authorized actor, not a new permission for
 an implementation worker to rewrite its own goal.
 
-## Fresh contexts
+## Task continuity and evidence reuse
 
-Sessions are never resumed.
+Workers receive a deterministic task packet of at most 8 KiB with the latest
+outcome, exact continuation, relevant source-bound findings, and check validity.
+Structured results are optional for compatibility: invalid or missing records
+retain the Markdown handoff and do not create a new recovery gate. Acceptance
+checkboxes remain in the original roadmap.
+
+`roadmap-runner check --spec check.json` runs a command as argv and captures its
+exit status, complete output artifacts, declared dependency/configuration/environment
+fingerprints, and tool identity. Matching checks can reuse their receipt; changed
+inputs invalidate it, and incomplete dependency scope stays unknown. A check receipt
+does not automatically mark acceptance complete. `record-review --spec review.json`
+preserves scoped review verdicts as separate agent assertions for later delta review.
+
+See [task continuity](docs/task-continuity.md) for result/check schemas, examples,
+checkpoint acknowledgment, recovery behavior and measurement limits.
+
+## Fresh contexts and optional continuation
+
+Sessions are fresh by default.
 
 For Codex, Roadmap Runner uses the accepted invocation from the previous shell implementation:
 
@@ -537,6 +566,15 @@ codex exec
 ```
 
 The JSON stream is filtered so normal terminal output stays concise while errors remain visible.
+
+Opt in with `--session-continuation`, `ROADMAP_SESSION_CONTINUATION=1`, or MCP
+`sessionContinuation: true`. The Codex adapter then retains the explicit provider
+thread ID only for the same task, batch scope, role, workspace, model and effort.
+A boundary change starts fresh. Reuse is bounded to four sessions and 65,536
+cumulative observed input tokens; unknown usage or an unsuccessful turn prevents
+reuse. These limits bound usage, not the provider's exact context-window occupancy.
+Other adapters retain fresh sessions. `--no-session-continuation` overrides the
+environment setting.
 
 The worker prompt explicitly disables implementation subagents. Long throughput comes from repeated fresh sessions, not from one 8–10 hour nested agent call.
 
@@ -552,6 +590,8 @@ roadmap-runner <roadmap-file> [options]
 --timeout <duration>   default: 90m
 --resolver-timeout <duration> blocker recovery limit; default 10m
 --recover-blocked     explicitly retry a stopped recovery
+--session-continuation opt in to bounded same-task Codex continuation
+--no-session-continuation override the environment and keep sessions fresh
 --supervisor-every <n> deprecated; no scheduled reviews
 --supervisor-timeout <duration> deprecated resolver-timeout alias
 --model <model>        optional model override
@@ -574,6 +614,7 @@ ROADMAP_RESOLVER_TIMEOUT
 ROADMAP_TIMEOUT
 ROADMAP_MODEL
 ROADMAP_EFFORT
+ROADMAP_SESSION_CONTINUATION
 ROADMAP_CLIENT_BIN
 ROADMAP_NOTIFY        attention (default) or off
 ROADMAP_PREVENT_SLEEP  set to 1 or true to prevent idle system sleep

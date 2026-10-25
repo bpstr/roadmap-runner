@@ -54,6 +54,7 @@
     "src",
     "skills",
     "docs/agent-integration.md",
+    "docs/task-continuity.md",
     "docs/agent-integration-evidence.md",
     "CHANGELOG.md"
   ],

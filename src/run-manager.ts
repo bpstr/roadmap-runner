@@ -23,6 +23,7 @@ export const startSchema = z.object({
   notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),
   recoverBlocked: z.boolean().default(false),
+  sessionContinuation: z.boolean().default(false),
   idempotencyKey: z.string().min(1).max(128).optional(),
   queue: z.array(queueItemSchema).max(99).default([]),
 }).strict();
@@ -129,6 +130,7 @@ export class RunManager {
     const queue = [this.resolveQueueItem({ roadmap, progressFile }, foreground), ...request.queue.map(item => this.resolveQueueItem(item, foreground))];
     this.validateQueue(queue);
     const options = { ...parseArgs([], {}), ...request, roadmap: optionRoadmap, progressFile: optionProgress, ...trustedOptions };
+    if (options.sessionContinuation && options.client !== 'codex') throw new Error('Session continuation currently requires the Codex adapter');
     if (request.executionPlan) {
       const executionPlan = canonicalPath(path.resolve(workspace, request.executionPlan));
       if (!within(workspace, executionPlan) || !fs.statSync(executionPlan).isFile()) throw new Error('Execution plan must be a file inside the authorized workspace');

@@ -40,10 +40,10 @@ function fixture(t, mode = "compact", reconcile = false, { initialBytes = 97 * 1
 
 for (const initialBytes of [32767, 32768, 32769]) {
   test(`a ${initialBytes}-byte handoff compacts only at the 32 KiB boundary`, t => {
-    const f = fixture(t, "compact-wide", false, { initialBytes });
+    const f = fixture(t, "compact-target", false, { initialBytes });
     assert.equal(f.result.status, 0, f.result.stderr);
     assert.deepEqual(f.calls, [...(initialBytes >= 32768 ? ["COMPACTOR"] : []), "WORKER"]);
-    if (initialBytes >= 32768) assert.equal(jsonLines(f.tracking.sessionsFile)[0].contextBytes.after.progress, 31 * 1024);
+    if (initialBytes >= 32768) assert.equal(jsonLines(f.tracking.sessionsFile)[0].contextBytes.after.progress, 8 * 1024 - 1);
   });
 }
 
@@ -87,7 +87,7 @@ test("legacy large handoffs compact separately while detailed evidence remains a
   assert.deepEqual(event.usage, sessions[0].usage);
 });
 
-for (const [mode, error] of [["noop", /did not reach/], ["status", /changed the opening status/], ["source", /source roadmap changed/], ["source-capacity", /source roadmap changed/], ["failure", /exited with code 9/], ["timeout", /compaction timed out/]]) {
+for (const [mode, error] of [["noop", /did not reach/], ["compact-wide", /did not reach/], ["status", /changed the opening status/], ["source", /source roadmap changed/], ["source-capacity", /source roadmap changed/], ["failure", /exited with code 9/], ["timeout", /compaction timed out/]]) {
   test(`compaction ${mode} stops before implementation and retains the original archive`, t => {
     const f = fixture(t, mode);
     assert.notEqual(f.result.status, 0);

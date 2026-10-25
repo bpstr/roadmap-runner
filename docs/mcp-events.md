@@ -20,10 +20,15 @@ This is a local executable interface; remote delivery is the hook's responsibili
 
 | Event | Meaning |
 | --- | --- |
-| `runner.turn_starting` | Worker, resolver or compactor starts; includes `sessionId` and initial `contextBytes` |
-| `runner.checkpoint_requested` | Soft deadline archived the handoff and requested an exact resumable checkpoint |
+| `runner.turn_starting` | Worker, resolver or compactor starts; includes `sessionId`, initial `contextBytes` and the continuation decision |
+| `runner.checkpoint_requested` | Soft deadline archived the handoff and saved a controller request; worker acknowledgment is still pending |
+| `runner.checkpoint_acknowledged` | A fresh acknowledgment matches the current request and a valid bound worker result; includes result and acknowledgment file pointers |
+| `runner.task_result` | A valid structured worker result was recorded for the current task and criteria; includes outcome, result-file pointer and receipt count |
+| `runner.task_result_invalid` | An available structured result could not be accepted; the preserved legacy handoff remains usable |
+| `runner.continuation_fallback` | The requested provider thread was unavailable before work began; its failed receipt was retained and the same task is retried once with a fresh session |
 | `runner.progress_observed` | Source-verified finite implementation delivered; acceptance checkboxes may remain open |
-| `runner.turn_finished` | Session result, elapsed time, model attribution, reported usage and before/after context-file sizes |
+| `runner.turn_finished` | Session result, elapsed time, observed activity timing, provider thread ID when reported, usage and before/after context-file sizes |
+| `runner.plan_exhausted` | A finite plan ended successfully in `needs_next_batch` or `awaiting_verification`; original acceptance remains open |
 | `runner.blocked` | Global blocker pauses workers and dispatches a resolver; terminal is false |
 | `runner.needs_attention` | Task blocked, skipped, problematic or needs an answer while other work can continue |
 | `runner.unblocked` | Previously flagged attention cleared |
@@ -54,6 +59,10 @@ and `progress` byte sizes. Usage fields are `inputTokens`, `cachedInputTokens`,
 fields remain null. Codex input includes cached tokens; Claude cache fields are
 separate from input. Failed attempts retain available receipts with
 `usageComplete: false`. These fields do not estimate monetary cost or peak context.
+
+A checkpoint acknowledgment confirms that resumable state was saved; it does not
+complete acceptance or terminate the worker. Detailed request fingerprints and
+checkpoint contents stay in evidence files so journal records remain bounded.
 
 Repeated unchanged task attention is suppressed across restarts. A changed reason,
 set of tasks or global status creates a new event. Hooks are best effort: the event

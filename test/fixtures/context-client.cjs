@@ -32,7 +32,7 @@ if (role === 'COMPACTOR') {
     const status = mode === 'status' ? 'COMPLETE' : old.match(/^Status: (.+)$/m)[1];
     const handoff = '# Handoff\nStatus: ' + status +
       '\n\n## Current handoff\nGATE-2: preserve the release receipt; details: ' + path.join(evidence, 'GATE-2.md') + '\n';
-    fs.writeFileSync(progress, mode === 'compact-wide' ? handoff.padEnd(31 * 1024, 'e') : handoff);
+    fs.writeFileSync(progress, mode === 'compact-wide' ? handoff.padEnd(31 * 1024, 'e') : mode === 'compact-target' ? handoff.padEnd(8 * 1024 - 1, 'e') : handoff);
   }
 } else if (role === 'RESOLVER') {
   fs.writeFileSync(progress, '# Handoff\nStatus: STOPPED\n## Current handoff\nRequired release receipt remains unavailable.\n');

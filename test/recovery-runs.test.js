@@ -49,7 +49,8 @@ if (role === 'RESOLVER') {
     resolutionId: mode === 'stale-decision' ? 'older' : prompt.match(/^Resolution ID: (.+)$/m)[1],
     outcome: stopped ? 'stopped' : 'resolved', evidence: 'Prepared repair receipt', nextAction: 'Implement the deliverable' }));
 } else {
-  assert.match(prompt, /Before choosing work, compare previous attempts/);
+  assert.match(prompt, /Start with the Task continuation packet when supplied/);
+  assert.match(prompt, /repeat the same failed operation with unchanged relevant/);
   const n = calls.filter(r => r === role).length;
   if (n > 10) process.exit(98);
   if (mode === 'worker-timeout' && !fs.existsSync('repair')) { setInterval(() => {}, 1000); return; }

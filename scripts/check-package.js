@@ -19,6 +19,7 @@ try {
     assert.ok(files.includes(required), `Missing packaged file: ${required}`);
   }
   for (const retired of ['supervisor.md', 'SUPERVISION.md', 'lib/supervision.js']) assert.ok(!files.includes(retired), `Retired supervisor shipped: ${retired}`);
+  for (const required of ['lib/task-index.js', 'lib/task-plan.js', 'lib/task-memory.js', 'lib/verification.js', 'lib/checkpoint.js', 'lib/continuation.js', 'docs/task-continuity.md']) assert.ok(files.includes(required), `Missing continuity artifact: ${required}`);
   assert.deepEqual(files.filter(file => /^(?:node_modules|test|\.git|\.codanna|\.github|docs\/assets)(?:\/|$)|(?:^|\/)\.secrets(?:\/|$)|\.tgz$/.test(file)), [], 'Development or private files must not be published');
   execFileSync('tar', ['-xzf', path.join(temporary, packed.filename), '-C', temporary], { timeout: 10000, maxBuffer: 65536 });
   const extracted = path.join(temporary, 'package');
