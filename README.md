@@ -189,13 +189,19 @@ loaded prompt revision; replacing installed files does not update a running proc
 
 ## Roadmap queues
 
-### Split large plans before running
+### Choose safe roadmap boundaries
 
 Structured roadmaps with unambiguous `### Task ID` sections are indexed and dispatched
 one task at a time, together with shared constraints and prerequisite references.
 General IDs such as `AUTH-01` and `API-01.2` share the same parser. Unsupported or
-ambiguous documents retain the existing whole-roadmap selection path. For a large plan, write focused
-roadmap files for coherent milestones, then queue those files in dependency order.
+ambiguous documents retain the existing whole-roadmap selection path.
+
+Keep one roadmap by default.
+Split when a concrete context budget or independent delivery boundary warrants it,
+then queue files in prerequisite order. Check both the task graph and the file
+graph for cycles: grouping otherwise valid tasks can create dependencies in both
+directions between files. Every file must be completable before its successor
+starts, including its acceptance and validation requirements.
 Keep the overall index with the controller and give each worker only the current
 milestone, its constraints and concise references to prerequisite evidence.
 
@@ -207,7 +213,7 @@ progress migration are controller work; the runner does not partition inputs
 automatically.
 
 The bundled skill's [splitting strategy](skills/write-runner-roadmap/references/roadmap-splitting.md)
-covers suggested input budgets, dependency boundaries, evidence handoffs and
+covers split preflight, dependency boundaries, evidence handoffs and
 revisions of an existing large plan.
 
 ### Start or extend a queue
@@ -407,6 +413,8 @@ and before the first `##` (or deeper) section heading. Fenced examples and statu
 lines in later sections are not control state. Duplicate or malformed header
 statuses stop with an error. A progress file with no header status defaults to
 `IN_PROGRESS`, allowing the worker to initialize it.
+Fresh roadmaps may use `Status: NOT_STARTED`; the runner treats this as runnable
+work, just like `IN_PROGRESS`.
 
 Normal work keeps:
 

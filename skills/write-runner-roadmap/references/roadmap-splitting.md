@@ -1,17 +1,17 @@
 # Roadmap splitting and queues
 
 Workers reread the active source roadmap in each fresh session. Smaller tasks inside
-one huge file still make every worker read that file. Split the source before
-execution; the runner's queue advances between complete roadmap files and does not
+one huge file still make every worker read that file. Keep one roadmap unless a
+concrete context budget or independent delivery boundary warrants separate files.
+When splitting is justified, prepare it before execution; the runner's queue advances between complete roadmap files and does not
 automatically partition a large source. Workers preserve source requirements and report a
 context blocker to the controller when further splitting is needed.
 
 ## Choose the boundary and input budget
 
-- Keep one coherent milestone or integration boundary per file. A useful starting
-  target is 5–10 parent tasks and roughly 10–20 KiB of source per file; these are
-  authoring guidelines, not runner limits. Split earlier when tasks need unrelated
-  context, and keep a larger tightly coupled unit only with an explicit reason.
+- Choose boundaries from prerequisites and independently verifiable outcomes.
+  Task count, milestone count and file size alone do not establish a safe cut.
+  Preserve a coherent file when splitting would introduce backward prerequisites.
 - Budget for the active source, current progress, repository instructions and the
   code needed for the next batch. Leave room for implementation and verification;
   a source that barely fits the context window is already too large.
@@ -47,6 +47,40 @@ copying the predecessor's full checklist or progress history into the next input
 Completion applies to that file; completion of the whole plan requires every
 required file and final integration acceptance to pass.
 
+## Preflight the complete proposed split
+
+Before recommending a queue, check all proposed files together and record the
+result in the controller index:
+
+1. Map each original task and acceptance requirement to exactly one owning file.
+   Preserve IDs and completed evidence. Resolve missing or duplicate owners before
+   replacing the original roadmap.
+2. Build the task graph from real prerequisites, including those implied by
+   acceptance, validation, fixtures, entry conditions and handoffs. Resolve missing
+   references and cycles before converting cross-file IDs into prose conditions;
+   rewriting a dependency does not remove it.
+3. Build the file graph: if a task in B needs an output from A, add A → B.
+   Check this graph separately for cycles. An acyclic task graph can become cyclic
+   when tasks are grouped: a1 → b1 → a2 is acyclic, but putting a1 and a2 in A and
+   b1 in B creates A → B → A. Keep this chain together or cut it into three ordered
+   files. Renumbering files or deleting the dependency cannot repair the grouping.
+4. Topologically order the files and verify every prerequisite belongs to the same
+   file or an earlier one. Each file's COMPLETE must be achievable before starting
+   its successor. Earlier acceptance must use its focused delivery evidence;
+   plan-wide integration or release acceptance belongs to its later owning task.
+   If an actual required gate prevents that separation, merge or recut the work.
+5. Check the rendered files for valid header statuses, standalone checkboxes,
+   unique IDs, resolvable local dependency IDs, explicit earlier-file entry
+   conditions and distinct source/progress paths. Use the installed runner's
+   supported status syntax; `IN_PROGRESS` is a compatible initial header even
+   before work has begun. Keep completed evidence linked to its actual source;
+   creating a fresh file does not reset completed work or prove new acceptance.
+
+Publish the split recommendation only after these checks pass. If they fail,
+retain the original roadmap and report the concrete cycle, missing prerequisite
+or acceptance conflict. A blocked split is a design problem for the controller;
+it is not a reason to start a worker or resolver to repair the plan.
+
 ## Order and operate the queue
 
 Queues are serial. Order files by true prerequisites, with independent local work
@@ -57,7 +91,8 @@ final testing file (or bounded testing files when needed for context) after ALL
 functional roadmaps for test development, comprehensive cases and justified
 cross-milestone validation. Give each testing requirement one owner in the index;
 do not append a testing epic or duplicate full test cases and broad runs after each
-functional roadmap. Functional files finish with their focused delivery checks
+functional roadmap. Keep a fixture or minimal check required by earlier delivery
+with that earlier work, even when broader coverage is deferred. Functional files finish with their focused delivery checks
 and do not wait for final testing. Preserve required final acceptance, reuse prior
 evidence and put any required release work after its applicable testing gates,
 with authority and entry conditions explicit.

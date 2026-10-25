@@ -61,6 +61,7 @@ const timer = setInterval(() => {
 
 test('queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors', async t => {
   const f = fixture(t); const [first, second, third] = f.roadmaps;
+  fs.writeFileSync(second, '# second\nStatus: NOT_STARTED\n\n- [ ] Implement fixture\n');
   const queue = [{ roadmap: second }, { roadmap: third }];
   const run = await f.start(queue, 'queue-start');
   assert.equal((await f.start(queue, 'queue-start')).id, run.id);

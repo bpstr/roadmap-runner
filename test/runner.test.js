@@ -96,9 +96,13 @@ test("duration parsing supports runner units", () => {
 });
 
 test("roadmap completion states are exact line based", () => {
+  assert.equal(roadmapStatus("# Roadmap\nStatus: NOT_STARTED\n"), "in-progress");
+  assert.equal(roadmapStatus("\uFEFF# Roadmap\r\n  Status: not_started\t\r\n"), "in-progress");
   assert.equal(roadmapStatus("# Roadmap\nStatus: IN_PROGRESS\n"), "in-progress");
   assert.equal(roadmapStatus("# Roadmap\nStatus: COMPLETE\n"), "complete");
   assert.equal(roadmapStatus("# Roadmap\nStatus: BLOCKED\n"), "blocked");
+  assert.throws(() => roadmapStatus("Status: NOT_STARTED\nStatus: IN_PROGRESS\n"), /multiple roadmap header status/);
+  assert.throws(() => roadmapStatus("Status: NOT_STARTED extra\n"), /invalid roadmap header status/);
 });
 
 test("client can be selected through args or environment", () => {
