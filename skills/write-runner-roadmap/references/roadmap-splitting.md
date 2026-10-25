@@ -1,7 +1,7 @@
 # Roadmap splitting and queues
 
-Workers reread the active source roadmap in each fresh session. Smaller tasks inside
-one huge file still make every worker read that file. Keep one roadmap unless a
+Structured roadmaps give workers the selected task and shared constraints;
+ambiguous documents retain the full-source path. Keep one roadmap unless a
 concrete context budget or independent delivery boundary warrants separate files.
 When splitting is justified, prepare it before execution; the runner's queue advances between complete roadmap files and does not
 automatically partition a large source. Workers preserve source requirements and report a

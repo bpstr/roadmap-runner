@@ -120,9 +120,10 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
   assert.match(prompt, /Tick an acceptance checkbox only after all its criteria/);
   assert.match(prompt, /Retrieve historical details on demand/);
-  assert.match(prompt, /one finite deliverable/);
+  assert.match(prompt, /Work through a meaningful checkpoint/);
   assert.match(prompt, /actual transport\/domain boundary and canonical/);
-  assert.match(prompt, /30–45-minute implementation budget/);
+  assert.match(prompt, /configured session time and absolute soft deadline/);
+  assert.match(prompt, /save intermediate progress and\s+continue in this session/);
   assert.match(prompt, /soft checkpoint deadline/);
   assert.match(prompt, /without new checkboxes or\s+scheduling tasks/);
   assert.match(prompt, /original task IDs, acceptance criteria/);
