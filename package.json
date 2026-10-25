@@ -1,7 +1,7 @@
 {
   "name": "@bpstr/roadmap-runner",
-  "version": "0.11.0",
-  "description": "Run long Markdown implementation roadmaps through fresh CLI coding-agent sessions until completion.",
+  "version": "0.12.0",
+  "description": "Run long Markdown implementation roadmaps through bounded CLI coding-agent sessions until completion.",
   "type": "module",
   "bin": {
     "roadmap-runner": "./bin/roadmap-runner.js"
@@ -65,7 +65,7 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.3.1",
     "smol-toml": "1.9.0",
-    "zod": "4.3.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "22.19.15",

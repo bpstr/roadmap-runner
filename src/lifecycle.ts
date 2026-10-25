@@ -108,19 +108,25 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   };
   const continuationFile = path.join(tracking.stateDir, 'continuation.json');
   let previousConversation = null;
-  let continuationAvailable = Boolean(options.sessionContinuation);
+  let continuationAvailable = options.sessionContinuation ?? options.client === 'codex';
+  let continuationPersistenceFailed = false;
   try {
-    if (fs.statSync(continuationFile).size <= 8192) previousConversation = JSON.parse(fs.readFileSync(continuationFile, 'utf8'));
+    if (continuationAvailable && fs.statSync(continuationFile).size <= 8192) previousConversation = JSON.parse(fs.readFileSync(continuationFile, 'utf8'));
   } catch { /* Optional conversation state never blocks a fresh invocation. */ }
   const saveContinuation = () => {
-    if (!continuationAvailable) return;
-    try { atomicJson(continuationFile, previousConversation); }
+    if (continuationPersistenceFailed) return;
+    try {
+      if (previousConversation && continuationAvailable) atomicJson(continuationFile, previousConversation);
+      else fs.rmSync(continuationFile, { force: true });
+    }
     catch (error) {
+      continuationPersistenceFailed = true;
       continuationAvailable = false;
       previousConversation = null;
       console.warn(`Optional conversation state unavailable: ${error.message}. Continuing with fresh sessions.`);
     }
   };
+  if (!continuationAvailable) saveContinuation();
   let deferredTasks: any[] = [];
   if (!onEvent) {
     notifications = new Notifications(options, `${tracking.file}.notifications.json`);
@@ -232,6 +238,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
     const resolving = !compacting && Boolean(recovery.state.blocker);
     if (!compacting && !resolving && status === 'complete' && (!execution || execution.schedulingOutcome().status === 'complete') && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
+      previousConversation = null;
+      saveContinuation();
       recovery.success();
       await recovery.event('runner.completed', { iteration });
       console.log(`Roadmap complete after ${iteration} iteration(s).`);

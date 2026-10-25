@@ -6,7 +6,7 @@ Run a long Markdown implementation roadmap through fresh coding-agent CLI sessio
 
 The goal is to start one command, let it keep working for **8–10 hours or longer** on a large roadmap without human approval prompts, and have it stop automatically when the roadmap is finished.
 
-Each implementation batch gets a fresh CLI session. Workers update verified task checkboxes and concise status directly in the roadmap. A separate bounded progress file holds evidence and handoffs. Controller changes to requirements are adopted between sessions. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
+Codex reuses bounded sessions within the same task by default; task boundaries and completed roadmaps start fresh. Workers update verified task checkboxes and concise status directly in the roadmap. A separate bounded progress file holds evidence and handoffs. Controller changes to requirements are adopted between sessions. Runner-owned archived snapshots preserve history without feeding an ever-growing delivery log back into every session.
 
 ## Install
 
@@ -567,16 +567,14 @@ codex exec
 
 The JSON stream is filtered so normal terminal output stays concise while errors remain visible.
 
-Opt in with `--session-continuation`, `ROADMAP_SESSION_CONTINUATION=1`, or MCP
-`sessionContinuation: true`. The Codex adapter then retains the explicit provider
+Codex conversation reuse is enabled by default. The adapter retains the explicit provider
 thread ID only for the same task, batch scope, role, workspace, model and effort.
 A boundary change starts fresh. Reuse is bounded to four sessions and 65,536
 cumulative observed input tokens; unknown usage or an unsuccessful turn prevents
 reuse. These limits bound usage, not the provider's exact context-window occupancy.
-Other adapters retain fresh sessions. `--no-session-continuation` overrides the
-environment setting.
+Saved conversation state is cleared when each roadmap completes, before the next queued roadmap starts. Other adapters retain fresh sessions. Disable reuse with `--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP `sessionContinuation: false`.
 
-The worker prompt explicitly disables implementation subagents. Long throughput comes from repeated fresh sessions, not from one 8–10 hour nested agent call.
+The worker prompt explicitly disables implementation subagents. Work advances through bounded sessions and focused handoffs.
 
 ## Options
 
@@ -590,8 +588,8 @@ roadmap-runner <roadmap-file> [options]
 --timeout <duration>   default: 90m
 --resolver-timeout <duration> blocker recovery limit; default 10m
 --recover-blocked     explicitly retry a stopped recovery
---session-continuation opt in to bounded same-task Codex continuation
---no-session-continuation override the environment and keep sessions fresh
+--session-continuation enable bounded same-task Codex continuation (default)
+--no-session-continuation disable reuse and keep sessions fresh
 --supervisor-every <n> deprecated; no scheduled reviews
 --supervisor-timeout <duration> deprecated resolver-timeout alias
 --model <model>        optional model override

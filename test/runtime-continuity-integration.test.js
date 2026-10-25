@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { runLifecycle } from '../dist/lifecycle.js';
 import { parseArgs, runClient } from '../lib/runner.js';
+import { trackingPaths } from '../lib/tracking.js';
 
 const firstThread = '0199a213-81c0-7800-8aa1-bbab2a035a53';
 const secondThread = '0199a213-81c0-7800-8aa1-bbab2a035a54';
@@ -62,7 +63,8 @@ if (mode === 'checkpoint') {
 } else finish();
 `, { mode: 0o755 });
   const options = { ...parseArgs([], {}), roadmap, progressFile: progress, executable: client,
-    client: 'codex', notify: 'off', timeout: mode === 'checkpoint' ? '2s' : '5s', sessionContinuation: mode === 'continuation' };
+    client: 'codex', notify: 'off', timeout: mode === 'checkpoint' ? '2s' : '5s',
+    ...(mode !== 'continuation' ? { sessionContinuation: false } : {}) };
   return { workdir, roadmap, progress, client, options, invocations: () => JSON.parse(fs.readFileSync(path.join(workdir, 'invocations.json'), 'utf8')) };
 }
 
@@ -73,7 +75,7 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   const calls = f.invocations();
   assert.deepEqual(calls.map(call => call.binding.taskId), ['API-01.1', 'API-01.1', 'API-01.2']);
   assert.equal(calls[0].args.includes('resume'), false);
-  assert.equal(calls[0].args.includes('--ephemeral'), false, 'first opt-in session must persist for later reuse');
+  assert.equal(calls[0].args.includes('--ephemeral'), false, 'default session must persist for bounded reuse');
   const resumeIndex = calls[1].args.indexOf('resume');
   assert.ok(resumeIndex > 0);
   assert.equal(calls[1].args[resumeIndex + 1], firstThread);
@@ -81,6 +83,20 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   assert.equal(calls[2].args.includes('resume'), false, 'task change must not inherit the preceding conversation');
   assert.deepEqual(events.filter(event => event.type === 'runner.turn_starting').map(event => event.continuation.resumed), [false, true, false]);
   assert.equal(events.some(event => event.role === 'resolver'), false);
+  assert.equal(fs.existsSync(path.join(trackingPaths(f.roadmap, f.progress, f.workdir).stateDir, 'continuation.json')), false,
+    'completed roadmap must release the saved provider conversation');
+});
+
+test('opting out discards saved conversation state and keeps every task invocation fresh', async t => {
+  const f = fixture(t);
+  f.options.sessionContinuation = false;
+  const stateFile = path.join(trackingPaths(f.roadmap, f.progress, f.workdir).stateDir, 'continuation.json');
+  fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+  fs.writeFileSync(stateFile, JSON.stringify({ providerThreadId: firstThread }));
+  const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: () => {} });
+  assert.equal(result.reason, 'complete');
+  assert.equal(fs.existsSync(stateFile), false);
+  assert.ok(f.invocations().every(call => call.args.includes('--ephemeral') && !call.args.includes('resume')));
 });
 
 test('a missing provider continuation falls back once to fresh execution of the same task', async t => {

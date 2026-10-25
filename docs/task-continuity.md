@@ -217,11 +217,13 @@ Unmet prerequisites, global blockers, failed workers and repeated hard timeouts
 retain resolver recovery. A replacement requirement or interrupted attempt may
 still need recovery before an exhausted plan can be accepted as a normal boundary.
 
-## Optional Codex conversation reuse
+## Bounded Codex conversation reuse
 
-Fresh sessions remain the default. Opt in with `--session-continuation`,
-`ROADMAP_SESSION_CONTINUATION=1`, or MCP `sessionContinuation: true`.
-`--no-session-continuation` overrides the environment setting.
+Codex conversation reuse is enabled by default. Disable it with
+`--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP
+`sessionContinuation: false`. CLI flags override the environment setting.
+Saved conversation state is cleared when each roadmap completes, before the next
+queued roadmap starts. Only the current task conversation is retained.
 
 Only explicit provider-reported Codex thread IDs are reused. Task, owner, batch
 boundary, criteria, role, workspace, model, effort, executable and prompt changes

@@ -35,8 +35,8 @@ Management options:
   --prevent-sleep        Prevent idle system sleep for the entire run
   --no-prevent-sleep     Override ROADMAP_PREVENT_SLEEP
   --recover-blocked     Retry a stopped recovery with a resolver
-  --session-continuation Opt in to bounded same-task Codex conversation reuse
-  --no-session-continuation Keep every invocation fresh (default)
+  --session-continuation Enable bounded same-task Codex conversation reuse (default)
+  --no-session-continuation Disable conversation reuse; keep every invocation fresh
   --notify attention|off Desktop notification mode (default attention)
   --notify-on <events>   Extra desktop event types; requires --notify attention
   --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration

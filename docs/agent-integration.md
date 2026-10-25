@@ -151,11 +151,12 @@ completes successfully, using the same client settings and separate progress.
 Status includes `queue` entry states and a zero-based `queueIndex`; retain the
 same run ID throughout. Stop ends the whole run and leaves later entries pending.
 
-`roadmap_start` also accepts `sessionContinuation: true` for the Codex adapter.
-The default is `false`, which starts fresh provider sessions. Opting in permits
-bounded reuse of the explicitly recorded provider thread for the same worker
+`roadmap_start` defaults to bounded conversation reuse for the Codex adapter.
+Set `sessionContinuation: false` to start fresh provider sessions. The runner
+reuses only the explicitly recorded provider thread for the same worker
 task; task, role, scope, model or effort changes start fresh, as do exhausted
-continuation budgets. Other adapters reject enabling it. See
+continuation budgets. Saved conversation state is cleared after each completed
+roadmap in a queue. Other adapters default to fresh sessions and reject enabling reuse. See
 [task continuity](task-continuity.md) for the limits and failure behavior.
 
 Status optionally accepts `runId`, `outputBytes` (0–8192), `cursor` and list `offset`.

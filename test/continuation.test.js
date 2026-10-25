@@ -10,10 +10,15 @@ const scope = { enabled: true, client: 'codex', task: 'API-01.1', role: 'worker'
   scopeRevision: 'criteria-and-boundary-v1', workdir: '/workspace', model: 'fixture-model', effort: 'high' };
 const successful = () => ({ code: 0, providerThreadId: thread, usageComplete: true, usage: { inputTokens: 1024 } });
 
-test('continuation is opt-in, Codex-only, and keeps default ephemeral arguments', () => {
-  assert.equal(parseArgs(['r.md'], {}).sessionContinuation, false);
+test('continuation defaults on for Codex, supports opt-out, and leaves other adapters fresh', () => {
+  assert.equal(parseArgs(['r.md'], {}).sessionContinuation, true);
   assert.equal(parseArgs(['r.md', '--session-continuation'], {}).sessionContinuation, true);
   assert.equal(parseArgs(['r.md', '--no-session-continuation'], { ROADMAP_SESSION_CONTINUATION: 'true' }).sessionContinuation, false);
+  for (const value of ['0', 'false']) assert.equal(parseArgs(['r.md'], { ROADMAP_SESSION_CONTINUATION: value }).sessionContinuation, false);
+  assert.equal(parseArgs(['r.md', '--session-continuation'], { ROADMAP_SESSION_CONTINUATION: '0' }).sessionContinuation, true);
+  for (const client of ['claude', 'gemini', 'grok', 'kimi', 'muse']) {
+    assert.equal(parseArgs(['r.md', '--client', client], {}).sessionContinuation, false);
+  }
   assert.throws(() => parseArgs(['r.md', '--client', 'claude', '--session-continuation'], {}), /requires --client codex/);
   assert.equal(selectContinuation({ ...scope, enabled: false }).persistSession, false);
   assert.equal(selectContinuation({ ...scope, client: 'claude' }).persistSession, false);
