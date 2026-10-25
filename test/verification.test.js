@@ -137,12 +137,14 @@ test('timed-out leader cannot release a live descendant into the next check', { 
 test('relative PATH entries resolve against the command cwd and changed executables invalidate receipts', { skip: process.platform === 'win32' }, async t => {
   const f = fixture(t);
   fs.mkdirSync(path.join(f.workdir, 'bin'));
-  const executable = path.join(f.workdir, 'bin', 'runner-checker');
+  const workspaceAlias = path.join(f.workdir, 'workspace-alias');
+  fs.symlinkSync(f.workdir, workspaceAlias, 'dir');
+  const executable = path.join(workspaceAlias, 'bin', 'runner-checker');
   fs.writeFileSync(executable, `#!${process.execPath}\nprocess.exit(0);\n`, { mode: 0o755 });
   const spec = { ...f.spec, command: ['runner-checker'] };
-  const options = { ...f.options, env: { ...f.env, PATH: `bin${path.delimiter}${f.env.PATH || ''}` } };
+  const options = { ...f.options, workdir: workspaceAlias, env: { ...f.env, PATH: `bin${path.delimiter}${f.env.PATH || ''}` } };
   const first = await runVerification(spec, options);
-  assert.equal(first.receipt.scope.runtime.executable.path, executable);
+  assert.equal(first.receipt.scope.runtime.executable.path, fs.realpathSync(executable));
   assert.equal(first.receipt.exitCode, 0);
   fs.writeFileSync(executable, `#!${process.execPath}\nprocess.exit(7);\n`);
   const second = await runVerification(spec, options);
