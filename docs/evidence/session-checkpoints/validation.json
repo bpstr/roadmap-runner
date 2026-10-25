@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "scope": "Same-task continuation and meaningful session checkpoints",
+  "observedProblem": {
+    "runId": "4acecf735be00a2da10738d3",
+    "workerIterations": [
+      53,
+      54,
+      55,
+      56,
+      57
+    ],
+    "reportedInputTokenRange": [
+      1861237,
+      6760321
+    ],
+    "nextWorkerReason": "input_budget",
+    "conclusion": "Aggregate usage includes repeated cached input and exhausts the former default cutoff before any continuation."
+  },
+  "verificationPlan": {
+    "mode": "Prepared local executable clients and deterministic assertions only; no model calls or credential loading",
+    "build": "npm run build",
+    "tests": "node --test --test-concurrency=1 test/continuation.test.js test/checkpoint-ack.test.js test/runtime-continuity-integration.test.js test/task-selection.test.js test/queue.test.js",
+    "impact": "Continuation budget and turn limit; shared checkpoint timing; ordinary-task budgets; lifecycle resume, scope transitions, acknowledgments and queue isolation",
+    "completion": "Build and selected tests pass; worker instructions and README agree; no source whitespace errors",
+    "retainedEvidence": "Other 0.12 behavior is unchanged from b5030e13a433b91eda6e78da767554f235ca294e; no full-suite rerun is required.",
+    "estimatedCost": "One TypeScript build and five affected prepared-client test files; no browser, server or paid inference"
+  },
+  "limits": [
+    "Prepared clients verify controller behavior, not live model productivity or checkpoint quality.",
+    "Existing active processes keep their loaded 0.12 code until restarted."
+  ],
+  "results": {
+    "buildExitCode": 0,
+    "tests": 57,
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "testDurationMs": 13683.527125,
+    "diffCheck": "passed",
+    "logs": {
+      "install": "/tmp/roadmap-runner-session-checkpoints/install.log",
+      "build": "/tmp/roadmap-runner-session-checkpoints/build.log",
+      "tests": "/tmp/roadmap-runner-session-checkpoints/tests.log"
+    },
+    "confirmed": [
+      "Prepared multi-million-input usage resumes the recorded same-task thread.",
+      "Eight-turn rotation and explicit aggregate usage caps remain bounded.",
+      "Ordinary structured tasks receive an 85-minute checkpoint under a 90-minute timeout.",
+      "Finite budgets, task/role boundaries, checkpoint acknowledgments and queue isolation pass."
+    ]
+  }
+}

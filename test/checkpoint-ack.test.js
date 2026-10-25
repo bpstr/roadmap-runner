@@ -3,8 +3,19 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { readCheckpointAcknowledgment } from '../lib/checkpoint.js';
+import { checkpointDelay, readCheckpointAcknowledgment } from '../lib/checkpoint.js';
 import { runClient } from '../lib/runner.js';
+
+test('checkpoint timing uses configured session length and preserves explicit finite budgets', () => {
+  const minute = 60_000;
+  assert.equal(checkpointDelay(90 * minute), 85 * minute);
+  assert.equal(checkpointDelay(180 * minute), 175 * minute);
+  assert.equal(checkpointDelay(45 * minute), 40 * minute);
+  assert.equal(checkpointDelay(90 * minute, 30), 30 * minute);
+  assert.equal(checkpointDelay(90 * minute, 45), 45 * minute);
+  assert.equal(checkpointDelay(30 * minute, 45), 25.5 * minute);
+  assert.equal(checkpointDelay(2000), 1700);
+});
 
 function fixture(t) {
   const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'runner-ack-'));

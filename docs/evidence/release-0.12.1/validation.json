@@ -1,0 +1,55 @@
+{
+  "version": "0.12.1",
+  "status": "local_passed",
+  "mergedWork": [
+    "b5030e1: queue continuation regression using controller-recorded paths",
+    "8938e71: longer meaningful checkpoints and eight-turn conversation reuse",
+    "67e5112, integrated as 8e45b36: preserved stale main edits for fresh status and safe roadmap splitting"
+  ],
+  "verificationPlan": {
+    "affectedLocalChecks": "npm run build; node --test --test-concurrency=1 test/runner.test.js test/progress.test.js test/queue.test.js; npm run check:package; git diff --check; changed skill reference links and instruction consistency",
+    "reusedEvidence": "docs/evidence/session-checkpoints/validation.json: 57 prepared checks, no failures or skips. Continuation and checkpoint behavior is unchanged since that passing implementation batch.",
+    "releaseGate": ".github/workflows/ci.yml requires npm test, package verification and whitespace checks across Node 20/22/24 on Ubuntu and macOS.",
+    "broadRunJustification": "The existing CI release gate explicitly runs the entire prepared suite on all six platform/runtime combinations. Local development reuses the passing checkpoint batch and checks only newly affected status, tracking and queue behavior. The clarified worker stopping rule changes the packaged prompt, so the existing CI gate applies to the final candidate; local revalidation remains limited to the prompt contract and changed tarball.",
+    "completion": "Affected local checks pass, six candidate CI jobs pass, PR merges, npm latest resolves to 0.12.1 and GitHub release points at the merged commit.",
+    "inference": "Prepared clients only; no live model calls, credentials loaded into tests, or paid dogfood."
+  },
+  "localResults": {
+    "buildExitCode": 0,
+    "initialAffectedRun": {
+      "tests": 54,
+      "passed": 53,
+      "failed": 1,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-session-checkpoints/tests-0121.log",
+      "failure": "Existing prompt-contract assertions expected the retired finite-deliverable wording and 30\u201345-minute budget."
+    },
+    "correctedPromptContract": {
+      "selector": "prompt keeps literal paths",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-session-checkpoints/tests-0121-prompt.log",
+      "scope": "Only assertions changed; 53 passing affected checks retained without rerun."
+    },
+    "packageVerification": {
+      "exitCode": 0,
+      "log": "/tmp/roadmap-runner-session-checkpoints/package-0121-sustained-work.log"
+    },
+    "documentChecks": {
+      "relativeLinks": 6,
+      "errors": 0
+    },
+    "diffCheck": "passed",
+    "sustainedWorkPrompt": {
+      "selector": "prompt keeps literal paths",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-session-checkpoints/tests-0121-sustained-work.log",
+      "changedInput": "User clarified that intermediate operation/fixture/file checkpoints must not end a session while the selected task has ready authorized work."
+    }
+  },
+  "remoteResults": "Tracked by the pull request CI checks and final GitHub release; not claimed by local prepared evidence."
+}

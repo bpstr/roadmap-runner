@@ -120,9 +120,11 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /Tracking mode: ROADMAP_CHECKBOXES/);
   assert.match(prompt, /Tick an acceptance checkbox only after all its criteria/);
   assert.match(prompt, /Retrieve historical details on demand/);
-  assert.match(prompt, /one finite deliverable/);
+  assert.match(prompt, /Work through a meaningful checkpoint/);
   assert.match(prompt, /actual transport\/domain boundary and canonical/);
-  assert.match(prompt, /30–45-minute implementation budget/);
+  assert.match(prompt, /configured session time and absolute soft deadline/);
+  assert.match(prompt, /save intermediate progress and\s+continue in this session/);
+  assert.match(prompt, /Save useful checkpoints without exiting; keep working while the selected original\s+task has ready authorized work/);
   assert.match(prompt, /soft checkpoint deadline/);
   assert.match(prompt, /without new checkboxes or\s+scheduling tasks/);
   assert.match(prompt, /original task IDs, acceptance criteria/);
@@ -271,7 +273,7 @@ if (mode === 'edit-capacity' && count === 1) {
     calls: fs.existsSync(path.join(dir, "calls")) ? Number(fs.readFileSync(path.join(dir, "calls"))) : 0 };
 }
 
-for (const sourceStatus of ["IN_PROGRESS", "COMPLETE"]) {
+for (const sourceStatus of ["NOT_STARTED", "IN_PROGRESS", "COMPLETE"]) {
   test(`three iterations update roadmap checkboxes and preserve requirements, ignoring source ${sourceStatus}`, (t) => {
     const f = run(t, { sourceStatus, useEnv: sourceStatus === "BLOCKED" });
     assert.equal(f.result.status, 0, f.result.stderr);
@@ -369,11 +371,12 @@ test("roadmap completion ignores fenced examples and rejects stale handoff compl
   assert.equal(hasOpenRoadmapTasks("~~~md\n- [ ] example\n~~~\n  - [ ] real"), true);
 });
 
-test("checkbox updates retain the source snapshot without requiring scope reconciliation", t => {
+test("fresh status and checkbox updates retain the source snapshot without requiring scope reconciliation", t => {
   const { roadmap, file } = workspace(t);
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace("Status: IN_PROGRESS", "Status: NOT_STARTED"));
   const tracking = prepareTracking(roadmap, file);
   const revision = tracking.sourceRevision;
-  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace("- [ ] EX-1", "- [x] EX-1"));
+  fs.writeFileSync(roadmap, fs.readFileSync(roadmap, "utf8").replace("Status: NOT_STARTED", "Status: IN_PROGRESS").replace("- [ ] EX-1", "- [x] EX-1"));
   tracking.refreshSource(1);
   assert.notEqual(tracking.sourceRevision, revision);
   assert.equal(tracking.needsReconciliation, false);

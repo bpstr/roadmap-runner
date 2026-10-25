@@ -7,7 +7,6 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { RunManager } from '../dist/run-manager.js';
 import { readRun } from '../dist/run-state.js';
-import { trackingPaths } from '../lib/tracking.js';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 const wait = async check => {
@@ -62,6 +61,7 @@ const timer = setInterval(() => {
 
 test('queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors', async t => {
   const f = fixture(t); const [first, second, third] = f.roadmaps;
+  fs.writeFileSync(second, '# second\nStatus: NOT_STARTED\n\n- [ ] Implement fixture\n');
   const queue = [{ roadmap: second }, { roadmap: third }];
   const run = await f.start(queue, 'queue-start');
   assert.equal((await f.start(queue, 'queue-start')).id, run.id);
@@ -111,20 +111,30 @@ else if (calls.length === 2) {
   const run = await f.start([{ roadmap: second }]);
   assert.equal(readRun(f.registry, run.id).options.sessionContinuation, true);
   const calls = file => fs.existsSync(file + '.calls') ? JSON.parse(fs.readFileSync(file + '.calls', 'utf8')) : [];
-  const state = (file, index) => path.join(trackingPaths(file, run.queue[index].progressFile, f.workspace).stateDir, 'continuation.json');
+  const continuationFile = queueIndex => {
+    const record = readRun(f.registry, run.id);
+    assert.equal(record.queueIndex, queueIndex);
+    return path.join(path.dirname(record.artifacts.evidence), 'continuation.json');
+  };
   await wait(() => calls(first).length === 2);
+  const firstState = continuationFile(0);
+  assert.equal(fs.existsSync(firstState), true, 'first conversation exists before roadmap completion');
   assert.equal(calls(first)[0].includes('resume'), false);
   assert.ok(calls(first)[1].includes('first-thread'));
   f.release(first);
   await wait(() => calls(second).length === 2);
-  assert.equal(fs.existsSync(state(first, 0)), false, 'first conversation is released before queue advancement');
+  const secondState = continuationFile(1);
+  assert.notEqual(secondState, firstState);
+  assert.equal(fs.existsSync(firstState), false, 'first conversation is released before queue advancement');
+  assert.equal(fs.existsSync(secondState), true, 'second conversation exists before roadmap completion');
   assert.equal(calls(second)[0].includes('resume'), false);
   assert.ok(calls(second)[1].includes('second-thread'));
   assert.equal(calls(second).flat().includes('first-thread'), false);
   f.release(second);
   const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
   assert.equal(final.reason, 'complete');
-  assert.equal(fs.existsSync(state(second, 1)), false);
+  assert.equal(fs.existsSync(firstState), false);
+  assert.equal(fs.existsSync(secondState), false, 'final conversation is released after roadmap completion');
 });
 
 test('macOS sleep prevention spans queue handoff and releases at completion', { skip: process.platform !== 'darwin' }, async t => {

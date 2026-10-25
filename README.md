@@ -115,16 +115,24 @@ Kimi is exposed because Campfire already has a working adapter, but its current 
 
 ## Batch size
 
-Each worker receives one named deliverable with a finite implementation boundary,
-a 30–45-minute implementation budget, completion criteria and an exact checkpoint.
+Each worker works toward a meaningful checkpoint in the selected original task:
+a coherent implementation and its permitted affected checks. Workers save
+intermediate checkpoints and continue while that task has ready authorized work
+in the current phase. A completed operation, fixture or file is an intermediate
+checkpoint; it does not end the session by itself.
+Explicit finite execution plans retain their named deliverable, implementation
+boundary, 30–45-minute budget, completion criteria and exact checkpoint.
 Keep prerequisite discovery to five minutes. Reuse compatible evidence; a new
 session or status note does not justify repeating unchanged checks. Original
 acceptance remains open wherever required verification is deferred.
 
-The default hard timeout remains 90 minutes for compatibility. It is a ceiling,
-not the implementation target. The prompt supplies an absolute soft deadline at
-the batch budget (40 minutes by default), leaving at least five minutes or 15% of
-the configured timeout for checkpointing. At that deadline the runner archives
+The default hard timeout is 90 minutes. Ordinary roadmaps use the configured
+session time, reserving the smaller of five minutes or 15% for checkpointing:
+85 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
+An explicit finite-plan budget can bring that checkpoint forward. Workers finish
+early when the selected task's current phase or explicit finite batch is complete,
+or no authorized ready work remains.
+At the soft deadline the runner archives
 the current handoff and writes a checkpoint request. Workers save a session-bound
 structured result and acknowledge the request with its exact ID and result path.
 Only a fresh validated result counts as an acknowledged checkpoint; saving the
@@ -184,13 +192,19 @@ loaded prompt revision; replacing installed files does not update a running proc
 
 ## Roadmap queues
 
-### Split large plans before running
+### Choose safe roadmap boundaries
 
 Structured roadmaps with unambiguous `### Task ID` sections are indexed and dispatched
 one task at a time, together with shared constraints and prerequisite references.
 General IDs such as `AUTH-01` and `API-01.2` share the same parser. Unsupported or
-ambiguous documents retain the existing whole-roadmap selection path. For a large plan, write focused
-roadmap files for coherent milestones, then queue those files in dependency order.
+ambiguous documents retain the existing whole-roadmap selection path.
+
+Keep one roadmap by default.
+Split when a concrete context budget or independent delivery boundary warrants it,
+then queue files in prerequisite order. Check both the task graph and the file
+graph for cycles: grouping otherwise valid tasks can create dependencies in both
+directions between files. Every file must be completable before its successor
+starts, including its acceptance and validation requirements.
 Keep the overall index with the controller and give each worker only the current
 milestone, its constraints and concise references to prerequisite evidence.
 
@@ -202,7 +216,7 @@ progress migration are controller work; the runner does not partition inputs
 automatically.
 
 The bundled skill's [splitting strategy](skills/write-runner-roadmap/references/roadmap-splitting.md)
-covers suggested input budgets, dependency boundaries, evidence handoffs and
+covers split preflight, dependency boundaries, evidence handoffs and
 revisions of an existing large plan.
 
 ### Start or extend a queue
@@ -402,6 +416,8 @@ and before the first `##` (or deeper) section heading. Fenced examples and statu
 lines in later sections are not control state. Duplicate or malformed header
 statuses stop with an error. A progress file with no header status defaults to
 `IN_PROGRESS`, allowing the worker to initialize it.
+Fresh roadmaps may use `Status: NOT_STARTED`; the runner treats this as runnable
+work, just like `IN_PROGRESS`.
 
 Normal work keeps:
 
@@ -569,9 +585,10 @@ The JSON stream is filtered so normal terminal output stays concise while errors
 
 Codex conversation reuse is enabled by default. The adapter retains the explicit provider
 thread ID only for the same task, batch scope, role, workspace, model and effort.
-A boundary change starts fresh. Reuse is bounded to four sessions and 65,536
-cumulative observed input tokens; unknown usage or an unsuccessful turn prevents
-reuse. These limits bound usage, not the provider's exact context-window occupancy.
+A boundary change starts fresh. Reuse is bounded to eight sessions; unknown usage
+or an unsuccessful turn prevents reuse. Aggregate input tokens include cached
+context repeated across provider requests and remain usage telemetry, rather than
+a context-window limit that forces a fresh conversation after productive work.
 Saved conversation state is cleared when each roadmap completes, before the next queued roadmap starts. Other adapters retain fresh sessions. Disable reuse with `--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP `sessionContinuation: false`.
 
 The worker prompt explicitly disables implementation subagents. Work advances through bounded sessions and focused handoffs.

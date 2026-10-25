@@ -228,9 +228,10 @@ queued roadmap starts. Only the current task conversation is retained.
 Only explicit provider-reported Codex thread IDs are reused. Task, owner, batch
 boundary, criteria, role, workspace, model, effort, executable and prompt changes
 start a fresh conversation. A failed, interrupted, timed-out, quota-limited or
-unaccounted turn is not retained. Reuse is capped at four sessions and 65,536
-cumulative observed input tokens; this is a conservative budget, not a measurement
-of the provider's exact active context window. Other adapters retain fresh sessions.
+unaccounted turn is not retained. Reuse is capped at eight sessions. Aggregate
+input tokens remain recorded as usage telemetry: they include cached context
+repeated across requests and do not measure active context occupancy. This counter
+does not impose a default continuation cutoff. Other adapters retain fresh sessions.
 If Codex explicitly reports that the requested thread is unavailable before any
 agent activity, the runner retains that failed transport receipt and retries the
 same invocation once with fresh context. Other failures retain normal recovery.

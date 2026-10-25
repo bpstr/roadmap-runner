@@ -60,13 +60,25 @@ belongs inside standalone `<!-- roadmap-runner:delivery:start -->` and
 priorities and acceptance checkboxes remain outside those markers.
 Apply the same loop check during requirement reconciliation.
 
-2. Implement one finite deliverable.
+2. Work through a meaningful checkpoint.
 
-Record the deliverable, original task/operation IDs, implementation boundary,
-necessary prerequisites and completion/checkpoint criteria in Current handoff.
-Use the configured 30–45-minute implementation budget and soft deadline in Runner
-context. This is a ceiling, not a minimum. Finish the named outcome or save exact
-remaining functionality at the soft deadline, leaving time before hard termination.
+Record the selected original task's implementation and permitted verification
+goal, original task/operation IDs, implementation boundary, necessary prerequisites
+and checkpoint criteria in Current handoff.
+Use the configured session time and absolute soft deadline in Runner context.
+The previous next action is the starting point. Carry the selected task through a
+coherent implementation and its permitted affected checks. When a small step is
+finished and related authorized work remains ready, save intermediate progress and
+continue in this session. Group connected steps that share implementation context.
+Save useful checkpoints without exiting; keep working while the selected original
+task has ready authorized work in the current phase. Completing one operation,
+fixture, file or self-selected slice is an intermediate checkpoint. End the session
+when the selected original task's implementation and permitted verification phase
+are complete, an explicit finite batch's completion criteria are met, no authorized
+ready work remains, or the soft deadline requires a handoff. Keep an explicit finite
+batch within its authorized boundary. Never wait merely to lengthen a completed or
+blocked session. At the deadline save exact remaining functionality, leaving time
+before hard termination.
 Check the clock after commands; avoid work that cannot finish before checkpointing.
 
 Discovery within accepted scope updates missing work under its existing owner.
@@ -105,10 +117,13 @@ For integration implement the actual transport/domain boundary and canonical
 fixtures. A prepared component does not prove missing end-to-end behavior. Source
 delivery does not qualify runtime, endpoint performance, consumers or deployment.
 
-4. Save the result and stop.
+4. Save progress and hand off at the checkpoint.
 
 When Runner context supplies an Optional structured result file and Result binding,
 save a JSON result there atomically at useful work boundaries and before exiting.
+An intermediate save preserves recovery state while you continue the selected task.
+Before exiting, record the reached checkpoint or the concrete deadline/blocker that
+requires a handoff, and the exact remaining functionality.
 Copy version, sessionId, taskId and criteriaRevision exactly from Result binding.
 Include operation (a stable operation name), outcome (partial, implemented, verified,
 reused or blocked), completed and remaining (string arrays), nextAction (an exact

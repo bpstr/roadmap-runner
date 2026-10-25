@@ -54,10 +54,34 @@ test('task, role, scope, workspace, model and effort boundaries always start fre
   }
 });
 
-test('continuation resets on budgets, missing usage and unsuccessful or replaced threads', () => {
+test('large cached-input reports preserve same-task continuity for eight turns', () => {
+  let previous = null;
+  for (let turn = 1; turn <= 8; turn++) {
+    const choice = selectContinuation({ ...scope, previous });
+    assert.equal(choice.resumeSessionId, turn === 1 ? null : thread);
+    previous = rememberContinuation(previous, choice, { ...successful(),
+      usage: { inputTokens: 6_760_321, cachedInputTokens: 6_642_816, outputTokens: 38_238 } });
+    assert.equal(previous.sessions, turn);
+    assert.equal(previous.inputTokens, turn * 6_760_321, 'aggregate usage remains recorded');
+    previous = JSON.parse(JSON.stringify(previous)); // Same persisted state shape as 0.12.
+  }
+  assert.equal(selectContinuation({ ...scope, previous }).reason, 'session_limit');
+});
+
+test('explicit aggregate usage budgets remain enforced separately from context', () => {
+  const choice = selectContinuation({ ...scope, maxInputTokens: 65536 });
+  const previous = rememberContinuation(null, choice, { ...successful(), usage: { inputTokens: 65536 } });
+  assert.equal(selectContinuation({ ...scope, previous, maxInputTokens: 65536 }).reason, 'input_budget');
+  assert.equal(selectContinuation({ ...scope, previous }).resumeSessionId, thread);
+  for (const maxInputTokens of [0, -1, NaN, Infinity]) {
+    assert.throws(() => selectContinuation({ ...scope, maxInputTokens }), /Invalid continuation limits/);
+  }
+});
+
+test('continuation resets on turn limits, missing usage and unsuccessful or replaced threads', () => {
   const first = selectContinuation(scope);
   const previous = rememberContinuation(null, first, successful());
-  for (const override of [{ sessions: 4 }, { inputTokens: 65536 }, { inputTokens: null }, { providerThreadId: null }]) {
+  for (const override of [{ sessions: 8 }, { inputTokens: null }, { providerThreadId: null }]) {
     assert.equal(selectContinuation({ ...scope, previous: { ...previous, ...override } }).resumeSessionId, null);
   }
   for (const override of [{ code: 1 }, { timedOut: true }, { interrupted: true }, { cleanupIncomplete: true },
