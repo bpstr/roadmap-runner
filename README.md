@@ -115,16 +115,21 @@ Kimi is exposed because Campfire already has a working adapter, but its current 
 
 ## Batch size
 
-Each worker receives one named deliverable with a finite implementation boundary,
-a 30–45-minute implementation budget, completion criteria and an exact checkpoint.
+Each worker works toward a meaningful checkpoint in the selected original task:
+a coherent implementation and its permitted affected checks. Workers save
+intermediate progress and continue related ready work within the same session.
+Explicit finite execution plans retain their named deliverable, implementation
+boundary, 30–45-minute budget, completion criteria and exact checkpoint.
 Keep prerequisite discovery to five minutes. Reuse compatible evidence; a new
 session or status note does not justify repeating unchanged checks. Original
 acceptance remains open wherever required verification is deferred.
 
-The default hard timeout remains 90 minutes for compatibility. It is a ceiling,
-not the implementation target. The prompt supplies an absolute soft deadline at
-the batch budget (40 minutes by default), leaving at least five minutes or 15% of
-the configured timeout for checkpointing. At that deadline the runner archives
+The default hard timeout is 90 minutes. Ordinary roadmaps use the configured
+session time, reserving the smaller of five minutes or 15% for checkpointing:
+85 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
+An explicit finite-plan budget can bring that checkpoint forward. Workers finish
+early when their checkpoint is reached or no authorized ready work remains.
+At the soft deadline the runner archives
 the current handoff and writes a checkpoint request. Workers save a session-bound
 structured result and acknowledge the request with its exact ID and result path.
 Only a fresh validated result counts as an acknowledged checkpoint; saving the
@@ -569,9 +574,10 @@ The JSON stream is filtered so normal terminal output stays concise while errors
 
 Codex conversation reuse is enabled by default. The adapter retains the explicit provider
 thread ID only for the same task, batch scope, role, workspace, model and effort.
-A boundary change starts fresh. Reuse is bounded to four sessions and 65,536
-cumulative observed input tokens; unknown usage or an unsuccessful turn prevents
-reuse. These limits bound usage, not the provider's exact context-window occupancy.
+A boundary change starts fresh. Reuse is bounded to eight sessions; unknown usage
+or an unsuccessful turn prevents reuse. Aggregate input tokens include cached
+context repeated across provider requests and remain usage telemetry, rather than
+a context-window limit that forces a fresh conversation after productive work.
 Saved conversation state is cleared when each roadmap completes, before the next queued roadmap starts. Other adapters retain fresh sessions. Disable reuse with `--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP `sessionContinuation: false`.
 
 The worker prompt explicitly disables implementation subagents. Work advances through bounded sessions and focused handoffs.

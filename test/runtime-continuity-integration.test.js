@@ -29,7 +29,9 @@ if (!prompt.includes('Runner role: WORKER')) process.exit(97);
 const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
 const resultFile = JSON.parse(prompt.match(/^Optional structured result file: (.+)$/m)[1]);
 const invocations = fs.existsSync('invocations.json') ? JSON.parse(fs.readFileSync('invocations.json', 'utf8')) : [];
-invocations.push({ args: process.argv.slice(2, -1), binding });
+invocations.push({ args: process.argv.slice(2, -1), binding,
+  softDeadline: prompt.match(/^Soft checkpoint deadline \\(UTC\\): (.+)$/m)[1],
+  startedAt: prompt.match(/^Session started \\(UTC\\): (.+)$/m)[1] });
 fs.writeFileSync('invocations.json', JSON.stringify(invocations));
 const n = invocations.length;
 if (n > 4) process.exit(98);
@@ -55,7 +57,7 @@ const finish = () => {
     const ackFile = JSON.parse(prompt.match(/^Checkpoint acknowledgment file: (.+)$/m)[1]);
     fs.writeFileSync(ackFile, JSON.stringify({ version: 1, requestId: binding.sessionId, resultFile }));
   }
-  console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 128, cached_input_tokens: 64, output_tokens: 32 } }));
+  console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 3606004, cached_input_tokens: 3517056, output_tokens: 30338 } }));
 };
 if (mode === 'checkpoint') {
   const requestFile = JSON.parse(prompt.match(/^Checkpoint request file: (.+)$/m)[1]);
@@ -70,10 +72,16 @@ if (mode === 'checkpoint') {
 
 test('lifecycle resumes productive same-task work by provider ID and starts fresh at the next task', async t => {
   const f = fixture(t); const events = [];
+  f.options.timeout = '90m';
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
   assert.equal(result.code, 0); assert.equal(result.reason, 'complete');
   const calls = f.invocations();
   assert.deepEqual(calls.map(call => call.binding.taskId), ['API-01.1', 'API-01.1', 'API-01.2']);
+  for (const call of calls) {
+    const implementationMs = Date.parse(call.softDeadline) - Date.parse(call.startedAt);
+    assert.ok(implementationMs >= 85 * 60_000 && implementationMs < 85 * 60_000 + 1000,
+      'ordinary structured tasks use the configured session instead of a fixed 40-minute checkpoint');
+  }
   assert.equal(calls[0].args.includes('resume'), false);
   assert.equal(calls[0].args.includes('--ephemeral'), false, 'default session must persist for bounded reuse');
   const resumeIndex = calls[1].args.indexOf('resume');

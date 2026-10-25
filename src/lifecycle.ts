@@ -13,7 +13,7 @@ import { sessionMetrics } from "../lib/telemetry.js";
 import { ExecutionPlan } from "../lib/execution.js";
 import { RoadmapPlan } from "../lib/task-plan.js";
 import { TaskMemory, validateWorkerResult } from "../lib/task-memory.js";
-import { readCheckpointAcknowledgment } from "../lib/checkpoint.js";
+import { checkpointDelay, readCheckpointAcknowledgment } from "../lib/checkpoint.js";
 import { selectContinuation, rememberContinuation } from "../lib/continuation.js";
 import { atomicJson } from "./run-state.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
@@ -160,7 +160,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
   console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
   console.log(`Timeout:   ${options.timeout} per run`);
-  console.log(`Prompt:    ${PROMPT_REVISION} (30–45-minute implementation batches)`);
+  console.log(`Prompt:    ${PROMPT_REVISION} (work through meaningful checkpoints)`);
   console.log(`Recovery: resolver on blockers; timeout ${options.resolverTimeout || "10m"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
@@ -268,8 +268,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const sourceContents = fs.readFileSync(tracking.sourceSnapshot, "utf8");
     const snapshot = compacting ? tracking.archive({ kind: "before-compaction", iteration }) : null;
     const sessionTimeoutMs = compacting || resolving ? Math.min(timeoutMs, resolverTimeoutMs) : timeoutMs;
-    const checkpointAtMs = Math.max(1, Math.min((batch?.budgetMinutes ?? 40) * 60_000,
-      sessionTimeoutMs - Math.min(300_000, sessionTimeoutMs * 0.15)));
+    const checkpointAtMs = checkpointDelay(sessionTimeoutMs, batch?.budgetMinutes);
     const checkpointFile = path.join(tracking.evidenceDir, `${sessionId}-checkpoint.json`);
     const checkpointAckFile = path.join(tracking.evidenceDir, `${sessionId}-checkpoint-ack.json`);
     const deadlineContext = `Soft checkpoint deadline (UTC): ${new Date(Date.now() + checkpointAtMs).toISOString()}\nHard termination deadline (UTC): ${new Date(Date.now() + sessionTimeoutMs).toISOString()}\n` +

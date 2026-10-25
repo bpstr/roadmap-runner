@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Keep Codex same-task conversations for up to eight successful turns. Aggregate input usage, including repeated cached context, no longer triggers a default 65,536-token reset; explicit usage budgets and scope/failure boundaries remain enforced.
+- Let ordinary roadmap workers use their configured session time, reserving time for checkpointing, instead of imposing a fixed 40-minute implementation limit. Preserve explicit finite-plan budgets.
+- Work through coherent implementation and permitted affected checks, saving intermediate progress while continuing related ready work within the selected task.
+
 ## 0.12.0 — 2026-10-25
 
 - Share task parsing across validation and dispatch, fix general task-ID boundaries, and focus ordinary structured roadmaps on one selected task with its shared constraints.
