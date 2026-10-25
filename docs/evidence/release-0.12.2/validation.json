@@ -1,0 +1,23 @@
+{
+  "version": "0.12.2",
+  "distribution": "GitHub only; do not publish to npm",
+  "status": "local_passed",
+  "scope": "Version metadata and release documentation only; implementation behavior is unchanged from 0.12.1.",
+  "verificationPlan": {
+    "local": "npm run check:package; package/lockfile version consistency; git diff --check",
+    "retainedEvidence": {
+      "commit": "a6f2357cf10c1c64c0a9f518a407c368e21c6fab",
+      "ci": "https://github.com/bpstr/roadmap-runner/actions/runs/40234727222",
+      "result": "All six Node 20/22/24 Ubuntu/macOS jobs passed the prepared suite and package checks. Unchanged behavior checks are retained."
+    },
+    "broadRunJustification": "The existing .github/workflows/ci.yml push-to-main gate automatically runs the full prepared matrix on the release commit. No additional local full-suite run is needed for metadata-only changes.",
+    "completion": "Package checks pass, configured main CI passes, v0.12.2 and the built tarball are published on GitHub, and npm remains unchanged.",
+    "inference": "No live model calls, paid dogfood, or credentials loaded into test runners."
+  },
+  "localResults": {
+    "packageVerificationExitCode": 0,
+    "packageLog": "/tmp/roadmap-runner-release-0.12.2/package.log",
+    "versionConsistency": "0.12.2 in manifest and both lockfile locations",
+    "diffCheck": "passed"
+  }
+}

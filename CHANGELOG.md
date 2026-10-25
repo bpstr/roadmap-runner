@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2 — 2026-10-25
+
+- Publish a GitHub-only test build with updated package and CLI version metadata. Implementation behavior is unchanged from 0.12.1, including longer work sessions, eight-turn continuation and intermediate checkpoints that preserve ongoing work.
+
 ## 0.12.1 — 2026-10-25
 
 - Keep Codex same-task conversations for up to eight successful turns. Aggregate input usage, including repeated cached context, no longer triggers a default 65,536-token reset; explicit usage budgets and scope/failure boundaries remain enforced.
