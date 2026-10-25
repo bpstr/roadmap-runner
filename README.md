@@ -117,7 +117,9 @@ Kimi is exposed because Campfire already has a working adapter, but its current 
 
 Each worker works toward a meaningful checkpoint in the selected original task:
 a coherent implementation and its permitted affected checks. Workers save
-intermediate progress and continue related ready work within the same session.
+intermediate checkpoints and continue while that task has ready authorized work
+in the current phase. A completed operation, fixture or file is an intermediate
+checkpoint; it does not end the session by itself.
 Explicit finite execution plans retain their named deliverable, implementation
 boundary, 30–45-minute budget, completion criteria and exact checkpoint.
 Keep prerequisite discovery to five minutes. Reuse compatible evidence; a new
@@ -128,7 +130,8 @@ The default hard timeout is 90 minutes. Ordinary roadmaps use the configured
 session time, reserving the smaller of five minutes or 15% for checkpointing:
 85 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
 An explicit finite-plan budget can bring that checkpoint forward. Workers finish
-early when their checkpoint is reached or no authorized ready work remains.
+early when the selected task's current phase or explicit finite batch is complete,
+or no authorized ready work remains.
 At the soft deadline the runner archives
 the current handoff and writes a checkpoint request. Workers save a session-bound
 structured result and acknowledge the request with its exact ID and result path.

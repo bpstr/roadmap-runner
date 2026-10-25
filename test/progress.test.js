@@ -124,6 +124,7 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /actual transport\/domain boundary and canonical/);
   assert.match(prompt, /configured session time and absolute soft deadline/);
   assert.match(prompt, /save intermediate progress and\s+continue in this session/);
+  assert.match(prompt, /Save useful checkpoints without exiting; keep working while the selected original\s+task has ready authorized work/);
   assert.match(prompt, /soft checkpoint deadline/);
   assert.match(prompt, /without new checkboxes or\s+scheduling tasks/);
   assert.match(prompt, /original task IDs, acceptance criteria/);

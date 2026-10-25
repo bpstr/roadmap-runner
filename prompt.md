@@ -62,18 +62,22 @@ Apply the same loop check during requirement reconciliation.
 
 2. Work through a meaningful checkpoint.
 
-Record the deliverable, original task/operation IDs, implementation boundary,
-necessary prerequisites and completion/checkpoint criteria in Current handoff.
+Record the selected original task's implementation and permitted verification
+goal, original task/operation IDs, implementation boundary, necessary prerequisites
+and checkpoint criteria in Current handoff.
 Use the configured session time and absolute soft deadline in Runner context.
 The previous next action is the starting point. Carry the selected task through a
 coherent implementation and its permitted affected checks. When a small step is
 finished and related authorized work remains ready, save intermediate progress and
-continue in this session. Group connected steps that share implementation context;
-use the original task's acceptance or an explicit finite batch's completion criteria
-as the checkpoint. Keep an explicit finite batch within its authorized boundary.
-Stop when that checkpoint is reached, the task has no authorized ready work, or the
-soft deadline requires a handoff. There is no minimum duration or reason to wait
-after completion. At the deadline save exact remaining functionality, leaving time
+continue in this session. Group connected steps that share implementation context.
+Save useful checkpoints without exiting; keep working while the selected original
+task has ready authorized work in the current phase. Completing one operation,
+fixture, file or self-selected slice is an intermediate checkpoint. End the session
+when the selected original task's implementation and permitted verification phase
+are complete, an explicit finite batch's completion criteria are met, no authorized
+ready work remains, or the soft deadline requires a handoff. Keep an explicit finite
+batch within its authorized boundary. Never wait merely to lengthen a completed or
+blocked session. At the deadline save exact remaining functionality, leaving time
 before hard termination.
 Check the clock after commands; avoid work that cannot finish before checkpointing.
 

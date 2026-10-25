@@ -4,7 +4,7 @@
 
 - Keep Codex same-task conversations for up to eight successful turns. Aggregate input usage, including repeated cached context, no longer triggers a default 65,536-token reset; explicit usage budgets and scope/failure boundaries remain enforced.
 - Let ordinary roadmap workers use their configured session time, reserving time for checkpointing, instead of imposing a fixed 40-minute implementation limit. Preserve explicit finite-plan budgets.
-- Work through coherent implementation and permitted affected checks, saving intermediate progress while continuing related ready work within the selected task.
+- Continue through the selected task's implementation and permitted verification phase. Save intermediate checkpoints while working; completing one operation, fixture or file does not end a session while authorized ready work remains.
 - Accept `NOT_STARTED` as a runnable source status without treating its transition to `IN_PROGRESS` as a requirements amendment. Preserve this behavior across queued roadmaps.
 - Keep roadmaps together by default; validate both task and file dependency graphs, acceptance prerequisites and queue handoffs before proposing a split.
 - Fix the queue regression to use controller-recorded state paths and verify conversation state exists before completion and clears afterward.
