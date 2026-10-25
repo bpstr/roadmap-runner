@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.0 — 2026-10-25
+
+- Share task parsing across validation and dispatch, fix general task-ID boundaries, and focus ordinary structured roadmaps on one selected task with its shared constraints.
+- Continue productive partial tasks with bounded fairness; retain legacy selection when structure or handoff data is insufficient.
+- Add session-bound worker outcomes, small deterministic task packets, source-bound shared findings, and scoped check/review receipts. Record command results directly, reuse compatible evidence, and explain invalidation without automatically closing acceptance.
+- Defer repeated unchanged failed operations before another worker starts; keep unrelated tasks eligible. Preserve partial quota outcomes and prior failure evidence across recovery.
+- Distinguish normal finite-plan exhaustion from blockers and target legacy handoff compaction below 8 KiB while retaining the 32 KiB trigger.
+- Verify checkpoint acknowledgments against fresh worker results. Enable bounded Codex same-task conversation reuse by default, with explicit opt-out, fresh scope boundaries, four-turn and 65,536 observed-input-token caps, and saved state cleared after each completed roadmap in a queue.
+- Add first-command/edit timings and bounded request fingerprints in cold detail evidence; keep event and recent-summary payloads small.
+- Update Zod to 4.6.7 to address GHSA-mrhx-c7xc-m3w5.
+
 ## 0.11.0 — 2026-10-24
 
 - Remove regular supervisor sessions. Workers begin with a loop check using previous runs, the current handoff and referenced evidence; repeated failures with unchanged relevant inputs set BLOCKED.

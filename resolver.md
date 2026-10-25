@@ -13,6 +13,9 @@ publishing and changing permissions require the user's authorization.
 
 1. Diagnose the blocker.
 Read the current handoff, blocker reason and recent-runs summary in Runner context.
+Use Deferred task evidence when present; the controller already compared those
+named operations and declared inputs. Inspect their specific result records
+instead of rediscovering unrelated completed work.
 Inspect the referenced failed attempts and only the roadmap evidence needed to
 identify the cause. For a repetition loop, name the repeated operation, failure
 and unchanged implementation/dependency inputs. Note churn and new sessions do

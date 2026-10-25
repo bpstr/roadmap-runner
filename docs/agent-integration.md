@@ -150,6 +150,15 @@ and appends to an active run. Each roadmap starts only after its predecessor
 completes successfully, using the same client settings and separate progress.
 Status includes `queue` entry states and a zero-based `queueIndex`; retain the
 same run ID throughout. Stop ends the whole run and leaves later entries pending.
+
+`roadmap_start` defaults to bounded conversation reuse for the Codex adapter.
+Set `sessionContinuation: false` to start fresh provider sessions. The runner
+reuses only the explicitly recorded provider thread for the same worker
+task; task, role, scope, model or effort changes start fresh, as do exhausted
+continuation budgets. Saved conversation state is cleared after each completed
+roadmap in a queue. Other adapters default to fresh sessions and reject enabling reuse. See
+[task continuity](task-continuity.md) for the limits and failure behavior.
+
 Status optionally accepts `runId`, `outputBytes` (0–8192), `cursor` and list `offset`.
 `roadmap_events` accepts a required `runId` and optional nonnegative sequence
 `cursor` (default 0). It returns up to 50 events within the 12 KiB page budget,

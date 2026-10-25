@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { RunManager } from '../dist/run-manager.js';
 import { readRun } from '../dist/run-state.js';
+import { trackingPaths } from '../lib/tracking.js';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 const wait = async check => {
@@ -83,6 +84,47 @@ test('queued roadmaps advance in FIFO order, preserve separate progress, and kee
   const page = await f.manager.status(run.id, { cursor }); assert.ok(page.events.every(event => event.sequence > cursor));
   for (const file of f.roadmaps) assert.ok(!fs.readFileSync(file, 'utf8').includes('COMPLETE'));
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
+});
+
+test('default Codex continuation resumes within each roadmap and clears before the next queue entry', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  fs.writeFileSync(f.worker, `#!${process.execPath}
+import fs from 'node:fs';
+import path from 'node:path';
+const prompt = process.argv.at(-1);
+const source = JSON.parse(prompt.match(/^Live roadmap[^:]*: (.+)$/m)[1]);
+const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
+const callsFile = source + '.calls';
+const calls = fs.existsSync(callsFile) ? JSON.parse(fs.readFileSync(callsFile, 'utf8')) : [];
+calls.push(process.argv.slice(2, -1)); fs.writeFileSync(callsFile, JSON.stringify(calls));
+console.log(JSON.stringify({ type: 'thread.started', thread_id: path.basename(source, '.md') + '-thread' }));
+const finish = complete => {
+  if (complete) fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('- [ ]', '- [x]'));
+  fs.writeFileSync(progress, 'Status: ' + (complete ? 'COMPLETE' : 'IN_PROGRESS') + '\\n\\n## Current handoff\\nFinish prepared work.\\n');
+  console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 128, cached_input_tokens: 0, output_tokens: 32 } }));
+};
+if (calls.length === 1) finish(false);
+else if (calls.length === 2) {
+  const timer = setInterval(() => { if (fs.existsSync(source + '.release')) { clearInterval(timer); finish(true); } }, 20);
+} else process.exit(98);
+`);
+  const run = await f.start([{ roadmap: second }]);
+  assert.equal(readRun(f.registry, run.id).options.sessionContinuation, true);
+  const calls = file => fs.existsSync(file + '.calls') ? JSON.parse(fs.readFileSync(file + '.calls', 'utf8')) : [];
+  const state = (file, index) => path.join(trackingPaths(file, run.queue[index].progressFile, f.workspace).stateDir, 'continuation.json');
+  await wait(() => calls(first).length === 2);
+  assert.equal(calls(first)[0].includes('resume'), false);
+  assert.ok(calls(first)[1].includes('first-thread'));
+  f.release(first);
+  await wait(() => calls(second).length === 2);
+  assert.equal(fs.existsSync(state(first, 0)), false, 'first conversation is released before queue advancement');
+  assert.equal(calls(second)[0].includes('resume'), false);
+  assert.ok(calls(second)[1].includes('second-thread'));
+  assert.equal(calls(second).flat().includes('first-thread'), false);
+  f.release(second);
+  const final = await wait(async () => { const s = await f.manager.status(run.id); return s.processState === 'exited' && s; });
+  assert.equal(final.reason, 'complete');
+  assert.equal(fs.existsSync(state(second, 1)), false);
 });
 
 test('macOS sleep prevention spans queue handoff and releases at completion', { skip: process.platform !== 'darwin' }, async t => {

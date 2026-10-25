@@ -99,6 +99,7 @@ try {
         if (event.type === 'runner.unblocked' || (event.type === 'runner.turn_starting' && event.role === 'worker')) record.roadmapState = 'in_progress';
         if (event.type === 'runner.completed') record.roadmapState = 'complete';
         if (event.type === 'runner.stopped') record.roadmapState = 'stopped';
+        if (event.type === 'runner.plan_exhausted' && ['needs_next_batch', 'awaiting_verification'].includes(event.schedulingState)) record.roadmapState = event.schedulingState;
         if (event.type === 'runner.usage_paused') { record.waitReason = 'quota'; record.resetAt = event.resetAt; record.deadline = event.deadline; }
         if (event.type === 'runner.capacity_wait') record.waitReason = 'capacity';
         if (event.type === 'runner.recovery_wait') record.waitReason = 'recovery';
@@ -108,7 +109,7 @@ try {
         appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
       },
     });
-    item.state = result.reason === 'complete' ? 'complete' : result.reason === 'stopped' ? 'stopped' : result.reason === 'blocked' ? 'blocked' : 'failed';
+    item.state = ['complete', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification'].includes(result.reason) ? result.reason : 'failed';
     if (result.reason === 'blocked') record.roadmapState = 'blocked';
     if (result.reason === 'stopped') record.roadmapState = 'stopped';
     persist();

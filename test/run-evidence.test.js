@@ -13,7 +13,8 @@ function fixture(t) {
 }
 const record = (runs, iteration, text = 'output') => {
   const output = runs.capture(); output.write('stdout', text);
-  runs.record({ iteration, result: { code: 0 }, output, before: 'handoff before', after: 'handoff after',
+  runs.record({ iteration, result: { code: 0, checkpoint: { requested: true, acknowledged: true,
+    acknowledgment: { requestId: `checkpoint-${iteration}`, resultFile: 'result.json', editedPaths: ['transport.js'], nextAction: 'Finish transport response' } } }, output, before: 'handoff before', after: 'handoff after',
     sourceBefore: 'source', sourceAfter: 'source', implementationBefore: { 'transport.js': 'a' }, implementationAfter: { 'transport.js': 'b' } });
 };
 test('bounded capture retains short output and bounded head/tail plus omissions', () => {
@@ -31,6 +32,8 @@ test('rolling evidence and checkpoint survive restart without loading detail int
   const detail = JSON.parse(fs.readFileSync(runs.records.at(-1).evidence));
   assert.equal(detail.stdout.omittedBytes, OUTPUT_BYTES * 9);
   assert.deepEqual(detail.implementationAfter, { 'transport.js': 'b' });
+  assert.deepEqual(detail.checkpoint.acknowledgment, { requestId: 'checkpoint-30', resultFile: 'result.json',
+    editedPaths: ['transport.js'], nextAction: 'Finish transport response' });
 });
 for (const inline of [true, false]) test(`legacy ${inline ? 'inline' : 'pointer'} supervisor evidence migrates without dispatching review`, t => {
   const f = fixture(t); const runs = new RunEvidence(f.config); record(runs, 1);
@@ -45,4 +48,18 @@ test('quota and capacity rejections are excluded from implementation attempts', 
   const f = fixture(t); const runs = new RunEvidence(f.config);
   for (const result of [{ code: 1, usageLimit: {} }, { code: 1, retryableCapacity: true }]) runs.record({ result });
   assert.equal(runs.records.length, 0); assert.equal(runs.usagePauses, 1); assert.equal(runs.capacityRetries, 1);
+});
+
+test('quota after useful work retains semantic continuation but cannot count as a repeated failure', t => {
+  const f = fixture(t); const runs = new RunEvidence(f.config);
+  const output = runs.capture(); output.write('stdout', 'partial implementation');
+  const outcome = { taskId: 'API-32', operation: 'pagination', outcome: 'partial', completed: ['parser'],
+    remaining: ['response'], nextAction: { instruction: 'Encode response cursor' }, receiptIds: [] };
+  runs.record({ iteration: 1, result: { code: 1, usageLimit: {} }, output, before: 'before', after: 'after', outcome });
+  assert.equal(runs.records.length, 1);
+  assert.equal(runs.records[0].task, 'API-32');
+  assert.equal(runs.records[0].outcome.nextAction, 'Encode response cursor');
+  assert.equal(runs.records[0].failureLoopEligible, false);
+  const resumed = new RunEvidence(f.config);
+  assert.equal(resumed.usagePauses, 1); assert.equal(resumed.records.length, 1);
 });

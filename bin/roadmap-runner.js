@@ -9,6 +9,7 @@ import { serveMcp } from '../dist/mcp.js';
 import { setup } from '../dist/setup.js';
 import { doctor } from '../dist/doctor.js';
 import { requestNotificationPermission } from '../dist/notification-permission.js';
+import { runVerification, recordReview, workspacePath } from '../lib/verification.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 function help() {
@@ -24,6 +25,8 @@ Usage:
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
   roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
   roadmap-runner notifications request-permission [--json]
+  roadmap-runner check --spec <json-file> [--workspace <path>]
+  roadmap-runner record-review --spec <json-file> [--workspace <path>]
 
 Management options:
   --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
@@ -32,6 +35,8 @@ Management options:
   --prevent-sleep        Prevent idle system sleep for the entire run
   --no-prevent-sleep     Override ROADMAP_PREVENT_SLEEP
   --recover-blocked     Retry a stopped recovery with a resolver
+  --session-continuation Enable bounded same-task Codex conversation reuse (default)
+  --no-session-continuation Disable conversation reuse; keep every invocation fresh
   --notify attention|off Desktop notification mode (default attention)
   --notify-on <events>   Extra desktop event types; requires --notify attention
   --monitor-id <id>      Doctor: inspect saved Codex hourly-monitor registration
@@ -59,6 +64,7 @@ Environment:
   ROADMAP_TIMEOUT
   ROADMAP_MODEL
   ROADMAP_EFFORT
+  ROADMAP_SESSION_CONTINUATION
   ROADMAP_CLIENT_BIN
   ROADMAP_NOTIFY            Desktop mode: attention (default) or off
   ROADMAP_PREVENT_SLEEP      Set to 1 or true to prevent idle system sleep
@@ -72,10 +78,40 @@ The current directory is always the workspace.
 `);
 }
 
+// Workers may record checks/reviews, but still cannot start or control runners.
+// These commands use argv from an explicit specification, never a shell string.
+const verificationCommand = async (command, argv) => {
+  let specFile, workspace = process.cwd();
+  for (let i = 0; i < argv.length; i++) {
+    const flag = argv[i];
+    if (!['--spec', '--workspace'].includes(flag) || !argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error(`${command} accepts --spec <json-file> and --workspace <path>`);
+    if (flag === '--spec') { if (specFile) throw new Error('--spec must be supplied once'); specFile = argv[++i]; }
+    else workspace = argv[++i];
+  }
+  if (!specFile) throw new Error(`${command} requires --spec <json-file>`);
+  workspace = fs.realpathSync(workspace);
+  const file = workspacePath(workspace, specFile, { allowMissing: false });
+  if (!fs.statSync(file).isFile() || fs.statSync(file).size > 64 * 1024) throw new Error('Verification specification must be a regular file at most 64 KiB');
+  const spec = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const controller = new AbortController(); const cancel = () => controller.abort();
+  process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
+  try {
+    const result = command === 'check' ? await runVerification(spec, { workdir: workspace, signal: controller.signal }) : recordReview(spec, { workdir: workspace });
+    const receipt = result.receipt;
+    console.log(JSON.stringify({ receiptId: receipt.id, receiptFile: result.receiptFile, reused: result.reused ?? false,
+      kind: receipt.kind, exitCode: receipt.exitCode ?? null, counts: receipt.counts ?? null,
+      completed: receipt.completed ?? null, cleanupIncomplete: receipt.cleanupIncomplete ?? false,
+      stdout: receipt.stdout, stderr: receipt.stderr, acceptanceAuthority: false }, null, 2));
+    if (command === 'check') process.exitCode = receipt.aborted ? 130 : receipt.timedOut ? 124 :
+      receipt.cleanupIncomplete || receipt.error || !receipt.completed ? 1 : receipt.exitCode ?? 1;
+  } finally { process.removeListener('SIGINT', cancel); process.removeListener('SIGTERM', cancel); }
+};
+
 const main = async () => {
   let argv = process.argv.slice(2);
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
+  if (['check', 'record-review'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
   assertController();
   const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
@@ -126,7 +162,7 @@ const main = async () => {
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, sessionContinuation: options.sessionContinuation, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

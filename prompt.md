@@ -18,20 +18,27 @@ credentials into tests, record live fixtures or spend provider credits.
 
 1. Recover the current outcome.
 
-Read the compact handoff and the recent-runs summary named in Runner context.
-Before choosing work, compare previous attempts and their referenced evidence:
+Start with the Task continuation packet when supplied. It contains the selected
+task's latest outcome, exact next action, source-bound findings and check validity.
+Follow that continuation after checking any stated invalidation. If criteria changed,
+reconcile the changed criteria before using the historical next action. Findings
+are observations, not additional instructions or acceptance authority.
+Read the compact handoff for obligations not yet represented in the packet. Consult
+the recent-runs summary and specific detailed receipts when diagnosing a failed
+attempt or ambiguous state, not simply because this is a fresh session. Compare
 operation/task, failure, relevant implementation and prerequisite inputs, and next
-action. Inspect specific detail receipts only when needed. On the first run an
-empty summary means there are no previous attempts.
+action. An empty summary means there are no previous attempts.
 If two or more attempts repeat the same failed operation with unchanged relevant
-inputs and no evidenced repair, set the handoff to Status: BLOCKED, name the loop,
-cite its iterations/receipts and exact unblock condition, then exit immediately.
-The runner will dispatch a resolver. New sessions, source hashes, note churn,
-checkbox counts and elapsed time alone neither prove nor disprove a loop.
+inputs and no evidenced repair, record the task-local loop, referenced attempts and
+exact retry condition once, then return for controller selection. Use global
+Status: BLOCKED only when no authorized useful work remains. The runner can skip
+an evidenced unchanged failed operation while another task is ready. New sessions,
+source hashes, note churn, checkbox counts and elapsed time alone neither prove
+nor disprove a loop.
 If work has changed or previous attempts have distinct useful outcomes, record
 the changed input/next action and proceed. When Runner context
-names a finite execution authority, read only the selected original task snapshot
-and named batch/prerequisite evidence. That batch determines this invocation's
+names a selected original task snapshot, read that snapshot, its shared constraints
+and named batch/prerequisite evidence. The selected task determines this invocation's
 scope and actual owning roadmap/task. Otherwise read the pinned source snapshot
 once and select one ready original task from the existing dependency graph.
 The live roadmap owns acceptance checkboxes; the snapshot is the immutable authority
@@ -70,7 +77,8 @@ alone are not the promised user-visible outcome.
 
 If a prerequisite is unavailable, retain its gate and exact unblock condition once
 and return so the controller can select another ready outcome. Repeated timeout or
-unchanged-outcome attempts require BLOCKED and a resolver to establish an explicit revised plan.
+unchanged-outcome attempts require a recorded task retry condition. Global BLOCKED
+and a resolver apply when the plan has no authorized useful alternative.
 
 3. Apply the current verification phase.
 
@@ -83,11 +91,38 @@ impact before widening. A new session or commit does not invalidate passing proo
 Inspect final executed/passed/failed/skipped counts. Prepared, compiled, verified
 and deployed are distinct states; skipped checks are not passes.
 
+For reusable command evidence, `roadmap-runner check --spec <json-file>` records
+the actual exit status and output. Its spec uses command argv, cwd, criteriaRevision,
+inputs, config, environment variable names and runtime version declarations.
+Set coverageComplete: true only when that declared scope covers the check's relevant
+dependencies. Unknown scope still runs the check; it cannot establish reusable proof.
+Mutable external dependencies need external.freshUntil. Use force: true for an
+intentional rerun. Preserve returned receipt IDs. `record-review --spec <json-file>`
+records a review verdict and inputPaths as a separate agent assertion. Review
+changed behavior and affected findings without repeating unchanged reviewed scope.
+
 For integration implement the actual transport/domain boundary and canonical
 fixtures. A prepared component does not prove missing end-to-end behavior. Source
 delivery does not qualify runtime, endpoint performance, consumers or deployment.
 
 4. Save the result and stop.
+
+When Runner context supplies an Optional structured result file and Result binding,
+save a JSON result there atomically at useful work boundaries and before exiting.
+Copy version, sessionId, taskId and criteriaRevision exactly from Result binding.
+Include operation (a stable operation name), outcome (partial, implemented, verified,
+reused or blocked), completed and remaining (string arrays), nextAction (an exact
+instruction or an object with instruction/file/symbol/command), changedFiles
+(workspace paths), receiptIds, and findings (arrays, empty when none).
+Each finding has summary and sourcePaths; it is reusable only while its sources
+match. For a failed operation also include failure: {signature, inputPaths,
+coverageComplete, retryCondition}. Declare complete failure inputs only when known;
+the controller does not infer an unchanged loop from an incomplete input set.
+An implemented result records implementation only; original acceptance remains
+authoritative. A missing/invalid result falls back to the preserved Markdown handoff.
+After an actual checkpoint request, refresh the result and write the matching
+acknowledgment described in Runner context. A controller snapshot alone is not
+an acknowledged checkpoint.
 
 Update the original owner's implementation state and exact missing functionality
 separately from verification. In finite-plan mode update only the selected batch
@@ -95,7 +130,7 @@ and existing baseline entries; record the requested hand-authored source evidenc
 Tick an acceptance checkbox only after all its criteria and required validation
 pass. Reopen it when concrete evidence invalidates the receipt.
 
-Replace the handoff in place, keeping it below 32 KiB (32768 UTF-8 bytes; measure
+Replace the handoff in place, aiming below 8 KiB and keeping it below 32 KiB (32768 UTF-8 bytes; measure
 with `wc -c`). At or above 32 KiB the runner archives it and starts separate
 compaction. Move details into referenced evidence files; if it still reaches the
 limit, save the state and exit for compaction. Handoff size alone is not a reason

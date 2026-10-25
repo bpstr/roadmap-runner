@@ -23,7 +23,8 @@ Tracking mode: ROADMAP_CHECKBOXES
    Keep concrete pointers for unresolved obligations and retained passing checks
    so the next worker can retrieve proof without rerunning unchanged checks.
 4. Replace the handoff with the compact current state and those pointers. Measure
-   its UTF-8 byte size with `wc -c` and keep it strictly below 32 KiB (32768 bytes).
+   its UTF-8 byte size with `wc -c` and reduce it strictly below 8 KiB (8192 bytes).
+   The 32 KiB trigger is a separate ceiling; leave headroom for subsequent work.
    Handoff size alone is not a reason to set BLOCKED: move details into evidence
    files and retain usable references. The source roadmap has a separate 256 KiB
    (262144-byte) inclusive limit; preserve it without compression or truncation.

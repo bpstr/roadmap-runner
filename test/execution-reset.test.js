@@ -277,11 +277,12 @@ if(p.includes('Runner role: RESOLVER')) {
   const result = spawnSync(process.execPath, [cli, path.join(f.dir, 'owner1.md'), '--client-bin', client,
     '--progress-file', f.tracking.file, '--execution-plan', f.file, '--supervisor-every', '20', '--notify', 'off'],
     { cwd: f.dir, encoding: 'utf8', timeout: 10000 });
-  assert.equal(result.status, 75, result.stderr);
+  assert.equal(result.status, 0, result.stderr);
   assert.equal(Number(fs.readFileSync(path.join(f.dir, 'productive-count'))), 6);
   const events = fs.readFileSync(f.tracking.file + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
-  assert.ok(events.some(e => e.reason === 'finite_plan_exhausted'));
-  assert.equal(events.at(-1).reason, 'resolver_stopped');
+  assert.ok(events.some(e => e.type === 'runner.plan_exhausted' && e.reason === 'needs_next_batch'));
+  assert.equal(events.at(-1).reason, 'needs_next_batch');
+  assert.equal(events.some(e => e.type === 'runner.turn_starting' && e.role === 'resolver'), false);
   assert.equal(events.some(e => e.reason === 'loop_detected' || e.reason === 'replan_required'), false);
   assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /- \[ \]/);
 });
@@ -337,11 +338,12 @@ fs.writeFileSync('authority.md', '# Authority\n\n` + '```' + String.raw`roadmap-
   const result = spawnSync(process.execPath, [cli, path.join(f.dir, 'owner1.md'), '--client-bin', client,
     '--progress-file', f.tracking.file, '--execution-plan', f.file, '--timeout', '5s', '--notify', 'off'],
     { cwd: f.dir, encoding: 'utf8', timeout: 10000 });
-  assert.equal(result.status, 75, result.stderr);
-  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'finite-calls'), 'utf8').trim().split('\n'), ['resolver', 'worker', 'worker', 'resolver']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'finite-calls'), 'utf8').trim().split('\n'), ['resolver', 'worker', 'worker']);
   assert.ok(fs.readFileSync(f.file, 'utf8').includes('"implementation":"implemented"'));
   assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /- \[ \]/);
   const events = fs.readFileSync(f.tracking.file + '.events.jsonl', 'utf8').trim().split('\n').map(JSON.parse);
   assert.ok(events.some(event => event.type === 'runner.unblocked' && event.role === 'resolver'));
   assert.equal(events.filter(event => event.type === 'runner.progress_observed').length, 2);
+  assert.ok(events.some(event => event.type === 'runner.plan_exhausted' && event.reason === 'needs_next_batch'));
 });

@@ -1,24 +1,22 @@
+import { parseRoadmapTasks } from '../lib/task-index.js';
+
 // Deterministic structure validation; acceptance quality still needs controller review.
 export const validateRoadmap = (text: string): string[] => {
   const errors: string[] = [];
+  const index = parseRoadmapTasks(text);
   const checkboxIds = new Set<string>();
-  for (const match of text.matchAll(/^- \[[ x]\] ([A-Za-z0-9_.-]+)(?:\s|$)/gm)) {
-    if (checkboxIds.has(match[1])) errors.push(`Duplicate checkbox ID: ${match[1]}`);
-    checkboxIds.add(match[1]);
+  for (const checkbox of index.checkboxes) {
+    if (!checkbox.id) continue;
+    if (checkboxIds.has(checkbox.id)) errors.push(`Duplicate checkbox ID: ${checkbox.id}`);
+    checkboxIds.add(checkbox.id);
   }
-  const headings = [...text.matchAll(/^### Task ([A-Za-z0-9_.-]+)[^\n]*$/gm)];
-  if (!headings.length) return ['No parent tasks found'];
-  const tasks = headings.map((heading, index) => {
-    const section = text.slice(heading.index, headings[index + 1]?.index ?? text.length);
-    const epics = [...text.slice(0, heading.index).matchAll(/^## Epic[^\n]*$/gm)];
-    const release = /deployment|production access|dogfood|release qualification/i.test(epics.at(-1)?.[0] || '');
-    return { id: heading[1], section, release, dependencies: [...(section.match(/^Dependencies:\s*(.+)$/m)?.[1] || '').matchAll(/\b[A-Z][A-Z0-9]*-\d+(?:\.\d+)*\b/g)].map(match => match[0]) };
-  });
+  if (index.format !== 'headings') return ['No parent tasks found'];
+  const tasks: Array<{ id: string; section: string; release: boolean; dependencies: string[]; parent?: unknown }> =
+    index.tasks.map(task => ({ ...task, section: task.visibleSection }));
   const ids = new Set<string>();
   for (const task of tasks) {
     if (ids.has(task.id)) errors.push(`Duplicate task ID: ${task.id}`); ids.add(task.id);
-    const escaped = task.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    if (!new RegExp(`^- \\[[ x]\\] ${escaped}(?:\\s|$)`, 'm').test(task.section)) errors.push(`${task.id}: missing parent checkbox`);
+    if (!task.parent) errors.push(`${task.id}: missing parent checkbox`);
     for (const field of ['Purpose', 'Context', 'Dependencies', 'Session scope', 'Acceptance', 'Evidence', 'Handoff', 'Blocked behavior']) {
       if (!new RegExp(`^${field}:\\s*\\S`, 'm').test(task.section)) errors.push(`${task.id}: missing ${field}`);
     }
