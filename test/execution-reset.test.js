@@ -294,6 +294,9 @@ test('finite execution dispatches a resolver for a global blocker', t => {
 const fs=require('node:fs');const p=process.argv.at(-1);
 fs.appendFileSync('global-calls',p.includes('Runner role: RESOLVER')?'resolver\\n':'worker\\n');
 fs.writeFileSync('progress.md',p.includes('Runner role: RESOLVER')?'Status: STOPPED\\n':'Status: BLOCKED\\n');
+if(p.includes('Runner role: RESOLVER')) fs.writeFileSync(JSON.parse(p.match(/^Resolution decision file: (.+)$/m)[1]),JSON.stringify({
+  resolutionId:p.match(/^Resolution ID: (.+)$/m)[1],outcome:'stopped',
+  evidence:'Prepared prerequisite is unavailable',nextAction:'Supply the prerequisite before recovery'}));
 `, { mode: 0o755 });
   const result = spawnSync(process.execPath, [cli, path.join(f.dir, 'owner1.md'), '--client-bin', client,
     '--progress-file', f.tracking.file, '--execution-plan', f.file, '--notify', 'off'],

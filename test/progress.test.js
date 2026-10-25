@@ -319,7 +319,7 @@ test("progress BLOCKED dispatches a resolver without ordinary workers", (t) => {
 
 test("conflicting progress statuses fail before launching", (t) => {
   const f = run(t, { evidence: "Status: IN_PROGRESS\nStatus: COMPLETE\n" });
-  assert.equal(f.result.status, 1);
+  assert.equal(f.result.status, 64);
   assert.equal(f.calls, 0);
   assert.match(f.result.stderr, /multiple roadmap header status/);
 });

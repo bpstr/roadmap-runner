@@ -74,7 +74,10 @@ for (const mode of ['ordinary', 'mixed']) {
     const f = fixture(t, mode);
     const result = spawnSync(process.execPath, f.args, f.options);
     assert.equal(result.status, 75, result.stderr);
-    assert.equal(fs.readFileSync(path.join(f.temp, 'count'), 'utf8'), '2');
+    assert.equal(fs.readFileSync(path.join(f.temp, 'count'), 'utf8'), '4');
+    const roles = fs.readFileSync(path.join(f.temp, 'models'), 'utf8').trim().split('\n')
+      .map(line => JSON.parse(line).at(-1).match(/^Runner role: (.+)$/m)[1]);
+    assert.deepEqual(roles, ['WORKER', 'RESOLVER', 'RESOLVER', 'RESOLVER']);
     assert.doesNotMatch(result.stdout, /retry/);
   });
 }

@@ -279,9 +279,17 @@ for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy
   await f.disconnect(); assert.equal((await f.manager.status(run.id)).processState, 'running');
   fs.writeFileSync(run.progressFile + '.fail', '');
   await wait(async () => ['exited', 'stopped'].includes((await f.manager.status(run.id)).processState));
-  const reconnected = await mcpFixture(t, modern, f); const replay = await read(reconnected, page.cursor);
-  assert.ok(replay.events.some(event => event.type === 'runner.blocked' && event.attention));
-  assert.ok(replay.events.every(event => event.sequence > page.cursor)); assert.equal(fs.existsSync(desktop), false);
+  const reconnected = await mcpFixture(t, modern, f); let replay = await read(reconnected, page.cursor);
+  const replayed = [...replay.events];
+  while (replay.eventsTruncated) {
+    const next = await read(reconnected, replay.cursor);
+    assert.ok(next.cursor > replay.cursor, 'truncated replay must advance its cursor');
+    replayed.push(...next.events); replay = next;
+  }
+  assert.ok(replayed.some(event => event.type === 'runner.blocked' && event.attention));
+  assert.ok(replayed.every(event => event.sequence > page.cursor));
+  assert.equal(new Set(replayed.map(event => event.sequence)).size, replayed.length);
+  assert.equal(fs.existsSync(desktop), false);
   const empty = await read(reconnected, replay.cursor); assert.deepEqual(empty.events, []); assert.equal(empty.cursor, replay.cursor);
   await reconnected.disconnect();
 });

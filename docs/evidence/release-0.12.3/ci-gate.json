@@ -1,0 +1,34 @@
+{
+  "version": "0.12.3",
+  "status": "corrected_selectors_passed",
+  "originalFailure": {
+    "commit": "516ca069fe49802a432aa5b2af38a0f0edc6a2a6",
+    "url": "https://github.com/bpstr/roadmap-runner/actions/runs/40241561300",
+    "jobsFailed": 6,
+    "distinctFailingSelectors": 7,
+    "fullLog": "/tmp/roadmap-runner-0.12.3/ci-failed.log",
+    "causes": [
+      "Two capacity fixtures still expected one unsuccessful resolver instead of the default three-attempt budget.",
+      "The finite execution fixture wrote STOPPED but omitted the fresh explicit stopped decision required by the recovery protocol.",
+      "Two invalid-header fixtures expected generic exit 1 instead of actionable preflight exit 64.",
+      "Legacy and modern MCP replay fixtures assumed all terminal events fit the first bounded page; macOS event paths caused pagination."
+    ]
+  },
+  "verificationPlan": {
+    "localSelectors": "ordinary/mixed failure dispatch; finite execution dispatches a resolver; conflicting progress statuses/header statuses; legacy/modern MCP event subscriptions, cancellation and replay",
+    "completion": "Seven failing selectors pass locally; required GitHub CI matrix passes for the corrective commit; publish v0.12.3 on that commit.",
+    "retainedEvidence": "All other passing checks from the failed CI matrix and recorded local batches remain valid for unchanged runtime behavior. These repairs change fixtures/assertions only.",
+    "broadRunJustification": "The existing .github/workflows/ci.yml release gate requires all prepared tests, package verification and whitespace checks on Node 20/22/24 and Ubuntu/macOS. Remote CI executes that explicit matrix after the corrective push; no local full-suite rerun is needed.",
+    "inference": "Prepared processes only. No provider calls, credentials, paid dogfood or automatic live recording."
+  },
+  "localResults": {
+    "tests": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "log": "/tmp/roadmap-runner-0.12.3/ci-gate-local.log",
+    "whitespace": "git diff --check passed",
+    "runtimeChanges": false
+  },
+  "remoteGate": "Publication waits for all six required CI jobs on the corrective commit. The release links that final run; original failed evidence remains retained."
+}

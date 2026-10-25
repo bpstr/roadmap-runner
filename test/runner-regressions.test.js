@@ -75,7 +75,7 @@ test("conflicting progress header statuses fail before starting a worker", (t) =
     path.join(root, "test/fixtures/mock-codex.js")], {
     cwd: dir, encoding: "utf8", timeout: 10_000,
   });
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 64);
   assert.match(result.stderr, /multiple roadmap header status/);
   assert.doesNotMatch(result.stdout, /===== iteration /);
 });
