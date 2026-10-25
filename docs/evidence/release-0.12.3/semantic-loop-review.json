@@ -1,0 +1,78 @@
+{
+  "status": "local_passed_and_installed",
+  "request": "Remove automatic same-task cutoffs and count-based loop aborts. Have the existing worker compare prior runs and explicitly assess semantic repetition.",
+  "plan": {
+    "affectedChecks": "Build once, then continuation, task-selection, task-memory, run-evidence, task-continuity-integration, runtime-continuity-integration and recovery-runs tests. Select affected runner/queue prompt contracts only if their assertions depend on changed wording or defaults.",
+    "completion": "Long productive continuations stay eligible beyond old eight-turn/attempt boundaries; repeated failures/timeouts do not automatically block; prepared worker assessments can identify semantic loops despite operation/hash churn; affected checks and local package/install verification pass.",
+    "retainedEvidence": "Prior 0.12.2 repair, handoff, receipt, FIFO and package checks remain evidence for unchanged behavior. Do not rerun the full suite or unrelated assurance fixtures.",
+    "inference": "Prepared clients and fixtures only; the previously read Assign paid-inference policy remains applicable. No provider calls, credentials or live fixture recording.",
+    "release": "Keep version 0.12.2 and replace the local CLI after validation. Preserve active controllers; the changed policy applies when new code is loaded.",
+    "additionalAffectedCheck": "The new lookback adds bounded prompt data. Run context-budget.test.js to validate compaction/context bounds; run the changed progress prompt-contract selector. Retain the other 88 passing checks.",
+    "retainedContextEvidence": "Later roadmap/criteria metadata stays inside the same enforced 8 KiB lookback envelope. Rerun its unit budget/durability and semantic-review consumers, retaining the 18 passing context-budget checks."
+  },
+  "localResults": {
+    "build": {
+      "exitCode": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-build-1.log"
+    },
+    "initialAffected": {
+      "tests": 89,
+      "passed": 88,
+      "failed": 1,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-affected-1.log",
+      "failure": "New long productive fixture completed its one configured task in 16 calls. Add the intended second task to verify both 16-turn affinity and the genuine task boundary; production behavior was correct."
+    },
+    "corrected": {
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-corrected.log"
+    },
+    "contextBudget": {
+      "tests": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-context.log"
+    },
+    "finalSelectors": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-final-selectors.log"
+    },
+    "retainedCoverage": {
+      "uniqueChecks": 109,
+      "passed": 109,
+      "unresolvedFailures": [],
+      "log": "/tmp/roadmap-runner-0.12.2/semantic-retained-checks.json"
+    },
+    "syntaxAndWhitespace": "Passed node --check for changed JavaScript modules and git diff --check."
+  },
+  "localInstallation": {
+    "verification": {
+      "version": "0.12.2",
+      "comparedFiles": 74,
+      "mismatches": [],
+      "sameTaskSessionLimit": null,
+      "continuesAfter100TurnsWithoutUsageTelemetry": true,
+      "hardSessionLimitMinutes": 90,
+      "checkpointMinutes": 85,
+      "inferenceCalls": 0,
+      "integrity": "sha512-/xcFuhhoAJurShrCWUVycH1Ge402pR9RNhkHYdJ345AE6nGwj3l2Ln5WAm4NYXUd37Q1+dznBaz0SKZkDpbNEQ=="
+    },
+    "log": "/tmp/roadmap-runner-0.12.2/semantic-install/install.log",
+    "packageLog": "/tmp/roadmap-runner-0.12.2/semantic-install/pack.json",
+    "method": "Offline npm pack/global install with lifecycle scripts disabled. Reuse the passing build and unchanged package-layout gate; verify every packaged file against the installed payload."
+  },
+  "hygiene": {
+    "remainingFixtureProcesses": 0,
+    "activeServicesPreserved": true,
+    "cleanupScope": "No unrelated processes or caches changed."
+  },
+  "releaseVersion": "0.12.3",
+  "implementationCandidateVersion": "0.12.2"
+}

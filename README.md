@@ -122,7 +122,7 @@ in the current phase. A completed operation, fixture or file is an intermediate
 checkpoint; it does not end the session by itself.
 Explicit finite execution plans retain their named deliverable, implementation
 boundary, 30–45-minute budget, completion criteria and exact checkpoint.
-Keep prerequisite discovery to five minutes. Reuse compatible evidence; a new
+Use the configured checkpoint for prerequisite discovery. Reuse compatible evidence; a new
 session or status note does not justify repeating unchanged checks. Original
 acceptance remains open wherever required verification is deferred.
 
@@ -142,11 +142,12 @@ Noninteractive clients must follow that prompt; the request
 file does not itself send a new chat message. Hard termination sends SIGTERM,
 then escalates after three seconds and verifies descendant cleanup.
 
-Workers begin with their task-specific continuation packet and consult history
-when current evidence requires it. Structured repeated failures with a complete
-declared input scope defer that task while independent work proceeds. A global
-blocker, failed worker or two consecutive hard timeouts dispatches a
-resolver. The resolver repairs the cause and resumes workers, or records STOPPED
+Workers begin with their task-specific continuation packet and a bounded recent-run
+lookback. The worker judges whether previous attempts repeat the same work without
+a credible repair or useful progress, even when operation names or hashes change.
+Only an explicit worker blocked assessment defers that task while independent work
+proceeds. Failure counts and repeated timeouts do not establish a loop. A global
+blocker or failed client dispatches a resolver. The resolver repairs the cause and resumes workers, or records STOPPED
 and ends the runner. Useful partial work continues without periodic supervisors.
 See [recovery runs](RECOVERY.md) for the decision contract and restart behavior.
 
@@ -170,8 +171,8 @@ roadmap-runner start docs/owning-roadmap.md --execution-plan docs/progress.md \
 ```
 
 The controller selects actual owning roadmaps across dependencies and continues a
-productive partial task with an exact next action for up to eight consecutive
-attempts. Legacy or stale outcomes retain rotation. Normal finite-plan exhaustion
+productive partial task with an exact next action while useful work remains,
+without an attempt-count cutoff. Legacy or stale outcomes retain rotation. Normal finite-plan exhaustion
 returns `needs_next_batch` or `awaiting_verification` with exit 0, preserving open
 acceptance and pending queue entries without a diagnostic resolver session. A real
 blocked ready set still dispatches a resolver. The controller never
@@ -307,8 +308,10 @@ Unexpected client failures stop the runner rather than retrying forever.
 
 ## Recovery runs
 
-Every worker begins with a loop check against recent runs and the current handoff.
-An evidenced repetition blocks the runner and dispatches a resolver. The resolver
+Every worker assesses the recent-run lookback and current handoff for semantic
+repetition. The worker records evidence and an exact retry condition when it judges
+a task blocked. Another ready task may continue; only a global blocker dispatches
+a resolver. The resolver
 uses roadmap evidence to repair the blocker, records the changed condition and
 next action, and clears the way for more workers. When it cannot unblock useful
 work, it sets STOPPED and ends the entire runner, leaving queued work pending.
@@ -440,11 +443,13 @@ session, the worker may set:
 Status: BLOCKED
 ```
 
-`BLOCKED` pauses workers and automatically dispatches a resolver. Use it when
+`BLOCKED` pauses workers and automatically dispatches a resolver, with up to
+three attempts per episode (`--resolver-attempts 3`). Use `--blocked-policy park`
+or `stop` to return before resolver dispatch. Use it when
 no authorized work remains ready or a repeated failed attempt needs intervention.
 Task-local blockers belong in Deferred gates while independent work continues.
 A successful resolver clears the cause, records evidence and resumes workers.
-An unresolved blocker becomes `Status: STOPPED`, ending the runner with exit 75
+An explicit stopped decision or exhausted recovery budget becomes `Status: STOPPED`, ending the runner with exit 75
 and reason `stopped`. Later queue entries remain pending.
 
 After supplying the missing input, explicitly retry the stopped recovery:
@@ -585,8 +590,8 @@ The JSON stream is filtered so normal terminal output stays concise while errors
 
 Codex conversation reuse is enabled by default. The adapter retains the explicit provider
 thread ID only for the same task, batch scope, role, workspace, model and effort.
-A boundary change starts fresh. Reuse is bounded to eight sessions; unknown usage
-or an unsuccessful turn prevents reuse. Aggregate input tokens include cached
+A boundary change starts fresh. Same-task reuse has no default turn limit. Missing
+usage telemetry does not prevent reuse; an unsuccessful client turn still does. Aggregate input tokens include cached
 context repeated across provider requests and remain usage telemetry, rather than
 a context-window limit that forces a fresh conversation after productive work.
 Saved conversation state is cleared when each roadmap completes, before the next queued roadmap starts. Other adapters retain fresh sessions. Disable reuse with `--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP `sessionContinuation: false`.
@@ -604,6 +609,9 @@ roadmap-runner <roadmap-file> [options]
 --progress-file <path> override bounded progress-state path; workers never edit source
 --timeout <duration>   default: 90m
 --resolver-timeout <duration> blocker recovery limit; default 10m
+--resolver-attempts <n> attempts per blocked episode; default 3, maximum 10
+--blocked-policy <mode> resolve (default), park, or stop before resolver dispatch
+--queue-spec <path>   JSON FIFO array of {roadmap, progressFile} entries
 --recover-blocked     explicitly retry a stopped recovery
 --session-continuation enable bounded same-task Codex continuation (default)
 --no-session-continuation disable reuse and keep sessions fresh

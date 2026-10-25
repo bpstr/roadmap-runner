@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Recovery, recoverySettings } from "../lib/recovery.js";
 import { RunEvidence } from "../lib/run-evidence.js";
 import { resolverSettings, readResolution, withStatus } from "../lib/recovery-runs.js";
+import { validateControlFile } from "../lib/handoff.js";
 import { prepareTracking, trackingPaths, renderPrompt, TARGET_TRACKING_BYTES } from "../lib/tracking.js";
 import { sessionMetrics } from "../lib/telemetry.js";
 import { ExecutionPlan } from "../lib/execution.js";
@@ -49,7 +50,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let sleep;
   try {
     options = { ...options, capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
-    const resolverTimeoutMs = resolverSettings(options).timeoutMs;
+    const { timeoutMs: resolverTimeoutMs, attempts: resolverAttempts, blockedPolicy } = resolverSettings(options);
 
   let roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
@@ -83,12 +84,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     console.warn(`Warning: ${options.client} has no explicit approval-bypass flag in the current adapter; local client configuration may still prompt.`);
   }
 
+  validateControlFile(roadmap);
+  const progressPath = trackingPaths(roadmap, options.progressFile, workdir).file;
+  if (fs.existsSync(progressPath)) validateControlFile(progressPath);
   let tracking = prepareTracking(roadmap, options.progressFile, workdir);
   const execution = options.executionPlan ? new ExecutionPlan(options.executionPlan, workdir, tracking) : null;
   const queuedDelivery = options.deliveryPlan ? new ExecutionPlan(options.deliveryPlan, workdir, tracking) : null;
   const defaultPlan = !execution && !queuedDelivery ? new RoadmapPlan(roadmap, workdir, tracking) : null;
   const memories = new Map<string, any>();
-  const legacyMemory = { latest: () => null, repeatFailure: () => false, prepare: () => null, acknowledgeResolution: () => {} };
+  const legacyMemory = { latest: () => null, assessedBlocker: () => false, prepare: () => null, acknowledgeResolution: () => {} };
   const disableMemory = (owner, error) => {
     owner = path.resolve(workdir, owner);
     if (memories.get(owner) !== legacyMemory) console.warn(`Optional task memory unavailable for ${owner}: ${error.message}. Continuing with the preserved legacy handoff.`);
@@ -151,6 +155,18 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     await recovery.event('runner.stopped', { reason, role: 'resolver', code: 75 });
     return { code: 75, reason: 'stopped' };
   };
+  const retryResolution = async (reason, evidenceFile) => {
+    const blocker = recovery.state.blocker;
+    blocker.failures ||= [];
+    blocker.failures.push({ attempt: blocker.failures.length + 1, reason, evidenceFile });
+    recovery.save();
+    if (blocker.failures.length - (blocker.attemptStart || 0) >= resolverAttempts) return await stopRecovery(reason);
+    // The retry remains in the same blocked episode, with the original ID and
+    // every failed decision retained. No general worker runs between attempts.
+    fs.writeFileSync(tracking.file, withStatus(fs.readFileSync(tracking.file, 'utf8'), 'BLOCKED'));
+    await recovery.event('runner.recovery_retry', { reason, attempt: blocker.failures.length - (blocker.attemptStart || 0) + 1, limit: resolverAttempts, evidenceFile });
+    return null;
+  };
 
   console.log(`Roadmap Runner ${PACKAGE.version}`);
   console.log(`Client:    ${options.client}`);
@@ -174,9 +190,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   if (options.recoverBlocked) {
     delete recovery.state.stopped;
     await block('explicit_recovery');
+    recovery.state.blocker.attemptStart = recovery.state.blocker.failures?.length || 0;
+    recovery.save();
   }
-  if (recovery.state.reviewRequested || recovery.state.loopBlockedRevision) {
-    await block(recovery.state.loopBlockedRevision ? 'loop_detected' : 'corrective_recovery');
+  const legacyReviewContext = recovery.state.reviewRequested || recovery.state.loopBlockedRevision
+    ? 'Legacy recovery flags request a review of previous runs; assess the evidence before deciding whether work is blocked.\n' : '';
+  if (legacyReviewContext) {
     delete recovery.state.reviewRequested;
     delete recovery.state.loopBlockedRevision;
     recovery.save();
@@ -195,8 +214,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       const memory = memoryFor(task.roadmap || roadmap);
       const latest = memory.latest(task.task || task.id);
       if (latest) plan.setContinuation(task.task || task.id, latest);
-      const repeated = memory.repeatFailure(task.task || task.id, task.criteriaRevision);
-      if (repeated) deferredTasks.push({ task: task.task || task.id, roadmap: task.roadmap || roadmap, criteriaRevision: task.criteriaRevision, ...repeated });
+      const assessment = memory.assessedBlocker(task.task || task.id, task.criteriaRevision);
+      if (assessment) deferredTasks.push({ task: task.task || task.id, roadmap: task.roadmap || roadmap, criteriaRevision: task.criteriaRevision, ...assessment });
     }
     plan?.setSkippedTaskIds(deferredTasks.map(task => task.task));
     const batch = plan?.select();
@@ -220,7 +239,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!compacting && !recovery.state.blocker && (status === 'blocked' || sourceStatus === 'blocked')) await block('roadmap_blocked');
     if (!compacting && !recovery.state.blocker && !batch && (execution || (defaultPlan?.reliable && !queuedDelivery))) {
       const schedule = plan.schedulingOutcome();
-      if (schedule.status === 'blocked') await block(deferredTasks.length ? 'unchanged_failed_operation' : 'task_prerequisite_blocked');
+      if (schedule.status === 'blocked') await block(deferredTasks.length ? 'agent_assessed_blocker' : 'task_prerequisite_blocked');
       else if (execution && ['needs_next_batch', 'awaiting_verification'].includes(schedule.status)) {
         if (tracking.needsReconciliation || recovery.state.requiresWorker || recovery.state.quota) await block('finite_plan_reconciliation');
         else {
@@ -232,11 +251,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       }
     }
     const fallbackTaskId = `roadmap-${createHash('sha256').update(roadmap).digest('hex').slice(0, 12)}`;
-    if (!compacting && !recovery.state.blocker && !plan && memoryFor().repeatFailure(fallbackTaskId, tracking.requirementsRevision)) {
+    if (!compacting && !recovery.state.blocker && !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision)) {
       deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision });
-      await block('unchanged_failed_operation');
+      await block('agent_assessed_blocker');
     }
     const resolving = !compacting && Boolean(recovery.state.blocker);
+    if (resolving && !options.recoverBlocked && blockedPolicy !== 'resolve') {
+      if (blockedPolicy === 'stop') return await stopRecovery('blocked_policy');
+      return { code: 75, reason: 'blocked' };
+    }
     if (!compacting && !resolving && status === 'complete' && (!execution || execution.schedulingOutcome().status === 'complete') && !tracking.needsReconciliation && !recovery.state.quota && !recovery.state.requiresWorker) {
       previousConversation = null;
       saveContinuation();
@@ -278,12 +301,13 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const prompt = renderPrompt(PROMPT_TEMPLATE, roadmap, tracking.file, tracking.historyDir);
     const resolutionId = recovery.state.blocker?.resolutionId;
     const resolutionFile = resolving ? path.join(tracking.evidenceDir, `${sessionId}-resolution.json`) : null;
+    const resolverEvidenceFile = resolving ? path.join(tracking.evidenceDir, `${sessionId}-resolver.json`) : null;
     // A unique path keeps every failed/partial decision across retries and restart.
     const iterationPrompt = compacting
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
       : resolving
-      ? `${renderPrompt(RESOLVER_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: RESOLVER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Blocker reason: ${recovery.state.blocker.reason}\nResolution ID: ${resolutionId}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nDeferred task evidence: ${JSON.stringify(deferredTasks)}\nFinite execution authority: ${JSON.stringify(options.executionPlan || options.deliveryPlan || null)}\nLoaded prompt revision: ${promptRevision}\n`
-      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nLoaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+      ? `${renderPrompt(RESOLVER_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: RESOLVER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Blocker reason: ${recovery.state.blocker.reason}\nResolution ID: ${resolutionId}\nResolver attempt: ${(recovery.state.blocker.failures?.length || 0) - (recovery.state.blocker.attemptStart || 0) + 1}/${resolverAttempts}\nPrevious resolver failures: ${JSON.stringify((recovery.state.blocker.failures || []).slice(-10))}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Deferred task evidence: ${JSON.stringify(deferredTasks)}\nFinite execution authority: ${JSON.stringify(options.executionPlan || options.deliveryPlan || null)}\nLoaded prompt revision: ${promptRevision}\n`
+      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const implementationBefore = !compacting && !resolving && batch ? plan.observe(batch) : undefined;
     const before = tracking.contextBytes(iterationPrompt);
     const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision,
@@ -379,6 +403,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
     } });
+    if (resolving) atomicJson(resolverEvidenceFile, { receipt, resolutionFile, completedHandoff,
+      error: result.error?.message ?? null, output: output.value() });
     if (!compacting && !resolving && batch) plan.remember(batch, completedHandoff, receipt);
     tracking.assertBounded();
     if (compacting && afterSource !== sourceContents) {
@@ -386,7 +412,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       fail(`source roadmap changed during handoff compaction; source and handoff preserved, original handoff at ${snapshot}. Inspect the change before restarting.`);
     }
     if (!compacting && !resolving) runs.record({
-      iteration, task: taskId, batch: batch?.id, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
+      iteration, sessionId, task: taskId, batch: batch?.id, startedAt, elapsedMs, promptRevision, sourceRevision, result, output, metrics,
       outcome: workerOutcome?.outcome, usefulWork: Boolean(workerOutcome?.outcome),
       before: contents, after, implementationBefore,
       implementationAfter: batch ? plan.observe(batch) : undefined,
@@ -394,20 +420,19 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
-    if (result.error) { if (resolving) return await stopRecovery("resolver_start_failed"); await block("worker_start_failed"); continue; }
+    if (result.error) { if (resolving) { const stopped = await retryResolution('resolver_start_failed', resolverEvidenceFile); if (stopped) return stopped; } else await block('worker_start_failed'); continue; }
     if (result.cleanupIncomplete) fail('Client process cleanup could not be confirmed; unfinished files preserved.', 75);
     const delivery = !compacting && !resolving && batch ? plan.finish(batch, result) : null;
     if (delivery?.delivered) await recovery.event('runner.progress_observed', {
       kind: 'implementation', task: batch.task, batch: batch.id });
     if (!compacting && !resolving && !result.usageLimit && !result.retryableCapacity) {
       recovery.state.consecutiveTimeouts = result.timedOut ? (recovery.state.consecutiveTimeouts || 0) + 1 : 0;
-      if (recovery.state.consecutiveTimeouts >= 2) await block("repeated_timeout");
       recovery.save();
     }
 
     if (result.timedOut) {
       await recovery.event("runner.turn_limit_reached", { role, iteration });
-      if (resolving) return await stopRecovery("resolver_timed_out");
+      if (resolving) { const stopped = await retryResolution('resolver_timed_out', resolverEvidenceFile); if (stopped) return stopped; continue; }
       if (compacting) fail(`handoff compaction timed out; original state preserved at ${snapshot}`);
       await recovery.attention(after, tracking.deliveryStatus(roadmapStatus(after)), iteration);
       console.log(`Iteration ${iteration} hit the ${options.timeout} limit; preserve checkpoint and apply bounded recovery.`);
@@ -438,7 +463,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     retryDelay = options.capacity.delayMs;
 
     if (result.code !== 0) {
-      if (resolving) return await stopRecovery('resolver_failed');
+      if (resolving) { const stopped = await retryResolution('resolver_failed', resolverEvidenceFile); if (stopped) return stopped; continue; }
       if (compacting) fail(`${options.client} compactor exited with code ${result.code}`, result.code || 1);
       await block('worker_failed');
       continue;
@@ -455,8 +480,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       plan?.setSkippedTaskIds([]);
       const recoveryPlan = execution || (defaultPlan?.reliable ? defaultPlan : null);
       const ready = !recoveryPlan || Boolean(recoveryPlan.select()) || recoveryPlan.schedulingOutcome().status === 'complete';
-      if (!decision || decision.outcome !== 'resolved' || !cleared || !ready) return await stopRecovery(
-        decision?.outcome === 'stopped' ? 'resolver_stopped' : 'blocker_unresolved');
+      if (decision?.outcome === 'stopped') return await stopRecovery('resolver_stopped');
+      if (!decision || !cleared || !ready) { const stopped = await retryResolution('blocker_unresolved', resolverEvidenceFile); if (stopped) return stopped; continue; }
       delete recovery.state.blocker;
       delete recovery.state.stopped;
       for (const task of deferredTasks) {

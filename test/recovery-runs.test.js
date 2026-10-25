@@ -40,6 +40,14 @@ if (role === 'RESOLVER') {
     console.log(JSON.stringify({ type: 'error', message })); process.exit(1);
   }
   if (mode === 'resolver-failure') process.exit(8);
+  if (mode === 'third-repair' && n < 3) { console.error('Prepared repair attempt failed ' + n); process.exit(8); }
+  if (mode === 'third-repair') {
+    assert.ok(prompt.includes('Resolver attempt: 3/3'));
+    assert.match(prompt, /resolver_failed/);
+    const failures = JSON.parse(prompt.match(/^Previous resolver failures: (.+)$/m)[1]);
+    assert.equal(failures.length, 2);
+    failures.forEach(failure => assert.match(fs.readFileSync(failure.evidenceFile, 'utf8'), /Prepared repair attempt failed/));
+  }
   const stopped = ['stop', 'loop-stop'].includes(mode);
   fs.writeFileSync(progress, '# Handoff\\nStatus: ' + (stopped ? 'STOPPED' : 'IN_PROGRESS') + '\\n## Current handoff\\nChanged input: repaired transport. Next: deliver.\\n');
   fs.writeFileSync('repair', 'changed implementation');
@@ -50,10 +58,16 @@ if (role === 'RESOLVER') {
     outcome: stopped ? 'stopped' : 'resolved', evidence: 'Prepared repair receipt', nextAction: 'Implement the deliverable' }));
 } else {
   assert.match(prompt, /Start with the Task continuation packet when supplied/);
-  assert.match(prompt, /repeat the same failed operation with unchanged relevant/);
+  assert.match(prompt, /Judge semantic repetition across runs/);
   const n = calls.filter(r => r === role).length;
   if (n > 10) process.exit(98);
-  if (mode === 'worker-timeout' && !fs.existsSync('repair')) { setInterval(() => {}, 1000); return; }
+  if (mode.startsWith('worker-timeout') && n <= 2) { setInterval(() => {}, 1000); return; }
+  if (mode === 'worker-timeout-productive' && n === 3) fs.writeFileSync('repair', 'continued useful work after checkpoints');
+  if (mode === 'worker-timeout' && n === 3) {
+    const lookback = JSON.parse(prompt.match(/^Run history lookback: (.+)$/m)[1]);
+    assert.equal(lookback.records.filter(record => record.timedOut).length, 2);
+    assert.match(prompt, /particular attempt count do not establish a loop/);
+  }
   if (mode === 'normal' && n < 7) { fs.appendFileSync(progress, 'Distinct useful implementation ' + n + '\\n'); process.exit(0); }
   if (mode.startsWith('loop') && n <= 2) {
     fs.writeFileSync(progress, '# Handoff\\nStatus: IN_PROGRESS\\n## Current handoff\\nRepeated operation: check transport; failure: missing; input unchanged.\\n');
@@ -103,6 +117,33 @@ test('worker loop check sees previous receipts and recovery permits a changed at
   assert.deepEqual(f.calls(), ['WORKER', 'WORKER', 'WORKER', 'RESOLVER', 'WORKER']);
   assert.match(fs.readFileSync(path.join(f.dir, 'prompt-4'), 'utf8'), /For a repetition loop/);
 });
+test('third resolver attempt repairs the blocker with both earlier failures preserved', t => {
+  const f = fixture(t, 'third-repair'); const result = f.run();
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.deepEqual(f.calls(), ['WORKER', 'RESOLVER', 'RESOLVER', 'RESOLVER', 'WORKER']);
+  assert.equal(f.events().filter(e => e.type === 'runner.recovery_retry').length, 2);
+});
+test('three failed resolver attempts exhaust one durable budget without starting another worker', t => {
+  const f = fixture(t, 'resolver-failure'); const result = f.run();
+  assert.equal(result.status, 75, result.stderr);
+  assert.deepEqual(f.calls(), ['WORKER', 'RESOLVER', 'RESOLVER', 'RESOLVER']);
+  const state = JSON.parse(fs.readFileSync(f.progress + '.recovery.json'));
+  assert.equal(state.blocker.failures.length, 3);
+  const before = f.calls(); assert.equal(f.run().status, 75); assert.deepEqual(f.calls(), before);
+  assert.equal(f.run(['--recover-blocked']).status, 75);
+  assert.equal(f.calls().filter(role => role === 'RESOLVER').length, 6);
+  const resumed = JSON.parse(fs.readFileSync(f.progress + '.recovery.json'));
+  assert.equal(resumed.blocker.failures.length, 6);
+  assert.equal(resumed.blocker.resolutionId, state.blocker.resolutionId);
+});
+for (const policy of ['park', 'stop']) test(`${policy} policy dispatches zero resolvers and explicit recovery resumes once`, t => {
+  const f = fixture(t); const first = f.run(['--blocked-policy', policy]);
+  assert.equal(first.status, 75, first.stderr); assert.deepEqual(f.calls(), ['WORKER']);
+  assert.equal(f.run(['--blocked-policy', policy]).status, 75); assert.deepEqual(f.calls(), ['WORKER']);
+  const resumed = f.run(['--blocked-policy', policy, '--recover-blocked']);
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.deepEqual(f.calls(), ['WORKER', 'RESOLVER', 'WORKER']);
+});
 for (const mode of ['stop', 'loop-stop', 'missing-decision', 'stale-decision', 'source-blocked', 'resolver-failure', 'timeout']) test(`${mode}: unresolved recovery persists STOPPED and does not retry on restart`, t => {
   const f = fixture(t, mode); const result = f.run();
   assert.equal(result.status, 75, result.stderr);
@@ -150,12 +191,28 @@ test('STOPPED is header state; status edits preserve fenced examples', () => {
   assert.throws(() => resolverSettings({ resolverTimeout: '999999h' }));
 });
 
-test('two consecutive hard worker timeouts dispatch a resolver', t => {
+test('after timeouts the next worker assesses history before declaring a blocker', t => {
   const f = fixture(t, 'worker-timeout'); const result = f.run(['--timeout', '1s']);
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(f.events().filter(e => e.type === 'runner.turn_starting').map(e => e.role), ['worker', 'worker', 'resolver', 'worker']);
+  assert.deepEqual(f.events().filter(e => e.type === 'runner.turn_starting').map(e => e.role), ['worker', 'worker', 'worker', 'resolver', 'worker']);
   assert.equal(f.events().filter(e => e.type === 'runner.turn_finished' && e.timedOut).length, 2);
-  assert.ok(f.events().some(e => e.type === 'runner.blocked' && e.reason === 'repeated_timeout'));
+  assert.ok(f.events().some(e => e.type === 'runner.blocked' && e.reason === 'roadmap_blocked'));
+  assert.equal(f.events().some(e => e.reason === 'repeated_timeout'), false);
+});
+test('repeated timeouts do not abort a worker that can continue productive work', t => {
+  const f = fixture(t, 'worker-timeout-productive'); const result = f.run(['--timeout', '1s']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(f.calls(), ['WORKER', 'WORKER', 'WORKER']);
+  assert.equal(f.events().some(event => event.type === 'runner.blocked'), false);
+});
+test('legacy count-based recovery flags request worker review without forcing resolver dispatch', t => {
+  const f = fixture(t, 'normal');
+  fs.writeFileSync(f.progress + '.recovery.json', JSON.stringify({ version: 1, roadmap: f.roadmap,
+    quota: null, reviewRequested: true, loopBlockedRevision: 'historical-counter' }));
+  const result = f.run(); assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(f.calls(), Array(7).fill('WORKER'));
+  assert.match(fs.readFileSync(path.join(f.dir, 'prompt-1'), 'utf8'), /Legacy recovery flags request a review/);
+  assert.equal(f.events().some(event => event.type === 'runner.blocked'), false);
 });
 test('STOPPED skips saved quota waits and compaction without dispatching a session', t => {
   const f = fixture(t);

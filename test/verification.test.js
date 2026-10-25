@@ -98,7 +98,7 @@ test('argv stays literal and escaping dependency paths are rejected before execu
 
 test('explicit force reruns a matching check without overwriting its old evidence', async t => {
   const f = fixture(t); const first = await runVerification(f.spec, f.options);
-  const second = await runVerification({ ...f.spec, force: true }, f.options);
+  const second = await runVerification({ ...f.spec, force: true, forceReason: 'Explicit fixture rerun' }, f.options);
   assert.equal(second.reused, false); assert.notEqual(first.receipt.id, second.receipt.id);
   assert.ok(fs.existsSync(first.receiptFile)); assert.equal(f.count(), 2);
   assert.equal(fs.readdirSync(path.join(verificationDirectory(f.workdir), 'locks')).length, 0);

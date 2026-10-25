@@ -142,18 +142,18 @@ test('default scheduling honors acceptance dependencies and carries scoped immut
   assert.match(fs.readFileSync(snapshot, 'utf8'), /\[ \] AUTH-01/, 'old snapshot is immutable');
 });
 
-test('useful exact partial continuation keeps task affinity for at most eight attempts', t => {
+test('useful exact partial continuation keeps task affinity beyond old attempt limits and restarts', t => {
   const f = fixture(t);
-  for (let attempt = 1; attempt <= 8; attempt++) {
+  for (let attempt = 1; attempt <= 32; attempt++) {
     const task = f.plan.select();
     assert.equal(task.task, 'AUTH-01');
     f.plan.setContinuation(task.task, { outcome: 'partial', criteriaRevision: task.criteriaRevision,
       completed: [`step-${attempt}`], nextAction: 'Finish the remaining return branch.' });
     f.plan.finish(task, { code: 0 });
   }
-  assert.equal(f.plan.select().task, 'AUTH-02');
+  assert.equal(f.plan.select().task, 'AUTH-01');
   const restarted = new RoadmapPlan(f.file, f.dir, f.tracking);
-  assert.equal(restarted.select().task, 'AUTH-02', 'fairness survives restart');
+  assert.equal(restarted.select().task, 'AUTH-01', 'productive affinity survives restart');
 });
 
 test('missing progress, changed acceptance and task skip remove affinity without blocking independent tasks', t => {

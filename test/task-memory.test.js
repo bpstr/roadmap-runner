@@ -65,32 +65,35 @@ test('findings are shared observations and invalidate when their named source ch
   assert.equal(other.contextFor('API-64', 'another').packet.findings[0].status, 'invalidated');
 });
 
-test('repetition requires matching declared failure inputs and a resolver starts a fresh attempt epoch', t => {
+test('failure counts do not block tasks; a recorded worker assessment defers them until reassessment', t => {
   const f = fixture(t);
   const failure = { signature: 'missing-cursor', inputPaths: ['source.js'], coverageComplete: true, retryCondition: 'Repair cursor encoding' };
-  f.save({ failure }); assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
-  f.save({ failure }); assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1').attempts.length, 2);
+  for (let run = 0; run < 12; run++) {
+    f.save({ failure }); assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
+  }
+  f.save({ outcome: 'blocked', failure: { ...failure, coverageComplete: false },
+    nextAction: 'Lookback shows repeated encoding attempts. Repair cursor encoding before retrying.' });
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1').provenance, 'agent-assessment');
   fs.writeFileSync(path.join(f.workdir, 'unrelated.txt'), 'unrelated change');
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1').attempts.length, 2);
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'));
+  fs.writeFileSync(path.join(f.workdir, 'source.js'), 'source hash churn alone does not clear an agent assessment');
+  assert.deepEqual(f.memory.blockedTaskIds({ 'API-32': 'criteria-v1' }), ['API-32']);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v2'), false);
   f.memory.acknowledgeResolution('API-32', 'criteria-v1', 'resolution-1');
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
-  f.save({ failure }); assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
-  f.save({ failure }); assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1').attempts.length, 2);
-  fs.writeFileSync(path.join(f.workdir, 'source.js'), 'repaired input');
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
   f.save({ failure, outcome: 'implemented' });
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
 });
 
 test('unknown dependency coverage and quota interruptions do not manufacture failure loops', t => {
   const f = fixture(t);
   const failure = { signature: 'missing', inputPaths: ['source.js'], retryCondition: 'Supply dependency' };
   f.save({ failure }); f.save({ failure });
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
   const quota = f.save({ outcome: 'verified', failure: { ...failure, coverageComplete: true } }, { code: 1, usageLimit: {} });
   assert.equal(quota.outcome.outcome, 'partial'); assert.equal(quota.outcome.reportedOutcome, 'verified');
   assert.equal(quota.record.failureLoopEligible, false);
-  assert.equal(f.memory.repeatFailure('API-32', 'criteria-v1'), false);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
 });
 
 test('large continuation packets keep exact overflow evidence and stay within 8 KiB', t => {

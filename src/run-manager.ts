@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { parseArgs, parseDuration } from '../lib/runner.js';
 import { trackingPaths } from '../lib/tracking.js';
 import { resolverSettings } from '../lib/recovery-runs.js';
+import { validateControlFile } from '../lib/handoff.js';
 import { readEvents, eventTypes } from './events.js';
 import { registryRoot, privateDir, runDir, readRun, saveRun, publicRun, outputTail, type RunRecord, type QueueItem } from './run-state.js';
 
@@ -23,6 +24,8 @@ export const startSchema = z.object({
   notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),
   recoverBlocked: z.boolean().default(false),
+  resolverAttempts: z.number().int().min(1).max(10).default(3),
+  blockedPolicy: z.enum(['resolve', 'park', 'stop']).default('resolve'),
   sessionContinuation: z.boolean().optional().describe('Defaults to true for Codex and false for other clients. Set false for fresh sessions.'),
   idempotencyKey: z.string().min(1).max(128).optional(),
   queue: z.array(queueItemSchema).max(99).default([]),
@@ -95,6 +98,10 @@ export class RunManager {
     return left.dev === right.dev && left.ino === right.ino;
   }
   validateQueue(queue: QueueItem[]) {
+    for (const item of queue) {
+      validateControlFile(item.roadmap);
+      if (fs.existsSync(item.progressFile)) validateControlFile(item.progressFile);
+    }
     for (let i = 0; i < queue.length; i++) {
       for (let j = 0; j < queue.length; j++) {
         if (this.sameFile(queue[i].progressFile, queue[j].roadmap)) throw new Error('Queue progress must be separate from every source roadmap');
@@ -203,7 +210,7 @@ export class RunManager {
     do {
       const r = await this.reconcile(this.get(id));
       if (terminal(r)) {
-        if (!r.readyAt) throw Object.assign(new Error(`Run ${id} failed to initialize; inspect status`), { runId: id });
+        if (!r.readyAt || r.processState === 'unknown') throw Object.assign(new Error(`Run ${id} failed to initialize: ${r.reason || 'inspect status'}`), { runId: id });
         return r;
       }
       try { const result = await control(r); if (result.ready) return this.get(id); } catch {}

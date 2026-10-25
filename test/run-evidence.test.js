@@ -35,6 +35,27 @@ test('rolling evidence and checkpoint survive restart without loading detail int
   assert.deepEqual(detail.checkpoint.acknowledgment, { requestId: 'checkpoint-30', resultFile: 'result.json',
     editedPaths: ['transport.js'], nextAction: 'Finish transport response' });
 });
+test('worker lookback retains semantic attempts and cold evidence across restart within its context budget', t => {
+  const f = fixture(t), runs = new RunEvidence(f.config);
+  for (let iteration = 1; iteration <= 12; iteration++) {
+    const output = runs.capture(); output.write('stderr', 'Prepared handshake failure');
+    runs.record({ iteration, sessionId: `session-${iteration}`, task: 'API-32', sourceRevision: `churn-${iteration}`,
+      result: { code: 0 }, output, before: 'notes', after: 'new notes', outcome: {
+        operation: `renamed-retry-${iteration}`, criteriaRevision: 'original-criteria', outcome: 'partial', completed: ['Inspected handshake'],
+        remaining: ['Establish the same prerequisite handshake'], nextAction: 'Try the handshake again',
+        changedFiles: ['notes.txt'], failure: { signature: `surface-message-${iteration}`, inputPaths: ['transport.js'], retryCondition: 'Repair transport' },
+      } });
+  }
+  const view = runs.lookback(); assert.ok(Buffer.byteLength(JSON.stringify(view)) <= 8192);
+  assert.equal(view.authority, 'context-only; worker assesses repetition');
+  assert.equal(view.records.at(-1).iteration, 12); assert.equal(view.records.length, 8); assert.equal(view.omittedRecords, 4);
+  assert.equal(view.records.at(-1).operation, 'renamed-retry-12');
+  assert.equal(view.records.at(-1).roadmap, '/source');
+  assert.equal(view.records.at(-1).criteriaRevision, 'original-criteria');
+  assert.equal(view.records.at(-1).remaining[0], 'Establish the same prerequisite handshake');
+  assert.ok(view.records.every(record => fs.existsSync(record.evidence)));
+  assert.deepEqual(new RunEvidence(f.config).lookback(), view);
+});
 for (const inline of [true, false]) test(`legacy ${inline ? 'inline' : 'pointer'} supervisor evidence migrates without dispatching review`, t => {
   const f = fixture(t); const runs = new RunEvidence(f.config); record(runs, 1);
   const saved = JSON.parse(fs.readFileSync(runs.checkpointFile));

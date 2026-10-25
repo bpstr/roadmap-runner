@@ -41,7 +41,7 @@ async function preparedClient(config) {
     changedFiles: [], receiptIds: [], findings: [], ...overrides }));
 
   if (role === 'RESOLVER') {
-    assert.equal(config.mode, 'duplicate-failure', 'ordinary completion and malformed optional results must not spawn a resolver');
+    assert.ok(['duplicate-failure', 'semantic-loop'].includes(config.mode), 'ordinary completion and malformed optional results must not spawn a resolver');
     assert.equal(calls.filter(call => call.role === 'RESOLVER').length, 1);
     assert.match(fs.readFileSync(config.roadmap, 'utf8'), /- \[x\] B-01 /, 'independent B completes before resolving A');
     fs.writeFileSync('dependency.txt', 'repaired prerequisite\n');
@@ -112,23 +112,35 @@ async function preparedClient(config) {
     return;
   }
 
-  if (config.mode === 'duplicate-failure') {
+  if (['duplicate-failure', 'semantic-loop'].includes(config.mode)) {
     if (task === 'A-01' && fs.readFileSync('dependency.txt', 'utf8') === 'unavailable prerequisite\n') {
-      assert.ok(attempt <= 2, 'unchanged failed operation must not be dispatched a third time');
+      const lookback = JSON.parse(prompt.match(/^Run history lookback: (.+)$/m)[1]);
+      if (config.mode === 'semantic-loop' && attempt <= 3) {
+        fs.writeFileSync('service.ts', 'export const renamedRetry = ' + attempt + ';\n');
+        handoff('IN_PROGRESS', 'Renamed the same handshake retry; diagnose whether this is repetition.');
+        writeResult({ operation: 'renamed-handshake-' + attempt, completed: ['Inspected retry route'],
+          changedFiles: ['service.ts'], remaining: ['Establish the same prerequisite handshake'], nextAction: 'Try the handshake again.' });
+        return;
+      }
+      if (config.mode === 'semantic-loop') {
+        assert.equal(lookback.records.filter(record => record.task === task).length, 3);
+        assert.equal(new Set(lookback.records.map(record => record.operation)).size, 3);
+        assert.match(prompt, /Judge semantic repetition across runs/);
+      }
       handoff('IN_PROGRESS', 'A-01 deferred: prerequisite unavailable; B-01 remains independent.');
       writeResult({ operation: 'load-prerequisite', outcome: 'blocked', remaining: ['Available prerequisite'],
-        nextAction: 'Retry only when dependency.txt changes.', failure: { signature: 'prerequisite-unavailable',
-          inputPaths: ['dependency.txt'], coverageComplete: true, retryCondition: 'dependency.txt must change' } });
+        nextAction: 'History review identified the same failed prerequisite handshake. Repair it before retrying.', failure: { signature: 'prerequisite-unavailable',
+          inputPaths: ['dependency.txt'], coverageComplete: config.mode !== 'semantic-loop', retryCondition: 'Repair the prerequisite handshake' } });
       return;
     }
-    if (task === 'B-01' && attempt === 1) {
+    if (task === 'B-01' && attempt === 1 && config.mode === 'duplicate-failure') {
       handoff('IN_PROGRESS', 'B-01 checkpoint; one exact source step remains.');
       writeResult({ remaining: ['Finish independent operation'], nextAction: 'Finish B-01 operation.' });
       return;
     }
     if (task === 'A-01') {
-      assert.equal(attempt, 3);
-      assert.equal(packet.repeatedFailure, false, 'changed prerequisite permits the next attempt');
+      assert.equal(attempt, config.mode === 'semantic-loop' ? 5 : 2);
+      assert.equal(packet.blockerAssessment, false, 'acknowledged repair permits worker reassessment');
       assert.equal(fs.readFileSync('dependency.txt', 'utf8'), 'repaired prerequisite\n');
     }
     complete(task); writeResult({ outcome: 'verified', completed: [`${task} accepted`] });
@@ -189,14 +201,20 @@ for (const mode of ['malformed', 'stale']) test(`${mode} optional result retains
   assert.equal(f.events().at(-1).type, 'runner.completed');
 });
 
-test('duplicate task failure defers A while B finishes and only then invokes one repairing resolver', t => {
+test('worker-assessed blocker defers A while B finishes and only then invokes one repairing resolver', t => {
   const f = fixture(t, 'duplicate-failure'); const result = f.run();
   assert.equal(result.status, 0, result.stderr + '\n' + result.stdout);
-  assert.deepEqual(f.calls().map(call => call.role === 'RESOLVER' ? 'RESOLVER' : call.task), ['A-01', 'B-01', 'A-01', 'B-01', 'RESOLVER', 'A-01']);
+  assert.deepEqual(f.calls().map(call => call.role === 'RESOLVER' ? 'RESOLVER' : call.task), ['A-01', 'B-01', 'B-01', 'RESOLVER', 'A-01']);
   const blocked = f.events().filter(event => event.type === 'runner.blocked');
   assert.equal(blocked.length, 1);
-  assert.equal(blocked[0].reason, 'unchanged_failed_operation');
+  assert.equal(blocked[0].reason, 'agent_assessed_blocker');
   assert.equal(f.events().at(-1).type, 'runner.completed');
+});
+test('worker history review identifies a semantic loop despite renamed operations and source churn', t => {
+  const f = fixture(t, 'semantic-loop'); const result = f.run();
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.deepEqual(f.calls().map(call => call.role === 'RESOLVER' ? 'RESOLVER' : call.task), ['A-01', 'A-01', 'A-01', 'A-01', 'B-01', 'RESOLVER', 'A-01']);
+  assert.equal(f.events().filter(event => event.type === 'runner.blocked').length, 1);
 });
 
 for (const state of ['needs_next_batch', 'awaiting_verification']) test(`finite productive exhaustion reports ${state} with open acceptance and no resolver`, t => {

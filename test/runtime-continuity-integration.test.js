@@ -15,7 +15,7 @@ function fixture(t, { mode = 'continuation', malformed = false, missingResume = 
   t.after(() => fs.rmSync(workdir, { recursive: true, force: true }));
   const roadmap = path.join(workdir, 'roadmap.md');
   const progress = path.join(workdir, 'progress.md');
-  const count = mode === 'continuation' ? 2 : 1;
+  const count = ['continuation', 'long-productive'].includes(mode) ? 2 : 1;
   fs.writeFileSync(roadmap, '# Prepared roadmap\n\n' + Array.from({ length: count }, (_, index) =>
     `### Task API-01.${index + 1}\n- [ ] API-01.${index + 1} Deliver fixture ${index + 1}\nDependencies: none\nAcceptance: prepared criterion ${index + 1}.\n`).join('\n'));
   fs.writeFileSync(progress, 'Status: IN_PROGRESS\n\n## Current handoff\nStart the prepared task.\n');
@@ -34,7 +34,7 @@ invocations.push({ args: process.argv.slice(2, -1), binding,
   startedAt: prompt.match(/^Session started \\(UTC\\): (.+)$/m)[1] });
 fs.writeFileSync('invocations.json', JSON.stringify(invocations));
 const n = invocations.length;
-if (n > 4) process.exit(98);
+if (n > (mode === 'long-productive' ? 20 : 4)) process.exit(98);
 const thread = binding.taskId === 'API-01.1' ? ${JSON.stringify(firstThread)} : ${JSON.stringify(secondThread)};
 if (missingResume && n === 2 && process.argv.includes('resume')) {
   console.error('Error: no rollout found for thread id ' + thread);
@@ -42,7 +42,7 @@ if (missingResume && n === 2 && process.argv.includes('resume')) {
 }
 console.log(JSON.stringify({ type: 'thread.started', thread_id: thread }));
 const finish = () => {
-  const partial = mode === 'continuation' && n === 1;
+  const partial = (mode === 'continuation' && n === 1) || (mode === 'long-productive' && n < 16);
   fs.writeFileSync('source.ts', 'export const value = ' + n + ';\\n');
   const result = { ...binding, operation: 'prepared-edit', outcome: partial ? 'partial' : 'verified',
     completed: ['Completed prepared source step'], remaining: partial ? ['Finish prepared criterion'] : [],
@@ -93,6 +93,19 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   assert.equal(events.some(event => event.role === 'resolver'), false);
   assert.equal(fs.existsSync(path.join(trackingPaths(f.roadmap, f.progress, f.workdir).stateDir, 'continuation.json')), false,
     'completed roadmap must release the saved provider conversation');
+});
+test('a long productive task keeps its conversation beyond eight turns without forced rotation', async t => {
+  const f = fixture(t, { mode: 'long-productive' }); f.options.sessionContinuation = true;
+  const events = [];
+  const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
+  assert.equal(result.code, 0);
+  const calls = f.invocations(); assert.equal(calls.length, 17);
+  assert.deepEqual(calls.slice(0, 16).map(call => call.binding.taskId), Array(16).fill('API-01.1'));
+  for (const call of calls.slice(1, 16)) {
+    const resume = call.args.indexOf('resume'); assert.ok(resume >= 0); assert.equal(call.args[resume + 1], firstThread);
+  }
+  assert.equal(calls[16].binding.taskId, 'API-01.2'); assert.equal(calls[16].args.includes('resume'), false);
+  assert.equal(events.some(event => event.type === 'runner.blocked'), false);
 });
 
 test('opting out discards saved conversation state and keeps every task invocation fresh', async t => {

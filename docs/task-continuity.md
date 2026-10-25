@@ -19,8 +19,8 @@ selection path. The controller does not rewrite requirements to make them fit.
 Finite execution plans continue using their declared original parents and batches.
 
 A partial task with recorded useful progress and an exact next action stays
-selected while its criteria and prerequisites remain valid, up to eight consecutive
-attempts. Missing/stale structured outcomes retain rotation. An implementation
+selected while its criteria and prerequisites remain valid and useful work remains.
+There is no attempt-count cutoff. Missing/stale structured outcomes retain rotation. An implementation
 outcome can move a normal task to focused verification; it never ticks acceptance.
 
 ## Worker result
@@ -92,13 +92,21 @@ An outcome may include:
 }
 ```
 
-The controller can defer an operation after two matching eligible failures only
-when operation, signature, criteria revision and declared complete input scope
-match, and those inputs remain unchanged. Incomplete coverage remains unknown.
-Another ready task can proceed; source-byte counts or elapsed time never establish
-a loop. A successful resolver authorizes a new failure epoch while preserving the
-old receipts. Useful quota-interrupted outcomes remain resumable and are excluded
-from failure-loop counting.
+Failure metadata supplies evidence for the worker's review, not an automatic loop
+verdict. Every worker receives a bounded `Run history lookback` with recent tasks,
+operations, outcomes, completed/remaining work, next actions, failures, input paths
+and cold evidence pointers. It judges semantic repetition even when names, notes
+or hashes change. Counts and repeated timeouts do not establish a loop.
+
+A worker records its assessment and supporting attempts in the handoff and a
+structured `outcome: "blocked"`, with an exact retry condition. The next task packet
+includes `blockerAssessment` with provenance `agent-assessment`. This can defer the
+task while independent work continues, without requiring matching hashes or
+complete dependency coverage. Byte churn cannot clear that assessment. Changed
+criteria or an acknowledged repair permits worker reassessment; prior evidence
+remains available. Partial outcomes, including repeated failed attempts, never
+become blocked merely because a counter crosses a threshold. Prepared fixtures
+exercise this orchestration, not the quality of a live model's judgment.
 
 ## Runner-observed verification
 
@@ -154,7 +162,9 @@ The classifications are:
 | `unknown` | Coverage or trustworthy execution evidence is incomplete. |
 
 A reusable failed check remains failed. Reusing its receipt avoids executing the
-same known failure again. Set `force: true` for an intentional rerun. Mutable
+same known failure again. Set `force: true` and a nonempty `forceReason` for an
+intentional rerun. A stable fully scoped timeout is also retained for failure
+reuse; it never qualifies as a passing prerequisite. Mutable
 external dependencies need `external: {"freshUntil": "<ISO timestamp>"}`; expired
 external evidence is invalidated. A caller must declare such dependencies rather
 than assuming local file hashes represent an external service's state.
@@ -163,6 +173,67 @@ Receipt reuse is scoped to the recorded check. It does not prove an entire featu
 or close acceptance automatically. The existing finite implementation contract
 still requires changed implementation source evidence; verification and reuse
 outcomes do not bypass it.
+
+### Repair authorization and staged checks (0.12.2)
+
+Give a check stable `taskId`, `operation` and `stage` fields. These join criteria,
+argv, cwd, runtime and declared inputs in its scope. Existing receipts without
+the new binding remain historical evidence; they do not silently become cache hits.
+
+An optional `prerequisites` array names check receipt IDs. Each prerequisite must
+be a current, fully scoped, successful runner check for the same task and criteria.
+Failed, interrupted, timed-out, stale or incomplete evidence rejects dispatch.
+Use separate configuration, compile, module, mount, behavior and cleanup commands
+in a project's recipe. Capture module/page errors at the stage where they occur.
+The runner does not infer service contracts or browser readiness from a timeout.
+
+For a repair, first run the edit as a check command. Declare its cwd and the same
+consumed input paths as the failed check (including a directory scope when the
+failed check consumes that directory). Then attach:
+
+```json
+{
+  "repair": {
+    "failedReceiptId": "check-<failed-check-uuid>",
+    "editReceiptId": "check-<edit-check-uuid>"
+  }
+}
+```
+
+The edit must finish successfully; its before/after snapshots must verify the
+relevant changed inputs. Failed edits and unrelated changes cannot authorize a
+new probe. A changed, current successful `prerequisites` binding can instead
+authorize a repaired dependency using `repair.failedReceiptId` without a separate
+edit receipt. An unchanged check can return the original failed receipt without
+dispatching. A byte change permits verification, not an assertion that the repair
+is correct: preserve exact behavior assertions and any new failure stage.
+
+Scope compiler checks to their actual source inventory and build inputs so a
+fixture-only repair can retain compatible compiler evidence. Include directories
+when additions/removals matter. Incomplete coverage remains unknown. Source review
+findings stay assertions; changing source invalidates affected checks and requires
+their smallest relevant rerun. Passing a command does not close review findings.
+
+`test/fixtures/delivery-assurance.cjs` is a synthetic local recipe for field/type,
+authorization, timeout-limit, compile-timeout, module and content drift. Prepared
+compilation is explicitly simulated; it does not establish service compilation,
+browser behavior or provider quality.
+
+### Validated handoffs and queue continuation (0.12.2)
+
+Source and progress control headers are validated before readiness or model
+dispatch, including queued entries. Errors identify the file and line.
+`roadmap-runner update-handoff --spec update.json` accepts `roadmap`,
+`progressFile`, `contents`, `expectedHash` (SHA-256 of current progress bytes) and
+`sourceRevision` (SHA-256 of current source bytes). It validates the candidate and
+both bindings before atomic replacement. Cooperating updates share a lock;
+rejected or stale updates preserve the prior content.
+
+CLI `--queue-spec queue.json` accepts the same ordered
+`[{"roadmap":"next.md","progressFile":"custom-handoff.md"}]` entries as MCP
+`roadmap_start.queue`. Supply the same progress paths when explicitly recovering
+a blocked run so existing receipts and handoff evidence remain available. Park or
+stop does not dispatch later entries or discard their order/dependencies.
 
 ## Scoped review continuity
 
@@ -213,11 +284,11 @@ retain that state. Open original acceptance is preserved, and later queued roadm
 do not advance. Supply the next authorized batch or qualification work and start
 again; a resolver is unnecessary when no diagnosis is required.
 
-Unmet prerequisites, global blockers, failed workers and repeated hard timeouts
-retain resolver recovery. A replacement requirement or interrupted attempt may
+Unmet prerequisites, global blockers and failed clients retain resolver recovery.
+Repeated hard timeouts return to a worker for a history assessment. A replacement requirement or interrupted attempt may
 still need recovery before an exhausted plan can be accepted as a normal boundary.
 
-## Bounded Codex conversation reuse
+## Codex conversation reuse
 
 Codex conversation reuse is enabled by default. Disable it with
 `--no-session-continuation`, `ROADMAP_SESSION_CONTINUATION=0`, or MCP
@@ -227,8 +298,9 @@ queued roadmap starts. Only the current task conversation is retained.
 
 Only explicit provider-reported Codex thread IDs are reused. Task, owner, batch
 boundary, criteria, role, workspace, model, effort, executable and prompt changes
-start a fresh conversation. A failed, interrupted, timed-out, quota-limited or
-unaccounted turn is not retained. Reuse is capped at eight sessions. Aggregate
+start a fresh conversation. A failed, interrupted, timed-out or quota-limited
+client turn is not retained. Same-task reuse has no default turn cap;
+missing usage telemetry alone does not end it. Aggregate
 input tokens remain recorded as usage telemetry: they include cached context
 repeated across requests and do not measure active context occupancy. This counter
 does not impose a default continuation cutoff. Other adapters retain fresh sessions.

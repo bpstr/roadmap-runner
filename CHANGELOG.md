@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.3 — 2026-10-25
+
+- Remove default same-task conversation and productive-attempt caps. Supply recent-run lookbacks for worker assessment of semantic repetition; matching failures and repeated timeouts no longer automatically defer tasks or dispatch recovery. Preserve source-bound worker blocked decisions and prior evidence.
+- Allow three resolver attempts per blocked episode, retaining prior failure evidence and stopping immediately on an explicit stopped decision. Add configurable attempt limits and native park/stop policies before resolver dispatch.
+- Bind check receipts to tasks, operations and stages. Gate dependent checks on current successful prerequisite receipts, verify repair edits against changed failing inputs, and require a reason for forced reruns. Preserve matching failed and timed-out results without turning them into passing evidence.
+- Validate source and progress control headers before readiness or client launch. Add atomic, source-bound handoff updates that reject stale or invalid candidates without replacing prior content.
+- Accept ordered JSON queue entries with custom progress paths through CLI `--queue-spec`, matching the MCP queue shape.
+- Add prepared fixtures for failed edits, three-attempt recovery, module-to-content failures, field/type/authorization drift, service timeout limits, compilation interruptions, source inventory changes, review invalidation and queue handoff continuity. Automated verification uses local fixtures and fake clients only.
+
 ## 0.12.2 — 2026-10-25
 
 - Publish a GitHub-only test build with updated package and CLI version metadata. Implementation behavior is unchanged from 0.12.1, including longer work sessions, eight-turn continuation and intermediate checkpoints that preserve ongoing work.

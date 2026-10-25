@@ -9,6 +9,7 @@ import { serveMcp } from '../dist/mcp.js';
 import { setup } from '../dist/setup.js';
 import { doctor } from '../dist/doctor.js';
 import { requestNotificationPermission } from '../dist/notification-permission.js';
+import { updateHandoff } from '../lib/handoff.js';
 import { runVerification, recordReview, workspacePath } from '../lib/verification.js';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGE = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
@@ -31,6 +32,9 @@ Usage:
 Management options:
   --workspace <path>     Explicit workspace binding; defaults to cwd for CLI
   --idempotency-key <id> Repeat the same managed start safely
+  --resolver-attempts <n>  Resolver attempts per blocker (default: 3; max: 10)
+  --blocked-policy <mode>  resolve (default), park, or stop before resolver dispatch
+  --queue-spec <path>   JSON FIFO entries with roadmap and custom progressFile
   --queue <path>        Run another roadmap after completion; repeat for FIFO order
   --prevent-sleep        Prevent idle system sleep for the entire run
   --no-prevent-sleep     Override ROADMAP_PREVENT_SLEEP
@@ -96,7 +100,8 @@ const verificationCommand = async (command, argv) => {
   const controller = new AbortController(); const cancel = () => controller.abort();
   process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
   try {
-    const result = command === 'check' ? await runVerification(spec, { workdir: workspace, signal: controller.signal }) : recordReview(spec, { workdir: workspace });
+    const result = command === 'check' ? await runVerification(spec, { workdir: workspace, signal: controller.signal }) : command === 'update-handoff' ? { update: updateHandoff(spec, { workdir: workspace }) } : recordReview(spec, { workdir: workspace });
+    if (result.update) { console.log(JSON.stringify(result.update, null, 2)); return; }
     const receipt = result.receipt;
     console.log(JSON.stringify({ receiptId: receipt.id, receiptFile: result.receiptFile, reused: result.reused ?? false,
       kind: receipt.kind, exitCode: receipt.exitCode ?? null, counts: receipt.counts ?? null,
@@ -111,7 +116,7 @@ const main = async () => {
   let argv = process.argv.slice(2);
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
-  if (['check', 'record-review'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
+  if (['check', 'record-review', 'update-handoff'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
   assertController();
   const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
@@ -157,12 +162,22 @@ const main = async () => {
     const manager = new RunManager(workspace); const value = command === 'stop' ? await manager.stop(argv[0]) : await manager.status(argv[0]);
     console.log(JSON.stringify(value, null, json ? 0 : 2)); return;
   }
-  const queue = []; while (argv.includes('--queue')) queue.push({ roadmap: take('--queue', undefined) });
+  const queue = [];
+  while (argv.some(flag => ['--queue', '--queue-spec'].includes(flag))) {
+    const flag = argv.find(flag => ['--queue', '--queue-spec'].includes(flag));
+    const value = take(flag, undefined);
+    if (flag === '--queue') { queue.push({ roadmap: value }); continue; }
+    const file = workspacePath(workspace, fs.realpathSync(path.resolve(workspace, value)), { allowMissing: false });
+    if (fs.statSync(file).size > 64 * 1024) throw new Error('Queue specification exceeds 64 KiB');
+    const items = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (!Array.isArray(items) || items.length > 99) throw new Error('Queue specification must be an array of at most 99 roadmap/progressFile entries');
+    queue.push(...items);
+  }
   const idempotencyKey = take('--idempotency-key', undefined); const options = parseArgs(argv);
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, sessionContinuation: options.sessionContinuation, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, resolverAttempts: Number(options.resolverAttempts), blockedPolicy: options.blockedPolicy, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, sessionContinuation: options.sessionContinuation, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

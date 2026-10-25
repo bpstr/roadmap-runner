@@ -25,6 +25,12 @@ const prompt = process.argv.at(-1);
 const source = JSON.parse(prompt.match(/^Live roadmap[^:]*: (.+)$/m)[1]);
 const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
 if (prompt.includes('Runner role: RESOLVER')) {
+  if (fs.existsSync(source + '.repair')) {
+    fs.writeFileSync(progress, fs.readFileSync(progress, 'utf8').replace(/BLOCKED|STOPPED/, 'IN_PROGRESS'));
+    fs.writeFileSync(JSON.parse(prompt.match(/^Resolution decision file: (.+)$/m)[1]), JSON.stringify({
+      resolutionId: prompt.match(/^Resolution ID: (.+)$/m)[1], outcome: 'resolved', evidence: 'Prepared prerequisite repaired', nextAction: 'Continue preserved FIFO' }));
+    process.exit(0);
+  }
   fs.writeFileSync(progress, 'Status: STOPPED\\n## Current handoff\\nDependency unavailable.\\n'); process.exit(0);
 }
 fs.appendFileSync(source + '.started', progress + '\\n');
@@ -196,6 +202,38 @@ test('foreground CLI accepts repeated --queue flags and completes every roadmap'
   assert.equal((output.match(/Roadmap complete after/g) || []).length, 3);
   assert.ok(f.roadmaps.every(f.started));
 });
+test('CLI queue specification preserves FIFO order and every custom progress path', async t => {
+  const f = fixture(t); for (const file of f.roadmaps) f.release(file);
+  const progress = f.roadmaps.map((_, index) => path.join(f.workspace, `custom-${index}.md`));
+  const spec = path.join(f.workspace, 'queue.json');
+  fs.writeFileSync(spec, JSON.stringify(f.roadmaps.slice(1).map((roadmap, index) => ({ roadmap, progressFile: progress[index + 1] }))));
+  await f.command([f.roadmaps[0], '--progress-file', progress[0], '--queue-spec', spec, '--client-bin', f.worker]);
+  for (let i = 0; i < f.roadmaps.length; i++) {
+    assert.equal(fs.realpathSync(fs.readFileSync(f.roadmaps[i] + '.started', 'utf8').trim()), fs.realpathSync(progress[i]));
+    assert.match(fs.readFileSync(progress[i], 'utf8'), /Status: COMPLETE/);
+  }
+});
+test('authorized recovery preserves the blocked source/progress FIFO and retained receipts', async t => {
+  const f = fixture(t); const [first, second, third] = f.roadmaps;
+  const progress = f.roadmaps.map((_, index) => path.join(f.workspace, `resume-${index}.md`));
+  const queue = [{ roadmap: second, progressFile: progress[1] }, { roadmap: third, progressFile: progress[2] }];
+  fs.writeFileSync(first + '.blocked', '');
+  const run = await f.start(queue, undefined, { progressFile: progress[0], blockedPolicy: 'park' });
+  const parked = await wait(async () => { const value = await f.manager.status(run.id); return value.processState === 'exited' && value; });
+  assert.deepEqual(parked.queue.map(item => item.state), ['blocked', 'pending', 'pending']);
+  assert.equal(f.started(second), false); assert.equal(f.started(third), false);
+  const receipt = path.join(f.workspace, 'retained-receipt.json'); fs.writeFileSync(receipt, '{"prepared":"passing earlier stage"}');
+  fs.writeFileSync(first + '.repair', ''); fs.rmSync(first + '.blocked'); f.roadmaps.forEach(f.release);
+  const resumed = await f.start(queue, undefined, { progressFile: progress[0], blockedPolicy: 'park', recoverBlocked: true });
+  const final = await wait(async () => { const value = await f.manager.status(resumed.id); return value.processState === 'exited' && value; });
+  assert.equal(final.exitCode, 0, final.output || final.reason);
+  assert.deepEqual(final.queue.map(item => item.progressFile), progress.map(file => fs.realpathSync(file)));
+  assert.deepEqual(final.queue.map(item => item.state), ['complete', 'complete', 'complete']);
+  assert.equal(final.events.filter(event => event.type === 'runner.turn_starting' && event.role === 'resolver').length, 1);
+  assert.equal(fs.readFileSync(receipt, 'utf8'), '{"prepared":"passing earlier stage"}');
+  assert.equal(fs.readFileSync(second + '.started', 'utf8').trim().split('\n').length, 1);
+  assert.equal(fs.readFileSync(third + '.started', 'utf8').trim().split('\n').length, 1);
+});
 
 test('a queued source removed before handoff fails the run and preserves later entries', async t => {
   const f = fixture(t); const [first, second, third] = f.roadmaps;
@@ -241,8 +279,9 @@ fs.writeFileSync(progress, 'Status: BLOCKED\n## Tasks\n- [ ] T01 build\n## Defer
   assert.equal(final.exitCode, 75); assert.equal(final.reason, 'stopped');
   assert.equal(final.roadmapState, 'stopped');
   assert.deepEqual(final.queue.map(item => item.state), ['stopped', 'pending']);
-  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\nresolver\n');
+  assert.equal(fs.readFileSync(path.join(f.workspace, 'attempts'), 'utf8'), 'worker\nresolver\nresolver\nresolver\n');
   assert.equal(f.started(second), false);
-  assert.equal(final.events.at(-1).type, 'runner.stopped');
+  const lastPage = await f.manager.status(run.id, { cursor: readRun(f.registry, run.id).sequence - 1 });
+  assert.equal(lastPage.events.at(-1).type, 'runner.stopped');
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });

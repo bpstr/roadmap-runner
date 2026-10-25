@@ -5,16 +5,27 @@ compactors. Regular supervisor sessions are removed.
 
 Each worker starts with its task continuation packet, using the handoff for legacy
 obligations and the recent-runs summary when diagnosing ambiguous state or failure.
-Two structured failed attempts with the same operation, signature, acceptance
-revision and unchanged declared complete inputs defer that task before another
-general worker is launched. Other ready tasks can continue. Incomplete input
-coverage stays an agent judgment; counters, checkbox totals and note changes alone
-do not establish a loop. Global `Status: BLOCKED` means no useful authorized
-alternative remains. Historical failed receipts are retained after a resolver
-authorizes a fresh attempt.
+Workers receive a recent-run lookback and assess whether the same work has been
+repeated without a credible changed condition. Counts, matching signatures,
+source hashes, timeouts and open acceptance items do not decide this. An explicit
+worker blocked outcome defers that task while independent ready work continues.
+A successful resolver authorizes reassessment, preserving the previous evidence.
+Global `Status: BLOCKED` means no useful authorized alternative remains.
 
-A global blocker pauses workers and dispatches a resolver automatically. This
-also applies to failed workers and two consecutive hard timeouts. Normal finite
+A global blocker pauses workers and dispatches a resolver automatically. From
+0.12.2, unsuccessful recovery permits three resolver attempts in the same blocked
+episode (including the first). Configure `--resolver-attempts`,
+`ROADMAP_RESOLVER_ATTEMPTS` or MCP `resolverAttempts` from 1 to 10. Each retry
+receives the original resolution ID and earlier failure evidence. Workers do not
+run between attempts. Quota/capacity waits retain their separate budgets. An
+explicit stopped decision ends recovery immediately.
+
+Use `--blocked-policy park` or `stop` (MCP `blockedPolicy`) to return before any
+resolver is dispatched. Park retains BLOCKED; stop persists STOPPED. An explicit
+`--recover-blocked` authorizes recovery through either policy once, after the
+concrete repair or missing input is supplied. The default policy is `resolve`. This
+also applies to failed clients. Repeated timeouts return to a worker for history
+assessment; they do not automatically dispatch a resolver. Normal finite
 plan exhaustion returns `needs_next_batch` or `awaiting_verification` without a
 resolver; exit 0 records a successful scheduling boundary, not acceptance completion.
 These states do not advance a queued roadmap. Task-local blockers allow independent
@@ -31,7 +42,8 @@ decisions cannot waive acceptance criteria.
 
 If the cause remains unresolved, the resolver sets `Status: STOPPED` and records
 what the user must supply. A failed or timed-out resolver, missing or stale decision,
-or uncleared blocker also stops the runner. The runner saves STOPPED durably,
+or uncleared blocker consumes an attempt and stops the runner at budget exhaustion.
+The runner saves STOPPED durably,
 returns exit 75 with reason `stopped`, and leaves later queued roadmaps pending.
 Restarting the same run inputs does not dispatch another session. After addressing
 the cause, `--recover-blocked` or MCP `recoverBlocked: true` explicitly retries with

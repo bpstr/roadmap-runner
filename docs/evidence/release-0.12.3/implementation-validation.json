@@ -1,0 +1,121 @@
+{
+  "version": "0.12.2",
+  "status": "local_passed",
+  "verificationPlan": {
+    "behavior": "Bounded resolver recovery, repair and staged verification receipts, handoff preflight/update, preserved FIFO resume, and delivery drift fixtures.",
+    "affectedChecks": "Build TypeScript once after the implementation batch; run the new recovery/assurance/handoff fixtures and existing recovery-runs, verification, verification-cli, queue and task-continuity-integration tests. Include test/task-memory.test.js and test/recovery.test.js because recovery and receipt consumers share the changed contracts.",
+    "retainedEvidence": "Release 0.12.1 validation and session-checkpoint checks remain evidence for unchanged checkpoint/continuation behavior.",
+    "wideningReason": "Recovery defaults and verification scope identity affect existing recovery, queued dispatch and evidence consumers. These focused files cover those dependencies; a local full-suite run is not required.",
+    "completion": "Affected checks, package verification, and whitespace checks pass; record failures and corrections without deleting original logs.",
+    "expectedCost": "Local prepared processes only, no provider traffic or credentials. Expect under two minutes for the selected checks.",
+    "releaseGate": "Existing GitHub CI matrix remains required before publication. No publish or live model run is requested.",
+    "retestPolicy": "Retain passing selectors. Rerun only previously failed checks or selectors affected by intervening changes. Timeout-cache hardening affects timeout/expiry selectors; prerequisite repair adds one new selector; queue parsing changes affect queue-spec/FIFO selectors."
+  },
+  "localResults": {
+    "builds": [
+      {
+        "log": "/tmp/roadmap-runner-0.12.2/build-1.log",
+        "exitCode": 0
+      },
+      {
+        "log": "/tmp/roadmap-runner-0.12.2/build-2.log",
+        "exitCode": 0
+      }
+    ],
+    "fixturesInitial": {
+      "tests": 40,
+      "passed": 39,
+      "failed": 1,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/fixtures-1.log",
+      "failure": "New fixture incorrectly expected resolver records in the worker-only summary; replaced with assertions on retained resolver failure evidence."
+    },
+    "fixturesCorrection": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/fixtures-corrected.log",
+      "selectors": [
+        "third resolver attempt",
+        "readiness rejects",
+        "complete staged recipe"
+      ]
+    },
+    "affectedInitial": {
+      "tests": 61,
+      "passed": 59,
+      "failed": 2,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/affected-1.log",
+      "failures": [
+        "Queue-spec absolute macOS /var alias rejected by canonical workspace path guard; canonicalized before containment validation.",
+        "Existing queue test expected one resolver attempt; updated for three."
+      ]
+    },
+    "affectedCorrection": {
+      "tests": 6,
+      "passed": 5,
+      "failed": 1,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/affected-corrected.log",
+      "failure": "More resolver events exceed the bounded first status page. The queue test must request the terminal event cursor instead of assuming the first page contains it."
+    },
+    "retainedContinuityEvidence": "structured default task continuation dispatches A to A to B and carries reusable check evidence passed in affected-1.log. Its exact dispatch sequence and one check-executions receipt verify no repeated check during fresh worker handoff.",
+    "inference": "Local prepared commands and fake clients only. No provider requests, credential loading, live recording or paid dogfood.",
+    "finalSelectors": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/final-selectors.log",
+      "selectors": [
+        "fully blocked managed",
+        "foreground CLI accepts repeated",
+        "CLI queue specification",
+        "verified prerequisite"
+      ]
+    },
+    "retainedFinalCoverage": {
+      "uniqueChecks": 106,
+      "passed": 106,
+      "unresolvedFailures": [],
+      "log": "/tmp/roadmap-runner-0.12.2/retained-selectors.json",
+      "method": "Latest result by test name across the recorded focused batches; unchanged passing checks retained without full-suite repetition."
+    },
+    "packageVerification": {
+      "exitCode": 0,
+      "log": "/tmp/roadmap-runner-0.12.2/package.log",
+      "version": "0.12.2",
+      "files": 74,
+      "packedBytes": 174030,
+      "compatibleEvidence": "Later queue argv ordering refinement changes neither package inclusion, imports, version nor early help paths. Its CLI selectors pass; retain package layout/help evidence rather than repack unchanged packaging inputs."
+    },
+    "syntaxAndWhitespace": "node --check on lib/verification.js, lib/handoff.js, bin/roadmap-runner.js and the prepared fixture; git diff --check passed."
+  },
+  "remoteResults": "Not run: no commit, PR, CI matrix, npm registry publication or GitHub release was requested. Local CLI replacement was requested and is recorded separately. Prepared checks do not establish live provider/repair quality.",
+  "localInstallation": {
+    "status": "installed_and_verified",
+    "path": "<local-install-prefix>/@bpstr/roadmap-runner",
+    "source": "Current workspace npm tarball; offline global install with lifecycle scripts disabled; existing compiled build retained.",
+    "verification": {
+      "version": "0.12.2",
+      "comparedFiles": 74,
+      "mismatches": [],
+      "hardLimitMinutes": 90,
+      "checkpointMinutes": 85,
+      "sameTaskTurns": 8,
+      "resolver": {
+        "timeoutMs": 600000,
+        "attempts": 3,
+        "blockedPolicy": "resolve"
+      },
+      "inferenceCalls": 0
+    },
+    "artifacts": "/tmp/roadmap-runner-0.12.2/local-install",
+    "supersededBy": "semantic-loop-review.json localInstallation; prior installation proof is historical."
+  },
+  "latestPolicyAmendment": "semantic-loop-review.json: supersedes count-based loop detection and same-task caps; current code is locally validated and installed.",
+  "releaseVersion": "0.12.3",
+  "implementationCandidateVersion": "0.12.2"
+}

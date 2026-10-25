@@ -121,6 +121,10 @@ test("prompt keeps literal paths and the latest batching and evidence instructio
   assert.match(prompt, /Tick an acceptance checkbox only after all its criteria/);
   assert.match(prompt, /Retrieve historical details on demand/);
   assert.match(prompt, /Work through a meaningful checkpoint/);
+  assert.match(prompt, /Review\s+the supplied Run history lookback/);
+  assert.match(prompt, /Judge semantic repetition across runs/);
+  assert.match(prompt, /particular attempt count do not establish a loop/);
+  assert.doesNotMatch(prompt, /If two or more attempts|Cap initial discovery\s+at five minutes/);
   assert.match(prompt, /actual transport\/domain boundary and canonical/);
   assert.match(prompt, /configured session time and absolute soft deadline/);
   assert.match(prompt, /save intermediate progress and\s+continue in this session/);

@@ -1,0 +1,24 @@
+{
+  "version": "0.12.3",
+  "status": "local_passed",
+  "scope": "Repair-gated verification, handoff preflight, bounded resolver recovery, preserved queues and worker assessment of semantic repetition without default same-task caps.",
+  "verificationPlan": {
+    "retainedRuntimeEvidence": "semantic-loop-review.json: 109 unique affected checks passed. Earlier repair/handoff/assurance results are retained only where compatible; the 109-check amendment supersedes prior count-based loop expectations.",
+    "changedInputs": "Version and lockfile metadata, changelog and release evidence only since the last passing implementation batch. Incoming origin/main commit 1a197dc changes only 0.12.2 release metadata/evidence.",
+    "affectedChecks": "npm run check:package (build, tarball contents, packaged version/help); JSON/version/changelog consistency; git diff --check.",
+    "whyNoLocalFullSuite": "No runtime changes since the recorded passing affected checks. Repeating the full suite is not necessary for a version-only amendment; the existing CI matrix runs its required prepared checks after push.",
+    "completion": "Package and metadata checks pass; commit and push current main without force; verify remote commit.",
+    "inference": "No provider calls, credentials, paid dogfood or live fixture recording."
+  },
+  "history": "The original 0.12.2 GitHub-only release evidence is preserved unchanged. These implementation checks were prepared under candidate version 0.12.2 before the requested 0.12.3 bump. Private original logs and interim reports are retained locally.",
+  "localResults": {
+    "packageVerification": {
+      "exitCode": 0,
+      "log": "/tmp/roadmap-runner-0.12.3/package.log"
+    },
+    "metadataConsistency": "Package, lockfile and first changelog version match 0.12.3.",
+    "whitespace": "git diff --check passed.",
+    "retainedImplementation": "109 affected semantic-policy checks plus compatible earlier repair, handoff and assurance results; see sibling evidence records.",
+    "remoteCI": "The existing prepared CI matrix will run after push; local evidence does not claim those results."
+  }
+}
