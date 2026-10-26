@@ -2,9 +2,10 @@
 
 ## Unreleased
 
+## 0.12.4 — 2026-10-26
+
 - Park explicitly deferred roadmap passes, continue later queued work and revisit only after changed criteria, declared prerequisite inputs or a targeted resolver acknowledgment. Preserve unfinished acceptance and exit exhausted queues with a deferred summary.
 - Align README, CLI help and agent guidance with live roadmap checkbox completion; clarify custom handoff paths and recovery from older progress-only instructions.
-
 - Honor explicit worker task deferrals independently of delivery outcomes, rotate controller-selected tasks and clarify ownership-return handling without adding count-based loop cutoffs.
 
 ## 0.12.3 — 2026-10-25

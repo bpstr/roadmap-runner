@@ -1,0 +1,29 @@
+{
+  "version": "0.12.4",
+  "status": "local_passed",
+  "scope": "Explicit task and roadmap-pass deferral, causal queue revisits, targeted resolver repairs and live-roadmap completion guidance.",
+  "verificationPlan": {
+    "retainedImplementation": "117 compatible prepared checks in ../queue-deferral/validation.json. Runtime code is unchanged by release preparation.",
+    "changedInputs": "Package/lockfile versions, changelog and release evidence only.",
+    "affectedLocalChecks": "Verify package, lockfile and changelog version consistency; run package verification for the new version; check whitespace. Retain implementation results rather than repeat local application suites.",
+    "releaseGate": "The existing .github/workflows/ci.yml push workflow requires the prepared test suite and package checks on Node 20/22/24 across Ubuntu and macOS. This explicit release gate justifies its six hosted full-suite runs; no local full-suite run.",
+    "inference": "Prepared fixtures only. No provider calls, credentials, paid dogfood or live fixture recording."
+  },
+  "results": {
+    "packageVerification": {
+      "exitCode": 0,
+      "log": "package.log.gz",
+      "files": 75,
+      "sizeBytes": 181416
+    },
+    "metadata": "Package, lockfile root and package versions and first numbered changelog section match 0.12.4.",
+    "asset": {
+      "filename": "bpstr-roadmap-runner-0.12.4.tgz",
+      "sizeBytes": 181416,
+      "sha256": "5775135ae162ec62b31726b3e44ec3b25555a162e182fc2e307dba56eadcbc36",
+      "contents": "Built CLI and deferral module verified in release tarball."
+    },
+    "remoteCI": "Pending after push; release publication will wait for the existing six-job matrix."
+  },
+  "publication": "GitHub release with built CLI tarball; no npm registry publication requested."
+}
