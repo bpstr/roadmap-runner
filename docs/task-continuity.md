@@ -61,11 +61,25 @@ Optional `scheduling: "defer"` returns an ownership or prerequisite gate to the
 controller independently of that delivery outcome. Set `nextAction` to the exact
 condition permitting a retry (including the responsible owner when known). A
 `reused` result with no new receipts can defer a task without claiming acceptance.
-The controller skips it while independent tasks run; when no task is ready, it
-uses the existing recovery path. Broad-roadmap fallback has no per-task selector:
-the worker chooses another ready contribution itself, or defers the whole scope
-to recovery. Deferrals persist across restarts until criteria change or a resolver
-acknowledges a repair, just like agent-assessed blockers. `scheduling: "continue"`
+The controller skips it while independent tasks run. When all remaining work is
+explicitly deferred or depends on deferred tasks, the current pass returns
+`deferred` with exit 0 and preserves open acceptance. Managed queues continue to
+later entries. Broad-roadmap fallback has no per-task selector: the worker chooses
+another ready contribution itself, or defers the whole scope.
+
+Deferrals persist across restarts. Criteria changes, a resolver's explicit
+`retryTasks` acknowledgment, or changes to a complete worker-declared prerequisite
+scope permit reassessment. Declare that scope in `failure.inputPaths` with
+`coverageComplete: true`; `nextAction` alone supplies a human-readable retry
+condition. Unrelated file changes and completed roadmaps do not permit a retry.
+At queue boundaries the controller revisits eligible deferred entries before the
+next pending entry. If none is eligible and no pending entry remains, it exits
+once with reason/state `deferred`, per-entry evidence pointers and a terminal
+`runner.queue_deferred` event. Deferred entries keep their source and custom
+progress paths. They never satisfy dependent acceptance. Start again after a
+prerequisite changes; the retained task memory suppresses unchanged work.
+Global blockers, failed clients and explicit stops keep resolver/stop behavior.
+`scheduling: "continue"`
 and omission preserve ordinary scheduling; there is no count-based cutoff.
 `nextAction` can also be a string. `completed`, `remaining`, `changedFiles`,
 `receiptIds` and `findings` are required arrays, empty when appropriate. Receipt IDs

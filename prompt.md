@@ -40,6 +40,9 @@ For an unchanged ownership gate, record scheduling: "defer" and name the owner a
 the exact condition permitting retry in nextAction. This defers dispatch without
 claiming that reused evidence satisfies acceptance. In broad-roadmap mode, first
 select other ready work within the supplied roadmap; defer only when none remains.
+If retry depends on workspace inputs, include their exact paths in failure.inputPaths
+and set coverageComplete: true only for a complete prerequisite scope. A change to
+that declared scope permits reassessment. Keep acceptance open until verified.
 When the lookback suggests repeated work without a credible changed condition,
 inspect the specific referenced details needed to decide. Use older history only
 for a concrete gap. If it is a loop, record your assessment, the attempts supporting
@@ -142,7 +145,9 @@ reused or blocked), completed and remaining (string arrays), nextAction (an exac
 instruction or an object with instruction/file/symbol/command), changedFiles
 (workspace paths), receiptIds, and findings (arrays, empty when none).
 Optional scheduling is "continue" or "defer"; use "defer" to return an ownership
-gate to scheduling or recovery, even when the delivery outcome is reused/partial.
+gate to scheduling, even when the delivery outcome is reused/partial. When no ready
+work remains, the controller parks this roadmap and tries later queued work;
+global blockers and failed clients retain resolver recovery.
 Each finding has summary and sourcePaths; it is reusable only while its sources
 match. For a failed operation also include failure: {signature, inputPaths,
 coverageComplete, retryCondition}. Declare complete failure inputs only when known;

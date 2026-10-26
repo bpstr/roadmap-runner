@@ -41,7 +41,9 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.failed` | Worker CLI failure; partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |
 | `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |
-| `runner.completed` | The final roadmap completed; the managed queue is finished |
+| `runner.roadmap_deferred` | Current pass has only explicitly deferred work or its dependents; includes deferred count and evidence pointer, preserving open acceptance |
+| `runner.queue_deferred` | Terminal exit 0 with deferred entries and no eligible or pending work; acceptance remains open |
+| `runner.completed` | Every roadmap in the managed queue completed |
 
 Managed run journals keep event sequences increasing across roadmap handoffs.
 Each roadmap's progress-local journal retains its own sequence and completion

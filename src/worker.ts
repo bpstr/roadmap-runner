@@ -9,6 +9,7 @@ import { SleepInhibitor } from './sleep-inhibitor.js';
 import { appendEvent } from './events.js';
 import { readRun, saveRun, runDir, appendOutput } from './run-state.js';
 import { RunManager } from './run-manager.js';
+import { deferredRoadmapReady } from '../lib/task-deferral.js';
 
 export const runWorker = async (root: string, id: string, foreground = false) => {
 
@@ -77,13 +78,15 @@ try {
   while (record.queueIndex < record.queue.length) {
     if (controller.signal.aborted) { result = { reason: 'stopped', code: 130 }; break; }
     const item = record.queue[record.queueIndex];
+    const firstDispatch = item.state === 'pending';
     item.state = 'running'; record.roadmap = item.roadmap; record.progressFile = item.progressFile;
     record.roadmapState = 'in_progress'; record.waitReason = null; record.role = undefined; record.iteration = undefined;
+    record.task = undefined; record.batch = undefined;
     record.sourceRevision = undefined; record.attentionTasks = []; record.resetAt = undefined; record.deadline = undefined;
     persist();
     result = await runLifecycle({ ...record.options,
       roadmap: record.queueIndex === 0 ? record.options.roadmap : item.roadmap,
-      recoverBlocked: record.queueIndex === 0 && record.options.recoverBlocked,
+      recoverBlocked: firstDispatch && record.queueIndex === 0 && record.options.recoverBlocked,
       progressFile: record.queueIndex === 0 ? record.options.progressFile : item.progressFile, runId: id, onProcess: ({ pid, active }) => {
       record.childGroups = active ? [...new Set([...(record.childGroups || []), pid])] : (record.childGroups || []).filter(value => value !== pid);
       persist();
@@ -92,13 +95,14 @@ try {
       onReady: tracking => { record.artifacts = { progress: tracking.file, history: tracking.historyDir, evidence: tracking.evidenceDir, sessions: tracking.sessionsFile, output: outputFile, events: path.join(dir, 'events.jsonl'), notifications: path.join(dir, 'notifications.json') }; record.processState = controller.signal.aborted ? 'stopping' : 'running'; record.readyAt = new Date().toISOString(); ready = true; persist(); },
       onEvent: event => {
         event = { ...event, sequence: ++record.sequence };
-        if (event.type === 'runner.completed' && record.queueIndex + 1 < record.queue.length) event.type = 'runner.roadmap_completed';
+        if (event.type === 'runner.completed' && record.queue.some((queued, index) => index !== record.queueIndex && queued.state !== 'complete')) event.type = 'runner.roadmap_completed';
         if (event.type === 'runner.turn_starting' && event.role === 'worker') { record.roadmap = event.roadmap; record.task = event.task; record.batch = event.batch; }
         record.sourceRevision = event.sourceRevision; record.role = event.role || record.role; record.iteration = event.iteration ?? record.iteration;
         if (event.type === 'runner.blocked') record.roadmapState = 'blocked';
         if (event.type === 'runner.unblocked' || (event.type === 'runner.turn_starting' && event.role === 'worker')) record.roadmapState = 'in_progress';
         if (event.type === 'runner.completed') record.roadmapState = 'complete';
         if (event.type === 'runner.stopped') record.roadmapState = 'stopped';
+        if (event.type === 'runner.roadmap_deferred') record.roadmapState = 'deferred';
         if (event.type === 'runner.plan_exhausted' && ['needs_next_batch', 'awaiting_verification'].includes(event.schedulingState)) record.roadmapState = event.schedulingState;
         if (event.type === 'runner.usage_paused') { record.waitReason = 'quota'; record.resetAt = event.resetAt; record.deadline = event.deadline; }
         if (event.type === 'runner.capacity_wait') record.waitReason = 'capacity';
@@ -109,12 +113,34 @@ try {
         appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
       },
     });
-    item.state = ['complete', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification'].includes(result.reason) ? result.reason : 'failed';
+    item.state = ['complete', 'deferred', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification'].includes(result.reason) ? result.reason : 'failed';
+    if (result.deferralFile) item.deferralFile = result.deferralFile;
+    else delete item.deferralFile;
     if (result.reason === 'blocked') record.roadmapState = 'blocked';
     if (result.reason === 'stopped') record.roadmapState = 'stopped';
     persist();
-    if (result.reason !== 'complete' || controller.signal.aborted || record.queueIndex + 1 === record.queue.length) break;
-    record.queueIndex += 1;
+    if (!['complete', 'deferred'].includes(result.reason) || controller.signal.aborted) break;
+    const reconsider = record.queue.findIndex(queued => queued.state === 'deferred' && deferredRoadmapReady(queued, record.workspace));
+    const next = reconsider >= 0 ? reconsider : record.queue.findIndex(queued => queued.state === 'pending');
+    if (next < 0) {
+      const deferredCount = record.queue.filter(queued => queued.state === 'deferred').length;
+      if (deferredCount) {
+        result = { reason: 'deferred', code: 0 }; record.roadmapState = 'deferred';
+        record.queueIndex = record.queue.findIndex(queued => queued.state === 'deferred');
+        const deferred = record.queue[record.queueIndex];
+        record.roadmap = deferred.roadmap; record.progressFile = deferred.progressFile;
+        record.role = undefined; record.iteration = undefined; record.task = undefined; record.batch = undefined; record.sourceRevision = undefined;
+        const stateDir = path.dirname(deferred.deferralFile);
+        record.artifacts = { ...record.artifacts, progress: deferred.progressFile, history: path.join(stateDir, 'history'),
+          evidence: path.join(stateDir, 'evidence'), sessions: path.join(stateDir, 'sessions.jsonl') };
+        const event = { version: 1, id: randomUUID(), runId: id, sequence: ++record.sequence, at: new Date().toISOString(),
+          type: 'runner.queue_deferred', reason: 'deferred', reasonCode: 'deferred', severity: 'warning', attention: true,
+          terminal: true, code: 0, deferredCount, roadmap: record.roadmap, progressFile: record.progressFile };
+        appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
+      }
+      break;
+    }
+    record.queueIndex = next;
     console.log(`Starting queued roadmap ${record.queueIndex + 1}/${record.queue.length}: ${record.queue[record.queueIndex].roadmap}`);
   }
   acceptingQueue = false;

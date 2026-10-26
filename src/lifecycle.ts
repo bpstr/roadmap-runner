@@ -14,6 +14,7 @@ import { sessionMetrics } from "../lib/telemetry.js";
 import { ExecutionPlan } from "../lib/execution.js";
 import { RoadmapPlan } from "../lib/task-plan.js";
 import { TaskMemory, validateWorkerResult } from "../lib/task-memory.js";
+import { saveDeferral } from "../lib/task-deferral.js";
 import { checkpointDelay, readCheckpointAcknowledgment } from "../lib/checkpoint.js";
 import { selectContinuation, rememberContinuation } from "../lib/continuation.js";
 import { atomicJson } from "./run-state.js";
@@ -132,6 +133,15 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   };
   if (!continuationAvailable) saveContinuation();
   let deferredTasks: any[] = [];
+  const deferRoadmap = async () => {
+    const deferralFile = saveDeferral(tracking, roadmap, deferredTasks);
+    previousConversation = null;
+    saveContinuation();
+    recovery.success();
+    await recovery.event('runner.roadmap_deferred', { reason: 'worker_requested_deferral', deferredCount: deferredTasks.length, deferralFile });
+    console.log('Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.');
+    return { code: 0, reason: 'deferred', deferralFile };
+  };
   if (!onEvent) {
     notifications = new Notifications(options, `${tracking.file}.notifications.json`);
     onEvent = event => notifications.enqueue(event);
@@ -211,11 +221,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     plan?.read();
     deferredTasks = [];
     for (const task of plan?.tasks || []) {
+      if (task.complete) continue;
       const memory = memoryFor(task.roadmap || roadmap);
       const latest = memory.latest(task.task || task.id);
       if (latest) plan.setContinuation(task.task || task.id, latest);
       const assessment = memory.assessedBlocker(task.task || task.id, task.criteriaRevision);
-      if (assessment) deferredTasks.push({ task: task.task || task.id, roadmap: task.roadmap || roadmap, criteriaRevision: task.criteriaRevision, ...assessment });
+      if (assessment) deferredTasks.push({ task: task.task || task.id, roadmap: path.resolve(workdir, task.roadmap || roadmap), criteriaRevision: task.criteriaRevision, ...assessment });
     }
     plan?.setSkippedTaskIds(deferredTasks.map(task => task.task));
     const batch = plan?.select();
@@ -237,9 +248,14 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       return { code: 75, reason: 'stopped' };
     }
     if (!compacting && !recovery.state.blocker && (status === 'blocked' || sourceStatus === 'blocked')) await block('roadmap_blocked');
-    if (!compacting && !recovery.state.blocker && !batch && (execution || (defaultPlan?.reliable && !queuedDelivery))) {
-      const schedule = plan.schedulingOutcome();
-      if (schedule.status === 'blocked') await block(deferredTasks.some(task => task.reason === 'worker_requested_deferral')
+    const explicitDeferrals = deferredTasks.length > 0 && deferredTasks.every(task => task.reason === 'worker_requested_deferral');
+    if (!compacting && !recovery.state.blocker && !batch && plan) {
+      const schedule = plan.schedulingOutcome({ deferredTaskIds: explicitDeferrals ? deferredTasks.map(task => task.task) : [] });
+      if (schedule.status === 'deferred') {
+        if (tracking.needsReconciliation || recovery.state.requiresWorker || recovery.state.quota) await block('deferred_plan_reconciliation');
+        else return await deferRoadmap();
+      }
+      else if (schedule.status === 'blocked' && !queuedDelivery) await block(deferredTasks.some(task => task.reason === 'worker_requested_deferral')
         ? 'worker_requested_deferral' : deferredTasks.length ? 'agent_assessed_blocker' : 'task_prerequisite_blocked');
       else if (execution && ['needs_next_batch', 'awaiting_verification'].includes(schedule.status)) {
         if (tracking.needsReconciliation || recovery.state.requiresWorker || recovery.state.quota) await block('finite_plan_reconciliation');
@@ -255,6 +271,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const fallbackAssessment = !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision);
     if (!compacting && !recovery.state.blocker && fallbackAssessment) {
       deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision, ...fallbackAssessment });
+      if (fallbackAssessment.reason === 'worker_requested_deferral' && !tracking.needsReconciliation &&
+          !recovery.state.requiresWorker && !recovery.state.quota) return await deferRoadmap();
       await block(fallbackAssessment.reason || 'agent_assessed_blocker');
     }
     const resolving = !compacting && Boolean(recovery.state.blocker);
@@ -476,6 +494,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
     if (resolving) {
       const decision = readResolution(resolutionFile, resolutionId);
+      if (decision?.outcome === 'stopped') return await stopRecovery('resolver_stopped');
       let cleared = false;
       try {
         const sourceAfterStatus = roadmapStatus(fs.readFileSync(roadmap, 'utf8'));
@@ -483,19 +502,26 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       } catch { /* Invalid terminal state cannot authorize further workers. */ }
       // A fresh resolver decision can authorize one revised attempt. Historical
       // failures remain recorded, but must not immediately veto that repair.
-      plan?.setSkippedTaskIds([]);
-      const recoveryPlan = execution || (defaultPlan?.reliable ? defaultPlan : null);
-      const ready = !recoveryPlan || Boolean(recoveryPlan.select()) || recoveryPlan.schedulingOutcome().status === 'complete';
-      if (decision?.outcome === 'stopped') return await stopRecovery('resolver_stopped');
+      const retryTasks = decision?.retryTasks || [];
+      if (retryTasks.some(taskId => !deferredTasks.some(task => task.task === taskId))) {
+        const stopped = await retryResolution('unknown_retry_task', resolverEvidenceFile); if (stopped) return stopped; continue;
+      }
+      const repairedTasks = deferredTasks.filter(task => task.reason !== 'worker_requested_deferral' || retryTasks.includes(task.task));
+      const remainingDeferrals = deferredTasks.filter(task => !repairedTasks.includes(task));
+      plan?.setSkippedTaskIds(remainingDeferrals.map(task => task.task));
+      const recoveryPlan = execution || (remainingDeferrals.length ? queuedDelivery : null) || (defaultPlan?.reliable ? defaultPlan : null);
+      const readyTask = recoveryPlan ? Boolean(recoveryPlan.select()) : !fallbackAssessment || repairedTasks.some(task => task.task === fallbackTaskId);
+      const nextSchedule = recoveryPlan?.schedulingOutcome({ deferredTaskIds: remainingDeferrals.map(task => task.task) });
+      const ready = readyTask || ['complete', 'deferred'].includes(nextSchedule?.status) || (!recoveryPlan && remainingDeferrals.length > 0);
       if (!decision || !cleared || !ready) { const stopped = await retryResolution('blocker_unresolved', resolverEvidenceFile); if (stopped) return stopped; continue; }
       delete recovery.state.blocker;
       delete recovery.state.stopped;
-      for (const task of deferredTasks) {
+      for (const task of repairedTasks) {
         try { memoryFor(task.roadmap).acknowledgeResolution(task.task, task.criteriaRevision, resolutionId); }
         catch (error) { disableMemory(task.roadmap, error); }
       }
       recovery.state.consecutiveTimeouts = 0;
-      recovery.state.requiresWorker = true;
+      recovery.state.requiresWorker = readyTask;
       recovery.success();
       recovery.save();
       await recovery.event('runner.unblocked', { role, iteration, resolutionId, resolutionFile });

@@ -15,6 +15,7 @@ import { parseArgs } from '../lib/runner.js';
 import { Recovery, recoverySettings } from '../lib/recovery.js';
 import { startSchema } from '../dist/run-manager.js';
 import { RunManager } from '../dist/run-manager.js';
+import { runLifecycle } from '../dist/lifecycle.js';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 const hash = text => createHash('sha256').update(text).digest('hex');
@@ -35,6 +36,48 @@ function fixture(t) {
   save(file, plan);
   return { dir, tracking, file, plan, execution: new ExecutionPlan(file, dir, tracking) };
 }
+
+test('finite scheduling distinguishes explicit deferral from a genuine unmet batch prerequisite', t => {
+  const f = fixture(t);
+  f.plan.batches[1].prerequisites = ['deliver-1'];
+  save(f.file, f.plan);
+  f.execution.setSkippedTaskIds(['API-01.1']);
+  assert.equal(f.execution.schedulingOutcome().status, 'blocked');
+  assert.equal(f.execution.schedulingOutcome({ deferredTaskIds: ['API-01.1'] }).status, 'deferred');
+  f.plan.batches[1].prerequisites = ['API-01.1'];
+  save(f.file, f.plan);
+  assert.equal(f.execution.schedulingOutcome({ deferredTaskIds: ['API-01.1'] }).status, 'deferred');
+  f.plan.batches[1].prerequisites = ['deliver-1', 'missing-owner'];
+  save(f.file, f.plan);
+  assert.equal(f.execution.schedulingOutcome({ deferredTaskIds: ['API-01.1'] }).status, 'blocked');
+  assert.match(fs.readFileSync(path.join(f.dir, 'owner1.md'), 'utf8'), /- \[ \]/);
+});
+
+test('finite ownership deferrals retain absolute owner bindings outside the process working directory', async t => {
+  const f = fixture(t);
+  const client = path.join(f.dir, 'prepared-defer.cjs');
+  fs.writeFileSync(client, String.raw`#!/usr/bin/env node
+const fs = require('node:fs');
+const prompt = process.argv.at(-1);
+if (prompt.includes('Runner role: RESOLVER')) throw new Error('No diagnosis is required for an explicit deferral');
+const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
+fs.appendFileSync('deferral-calls', binding.taskId + '\n');
+fs.writeFileSync(JSON.parse(prompt.match(/^Optional structured result file: (.+)$/m)[1]), JSON.stringify({
+  ...binding, operation: 'prepared-owner-deferral', outcome: 'reused', scheduling: 'defer',
+  completed: [], remaining: ['External adoption'], nextAction: 'Wait for the owner to supply adoption.', changedFiles: [], receiptIds: [], findings: []
+}));
+const progress = prompt.match(/Tracking file \(progress \/ delivery evidence\):\s*\n\s*([^\n]+)/)[1].trim();
+fs.writeFileSync(progress, 'Status: IN_PROGRESS\n## Current handoff\nOwner adoption remains open.\n');
+`, { mode: 0o755 });
+  const result = await runLifecycle({ roadmap: path.join(f.dir, 'owner1.md'), progressFile: f.tracking.file,
+    executionPlan: f.file, client: 'codex', executable: client, timeout: '5s', notify: 'off' }, { workdir: f.dir });
+  assert.equal(result.reason, 'deferred');
+  assert.equal(result.code, 0);
+  assert.deepEqual(fs.readFileSync(path.join(f.dir, 'deferral-calls'), 'utf8').trim().split('\n'), ['API-01.1', 'API-01.2']);
+  const manifest = JSON.parse(fs.readFileSync(result.deferralFile, 'utf8'));
+  assert.ok(manifest.sources.every(source => path.isAbsolute(source.file)));
+  for (const n of [1, 2]) assert.match(fs.readFileSync(path.join(f.dir, `owner${n}.md`), 'utf8'), /- \[ \]/);
+});
 
 test('a verified delivery counts once and configuration must be an explicit changed source', t => {
   const f = fixture(t);

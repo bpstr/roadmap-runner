@@ -3,11 +3,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 
-export type QueueItem = { roadmap: string; progressFile: string; state: 'pending' | 'running' | 'complete' | 'failed' | 'stopped' | 'blocked' | 'needs_next_batch' | 'awaiting_verification' };
+export type QueueItem = { roadmap: string; progressFile: string; state: 'pending' | 'running' | 'complete' | 'deferred' | 'failed' | 'stopped' | 'blocked' | 'needs_next_batch' | 'awaiting_verification'; deferralFile?: string };
 export type RunRecord = {
   task?: string; batch?: string; id: string; token: string; workspace: string; roadmap: string; progressFile: string;
   processState: 'starting' | 'running' | 'stopping' | 'stopped' | 'exited' | 'unknown';
-  roadmapState: 'in_progress' | 'blocked' | 'complete' | 'stopped' | 'needs_next_batch' | 'awaiting_verification'; waitReason: string | null;
+  roadmapState: 'in_progress' | 'blocked' | 'complete' | 'deferred' | 'stopped' | 'needs_next_batch' | 'awaiting_verification'; waitReason: string | null;
   createdAt: string; heartbeat: string; pid?: number; options: any; sequence: number;
   readyAt?: string;
   socket: string; locks: string[]; idempotencyKey?: string; exitCode?: number; reason?: string;

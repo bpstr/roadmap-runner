@@ -9,7 +9,12 @@ Workers receive a recent-run lookback and assess whether the same work has been
 repeated without a credible changed condition. Counts, matching signatures,
 source hashes, timeouts and open acceptance items do not decide this. An explicit
 worker blocked outcome defers that task while independent ready work continues.
+An explicit `scheduling: "defer"` can park an exhausted roadmap pass and continue
+later queue entries with acceptance still open. An unchanged deferred queue exits
+once with reason `deferred`; it does not need a diagnostic resolver session.
 A successful resolver authorizes reassessment, preserving the previous evidence.
+For explicitly deferred tasks it names only repaired task IDs in `retryTasks`;
+unrelated ownership deferrals stay parked.
 Global `Status: BLOCKED` means no useful authorized alternative remains.
 
 A global blocker pauses workers and dispatches a resolver automatically. From

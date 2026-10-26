@@ -1,0 +1,89 @@
+{
+  "status": "local_passed",
+  "verificationPlan": {
+    "changedBehavior": "Explicit task deferral parks unfinished acceptance, advances a managed queue, and permits reassessment only after changed criteria, worker-declared prerequisite inputs or a targeted acknowledged repair. Exhausted queues exit deferred rather than repeatedly dispatching unchanged work.",
+    "affectedChecks": "Build TypeScript; run prepared ownership-deferral and queue-deferral regressions, existing queue tests, and relevant task-memory, task-selection, execution, recovery and notification consumers.",
+    "retainedEvidence": "Completion tracking validation and PR 14 prepared CI evidence remain applicable to unchanged client adapters, source completion and packaging behavior.",
+    "completion": "Changed behavior and affected prepared regressions pass, TypeScript builds, package imports and whitespace checks pass. No provider calls or credentials.",
+    "scope": "No automatic full-suite run. Broaden selectors only for concrete affected dependencies or failures.",
+    "expectedCost": "One implementation-batch build and focused deterministic fixtures; no paid inference, live dogfood, browsers or dev servers.",
+    "retestPolicy": "Retain 99 unchanged checks from affected-1.log. The finite scheduling selector was rerun after tightening mixed-prerequisite handling. Deferral selectors were rerun after updating exact-scope readiness, terminal status metadata and resolver acknowledgment validation. No full suite was run. Final inspection found relative finite owner bindings; normalize them and run the new finite-owner selector. Default roadmap owner paths were already absolute, so retain their compatible passing selectors."
+  },
+  "results": [
+    {
+      "log": "affected-1.log.gz",
+      "passed": 100,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Existing queue, task-memory, task-selection, execution-reset, recovery-runs and task-continuity-integration tests. Retain 99; the revised finite scheduling selector is superseded by finite-final.log.gz."
+    },
+    {
+      "log": "deferral-final.log.gz",
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Prepared ownership and queue deferral fixtures, including restart persistence, causal-input changes, broad fallback, targeted resolver repairs, final status and exhausted queue summary."
+    },
+    {
+      "log": "finite-final.log.gz",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Finite deferral closure including parent references and an additional genuinely unmet prerequisite."
+    },
+    {
+      "log": "finite-owner-final.log.gz",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "Finite ownership deferrals from a different process working directory retain absolute owner bindings and leave original criteria open."
+    }
+  ],
+  "compatiblePassingChecks": 117,
+  "builds": {
+    "build-1.log.gz": "Initial implementation passed.",
+    "build-2.log.gz": "Passed after MCP description and resolver readiness changes.",
+    "package.log.gz": "Package check passed with current worker metadata; 75 packaged files, 181333 packed bytes, version/help passed and new deferral module present. Later helper changes preserve the same module dependencies and package paths.",
+    "build-3.log.gz": "Passed after normalizing finite deferral owner paths. This changes neither module imports nor package layout, so retained package version/help and inclusion evidence remains applicable."
+  },
+  "failedEvidence": [
+    {
+      "log": "deferral-1.log.gz",
+      "passed": 8,
+      "failed": 6,
+      "cause": "Prepared client left IN_PROGRESS after closing all source checkboxes, causing broad fallback dispatch. Fixture now writes COMPLETE on closure. Full failed output is retained."
+    },
+    {
+      "log": "diagnostic-1.log.gz",
+      "cause": "Narrow reproduction of the prepared completion-header error."
+    },
+    {
+      "log": "queue-deferral-2.log.gz",
+      "passed": 4,
+      "failed": 3,
+      "cause": "Two assertions assumed terminal events fit the first bounded status page. Assertions now inspect the retained journal. The criteria-change fixture edited an unrelated completed task; readiness now checks exact deferred criteria/new ready work, and the fixture edits its intended criterion."
+    },
+    {
+      "log": "queue-deferral-3.log.gz",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Intermediate passing fixtures retained; final metadata, cleanup and validation refinements are covered by deferral-final.log.gz."
+    }
+  ],
+  "inference": "Prepared local executables and deterministic fixtures only. No provider calls, credentials, live dogfood or paid fixture recording.",
+  "completion": "Deferred queue scheduling and connected checks passed. No release, global installation, GitHub push or active-run restart was performed.",
+  "hygiene": {
+    "automatedBrowsersOrServersStarted": false,
+    "remainingSessionFixtureProcesses": 0,
+    "removedPath": "/tmp/roadmap-runner-queue-deferral-20261026",
+    "removedFileBytes": 112452,
+    "dataVolumeFreeGiBBefore": 18.03,
+    "largestInspectedExistingCache": {
+      "path": "/Users/bpstr/.npm/_cacache",
+      "sizeKiB": 413816,
+      "action": "Preserved; outside current-session cleanup scope."
+    },
+    "dataVolumeFreeGiBAfter": 18.02
+  }
+}

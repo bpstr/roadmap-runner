@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { runLifecycle } from '../dist/lifecycle.js';
 import { TaskMemory } from '../lib/task-memory.js';
+import { readResolution } from '../lib/recovery-runs.js';
 
 // Prepared executable only: no provider transport, credentials or live calls.
 function preparedClient(config) {
@@ -51,12 +52,12 @@ function fixture(t, { broad = false, outcome = 'reused' } = {}) {
   const tracking = { stateDir: path.join(workdir, 'state'), evidenceDir: path.join(workdir, 'state/evidence'), file: progress };
   const memory = new TaskMemory({ workdir, tracking, roadmap });
   let sessionNumber = 0;
-  const save = (scheduling, processResult = { code: 0 }, workerOutcome = outcome) => {
+  const save = (scheduling, processResult = { code: 0 }, workerOutcome = outcome, extra = {}) => {
     const binding = { version: 1, sessionId: `prepared-session-${++sessionNumber}`, taskId: 'A-01', criteriaRevision: 'v1' };
     const prepared = memory.prepare(binding);
     fs.writeFileSync(prepared.resultFile, JSON.stringify({ ...binding, operation: 'prepared-return', outcome: workerOutcome,
       scheduling, completed: [], remaining: ['External adoption'], nextAction: 'Retry after adoption changes.',
-      changedFiles: [], receiptIds: [], findings: [] }));
+      changedFiles: [], receiptIds: [], findings: [], ...extra }));
     return memory.consume({ ...binding, resultFile: prepared.resultFile, processResult });
   };
   return { workdir, roadmap, progress, memory, save, options: { roadmap, progressFile: progress, client: 'codex',
@@ -87,6 +88,18 @@ test('unknown scheduling values are rejected and interrupted deferrals do not su
   assert.equal(f.memory.assessedBlocker('A-01', 'v1'), false);
 });
 
+test('resolver retry acknowledgments require a bounded unique list of exact task IDs', t => {
+  const f = fixture(t);
+  const file = path.join(f.workdir, 'resolution.json');
+  const decision = { resolutionId: 'prepared-repair', outcome: 'resolved', evidence: 'Exact prerequisite repaired.', nextAction: 'Retry A-01.' };
+  const read = retryTasks => {
+    fs.writeFileSync(file, JSON.stringify({ ...decision, retryTasks }));
+    return readResolution(file, decision.resolutionId);
+  };
+  assert.deepEqual(read(['A-01']).retryTasks, ['A-01']);
+  for (const value of ['A-01', ['A-01', 'A-01'], [null], [''], Array(129).fill('A-01')]) assert.equal(read(value), null);
+});
+
 test('reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts', t => {
   const f = fixture(t);
   assert.equal(f.save(undefined).warning, null);
@@ -95,24 +108,42 @@ test('reused outcomes without explicit deferral stay compatible and do not manuf
   assert.equal(f.memory.assessedBlocker('A-01', 'v1'), false);
 });
 
-for (const outcome of ['reused', 'partial']) test(`${outcome} ownership return rotates to independent work before recovery`, async t => {
+for (const outcome of ['reused', 'partial']) test(`${outcome} ownership return rotates to independent work before deferring the roadmap`, async t => {
   const f = fixture(t, { outcome });
   const events = [];
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
-  assert.equal(result.reason, 'stopped');
+  assert.equal(result.reason, 'deferred');
+  assert.equal(result.code, 0);
   const calls = JSON.parse(fs.readFileSync(path.join(f.workdir, 'calls.json'), 'utf8'));
-  assert.deepEqual(calls.map(call => [call.role, call.task]), [['WORKER', 'A-01'], ['WORKER', 'B-01'], ['RESOLVER', undefined]]);
+  assert.deepEqual(calls.map(call => [call.role, call.task]), [['WORKER', 'A-01'], ['WORKER', 'B-01']]);
   assert.ok(calls.every(call => !call.resumed), 'deferring a task must not carry its conversation into another task or resolver');
   assert.equal(events.find(event => event.type === 'runner.task_result').scheduling, 'defer');
   assert.match(fs.readFileSync(f.roadmap, 'utf8'), /- \[ \] A-01/);
 });
 
-test('broad roadmap ownership return enters recovery instead of repeating the synthetic task', async t => {
+test('broad roadmap ownership return defers the scope instead of repeating the synthetic task', async t => {
   const f = fixture(t, { broad: true });
   const events = [];
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
-  assert.equal(result.reason, 'stopped');
+  assert.equal(result.reason, 'deferred');
   const calls = JSON.parse(fs.readFileSync(path.join(f.workdir, 'calls.json'), 'utf8'));
-  assert.deepEqual(calls.map(call => call.role), ['WORKER', 'RESOLVER']);
-  assert.equal(events.find(event => event.type === 'runner.blocked').reason, 'worker_requested_deferral');
+  assert.deepEqual(calls.map(call => call.role), ['WORKER']);
+  assert.equal(events.find(event => event.type === 'runner.roadmap_deferred').reason, 'worker_requested_deferral');
+});
+
+test('only a worker-declared complete prerequisite scope can permit a deferred retry', t => {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.workdir, 'owner.txt'), 'not delivered');
+  fs.writeFileSync(path.join(f.workdir, 'unrelated.txt'), 'before');
+  const failure = { signature: 'owner-pending', inputPaths: ['owner.txt'], coverageComplete: true,
+    retryCondition: 'Reassess after the owner input changes.' };
+  f.save('defer', { code: 0 }, 'reused', { failure });
+  fs.writeFileSync(path.join(f.workdir, 'unrelated.txt'), 'after');
+  assert.equal(f.memory.assessedBlocker('A-01', 'v1').reason, 'worker_requested_deferral');
+  fs.writeFileSync(path.join(f.workdir, 'owner.txt'), 'delivered');
+  assert.equal(f.memory.assessedBlocker('A-01', 'v1'), false);
+  assert.equal(f.memory.latest('A-01').outcome, 'reused', 'changed inputs do not promote acceptance');
+  f.save('defer', { code: 0 }, 'reused', { failure: { ...failure, coverageComplete: false } });
+  fs.writeFileSync(path.join(f.workdir, 'owner.txt'), 'changed again');
+  assert.equal(f.memory.assessedBlocker('A-01', 'v1').reason, 'worker_requested_deferral');
 });

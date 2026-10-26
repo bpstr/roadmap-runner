@@ -145,8 +145,8 @@ then escalates after three seconds and verifies descendant cleanup.
 Workers begin with their task-specific continuation packet and a bounded recent-run
 lookback. The worker judges whether previous attempts repeat the same work without
 a credible repair or useful progress, even when operation names or hashes change.
-Only an explicit worker blocked assessment defers that task while independent work
-proceeds. Failure counts and repeated timeouts do not establish a loop. A global
+An explicit worker blocked assessment or scheduling deferral skips that task while
+independent work proceeds. Failure counts and repeated timeouts do not establish a loop. A global
 blocker or failed client dispatches a resolver. The resolver repairs the cause and resumes workers, or records STOPPED
 and ends the runner. Useful partial work continues without periodic supervisors.
 See [recovery runs](RECOVERY.md) for the decision contract and restart behavior.
@@ -204,8 +204,9 @@ Keep one roadmap by default.
 Split when a concrete context budget or independent delivery boundary warrants it,
 then queue files in prerequisite order. Check both the task graph and the file
 graph for cycles: grouping otherwise valid tasks can create dependencies in both
-directions between files. Every file must be completable before its successor
-starts, including its acceptance and validation requirements.
+directions between files. Prefer files whose implementation and validation can
+finish before their successors. Explicit deferrals can park an unfinished pass;
+actual consumed prerequisites still need delivery before dependent work starts.
 Keep the overall index with the controller and give each worker only the current
 milestone, its constraints and concise references to prerequisite evidence.
 
@@ -243,6 +244,16 @@ zero-based `queueIndex`. The run ID remains the same through every handoff, and
 the workspace stays reserved until the run ends. Stopping or a terminal failure
 ends the run with later entries still pending. A blocked roadmap continues its
 existing recovery workflow and holds the queue until it completes.
+
+An explicit worker `scheduling: "defer"` can exhaust the current roadmap pass
+without completing its acceptance. The queue parks that entry as `deferred` and
+continues later entries. It revisits deferred entries only after changed criteria,
+changed worker-declared prerequisite inputs, or a resolver's targeted repair
+acknowledgment. A new session or unrelated completed roadmap is insufficient.
+When no pending or eligible work remains, the run exits once with code 0 and
+reason `deferred`; unfinished checkboxes remain open. Status retains each entry's
+state and deferred evidence pointer. See the [deferral contract](docs/task-continuity.md)
+for retry inputs and restart behavior.
 
 Queues accept up to 100 distinct roadmaps. Paths and progress-file conflicts are
 checked before launch or append. Managed queues persist across CLI or MCP

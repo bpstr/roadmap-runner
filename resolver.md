@@ -55,6 +55,10 @@ The source limit is 256 KiB (262144 bytes); preserve its requirements.
 Write UTF-8 JSON to the Resolution decision file from Runner context:
 {"resolutionId":"<current Resolution ID>","outcome":"resolved or stopped","evidence":"specific repair/check evidence or unresolved cause","nextAction":"exact next worker action or required user action"}
 Use the current ID. Both text fields must be nonempty. Exit after writing it.
+When repairing an explicitly deferred task, include retryTasks: ["exact-task-id"]
+for only the tasks whose retry conditions this repair addresses. Record the changed
+condition and evidence above. Omission preserves ownership deferrals; a resolved
+global blocker alone does not authorize another unchanged ownership return.
 Only a successful resolver with a fresh resolved decision and cleared global
 blockers permits further workers. A missing/invalid decision or an unsuccessful
 resolver consumes one bounded attempt; prior failures remain in the next resolver
