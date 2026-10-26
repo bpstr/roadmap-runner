@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Honor explicit worker task deferrals independently of delivery outcomes. Rotate controller-selected tasks or enter recovery for a deferred broad roadmap, and clarify ownership-return handling without adding count-based loop cutoffs.
+
 ## 0.12.3 — 2026-10-25
 
 - Remove default same-task conversation and productive-attempt caps. Supply recent-run lookbacks for worker assessment of semantic repetition; matching failures and repeated timeouts no longer automatically defer tasks or dispatch recovery. Preserve source-bound worker blocked decisions and prior evidence.

@@ -239,7 +239,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!compacting && !recovery.state.blocker && (status === 'blocked' || sourceStatus === 'blocked')) await block('roadmap_blocked');
     if (!compacting && !recovery.state.blocker && !batch && (execution || (defaultPlan?.reliable && !queuedDelivery))) {
       const schedule = plan.schedulingOutcome();
-      if (schedule.status === 'blocked') await block(deferredTasks.length ? 'agent_assessed_blocker' : 'task_prerequisite_blocked');
+      if (schedule.status === 'blocked') await block(deferredTasks.some(task => task.reason === 'worker_requested_deferral')
+        ? 'worker_requested_deferral' : deferredTasks.length ? 'agent_assessed_blocker' : 'task_prerequisite_blocked');
       else if (execution && ['needs_next_batch', 'awaiting_verification'].includes(schedule.status)) {
         if (tracking.needsReconciliation || recovery.state.requiresWorker || recovery.state.quota) await block('finite_plan_reconciliation');
         else {
@@ -251,9 +252,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       }
     }
     const fallbackTaskId = `roadmap-${createHash('sha256').update(roadmap).digest('hex').slice(0, 12)}`;
-    if (!compacting && !recovery.state.blocker && !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision)) {
-      deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision });
-      await block('agent_assessed_blocker');
+    const fallbackAssessment = !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision);
+    if (!compacting && !recovery.state.blocker && fallbackAssessment) {
+      deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision, ...fallbackAssessment });
+      await block(fallbackAssessment.reason || 'agent_assessed_blocker');
     }
     const resolving = !compacting && Boolean(recovery.state.blocker);
     if (resolving && !options.recoverBlocked && blockedPolicy !== 'resolve') {
@@ -276,6 +278,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const taskOwner = path.resolve(workdir, batch?.roadmap || roadmap);
     const criteriaRevision = batch?.criteriaRevision || plan?.tasks.find(task => task.task === taskId)?.criteriaRevision || tracking.requirementsRevision;
     const taskMemory = memoryFor(taskOwner);
+    const selectionContext = batch
+      ? 'Selection scope: controller-selected task. Defer this task with scheduling: "defer" when its next useful action belongs to another owner; the controller can select independent ready work.\n'
+      : 'Selection scope: broad roadmap. You select ready work within this roadmap; there is no per-task controller selection in this mode. If a prior next action only returns an ownership gate to the controller, select another ready contribution. If none exists, record scheduling: "defer" with the exact retry condition so the runner can enter recovery.\n';
     let taskContext = null;
     if (role === 'worker') {
       try { taskContext = taskMemory.prepare({ sessionId, taskId, criteriaRevision }); }
@@ -307,7 +312,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
       : resolving
       ? `${renderPrompt(RESOLVER_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: RESOLVER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Blocker reason: ${recovery.state.blocker.reason}\nResolution ID: ${resolutionId}\nResolver attempt: ${(recovery.state.blocker.failures?.length || 0) - (recovery.state.blocker.attemptStart || 0) + 1}/${resolverAttempts}\nPrevious resolver failures: ${JSON.stringify((recovery.state.blocker.failures || []).slice(-10))}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Deferred task evidence: ${JSON.stringify(deferredTasks)}\nFinite execution authority: ${JSON.stringify(options.executionPlan || options.deliveryPlan || null)}\nLoaded prompt revision: ${promptRevision}\n`
-      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+      : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${selectionContext}${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const implementationBefore = !compacting && !resolving && batch ? plan.observe(batch) : undefined;
     const before = tracking.contextBytes(iterationPrompt);
     const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision,
@@ -381,6 +386,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (workerOutcome?.outcome) {
       plan?.setContinuation(taskId, workerOutcome.outcome);
       await recovery.event('runner.task_result', { role, iteration, sessionId, task: taskId, outcome: workerOutcome.outcome.outcome,
+        ...(workerOutcome.outcome.scheduling ? { scheduling: workerOutcome.outcome.scheduling } : {}),
         resultFile: taskContext.resultFile, receiptCount: workerOutcome.outcome.receiptIds.length });
     } else if (taskContext && fs.existsSync(taskContext.resultFile)) {
       console.warn(workerOutcome.warning);
