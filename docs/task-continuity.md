@@ -57,6 +57,16 @@ and actual project paths rather than these illustrative values:
 ```
 
 Supported outcomes are `partial`, `implemented`, `verified`, `reused` and `blocked`.
+Optional `scheduling: "defer"` returns an ownership or prerequisite gate to the
+controller independently of that delivery outcome. Set `nextAction` to the exact
+condition permitting a retry (including the responsible owner when known). A
+`reused` result with no new receipts can defer a task without claiming acceptance.
+The controller skips it while independent tasks run; when no task is ready, it
+uses the existing recovery path. Broad-roadmap fallback has no per-task selector:
+the worker chooses another ready contribution itself, or defers the whole scope
+to recovery. Deferrals persist across restarts until criteria change or a resolver
+acknowledges a repair, just like agent-assessed blockers. `scheduling: "continue"`
+and omission preserve ordinary scheduling; there is no count-based cutoff.
 `nextAction` can also be a string. `completed`, `remaining`, `changedFiles`,
 `receiptIds` and `findings` are required arrays, empty when appropriate. Receipt IDs
 come from the check/review helpers below. Outcomes are agent statements about work;
