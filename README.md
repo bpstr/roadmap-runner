@@ -464,7 +464,7 @@ assessment remain agent assertions; prepared tests verify orchestration.
 
 ## Choose a custom progress path
 
-Source preservation is the default. Use `--progress-file` only when you want the
+Live roadmap checkboxes control completion in every mode. Use `--progress-file` when you want the
 bounded active state at a specific path:
 
 ```sh
@@ -477,12 +477,14 @@ Paths are resolved from the current workspace, not from the roadmap directory.
 The CLI option overrides the environment setting. With neither set, the internal
 `.roadmap-runner/.../progress.md` path is used.
 
-In all modes the roadmap is read-only to the worker. It reads the current source
-snapshot and the progress file, but puts its checklist, child tasks, batch plan, handoff, verification
-evidence, deferrals and status only in the progress file. Iteration history is
+Workers update verified acceptance checkboxes and concise Status in the **live
+roadmap**. Requirement prose, task IDs and acceptance criteria remain controller-owned;
+the **session snapshot** is read-only. The separate **progress file** holds the
+batch plan, handoff, verification evidence and deferrals. `--progress-file` changes
+that handoff location, not completion authority. Iteration history is
 runner-owned cold history, not an append-only section in active model context.
 Original gate IDs/criteria and stricter run limits remain authoritative; source
-instructions to update progress are redirected to this separate file.
+instructions to record execution history use this separate file.
 
 A missing progress file (and its parent directories) is created with an
 `IN_PROGRESS` scaffold. The worker derives its checklist from the source; the
@@ -496,6 +498,13 @@ successfully after pending reconciliation and worker verification; BLOCKED
 dispatches a resolver; STOPPED ends the runner. Open roadmap checkboxes prevent
 completion. Interrupted, capacity-only and quota-only sessions still require a
 successful worker before trusting their completion claims.
+
+To recover a run configured from older progress-only guidance, preserve its
+evidence and stopped state. Reconcile only live source checkmarks whose original
+criteria have already been verified against current inputs; leave partial,
+failed or stale acceptance open. Record this concrete correction before resuming
+with the same roadmap and progress path. Do not repeatedly redispatch completed
+work or weaken dependency prerequisites.
 
 The runner rejects a progress path that resolves to the source itself, including
 symlink/hard-link aliases. Missing, unreadable, non-file or oversized sources still
@@ -606,7 +615,7 @@ The worker prompt explicitly disables implementation subagents. Work advances th
 roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
---progress-file <path> override bounded progress-state path; workers never edit source
+--progress-file <path> override handoff path; live roadmap checkboxes control completion
 --timeout <duration>   default: 90m
 --resolver-timeout <duration> blocker recovery limit; default 10m
 --resolver-attempts <n> attempts per blocked episode; default 3, maximum 10
@@ -730,16 +739,16 @@ example-output/two.txt
 example-output/three.txt
 ```
 
-The same example can exercise preserved-source mode in the disposable workspace:
+The same example can use a custom handoff path in the disposable workspace:
 
 ```sh
 roadmap-runner roadmap.md --progress-file delivery-evidence.md
 ```
 
-A compliant run still takes three worker iterations, but the original three
-checkboxes stay unchanged and completion is recorded in `delivery-evidence.md`.
+A compliant run still takes three worker iterations, updates the three verified
+checkboxes in the live roadmap, and records evidence in `delivery-evidence.md`.
 Without the option, the same behavior uses the internal bounded progress path.
-The integration test checks source bytes as well as iteration count.
+The integration test checks requirement preservation as well as iteration count.
 
 The automated test does **not** call a live model. It runs the real Roadmap Runner
 process against `test/fixtures/mock-codex.js`, which completes exactly one checkbox

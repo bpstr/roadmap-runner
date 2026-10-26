@@ -5,6 +5,11 @@ Tracking file (progress / delivery evidence):
 {{PROGRESS_FILE}}
 Cold history: {{HISTORY_DIR}}
 
+The live roadmap's checkboxes control completion and dependencies. Reconcile only
+verified checkboxes and concise Status there; preserve controller-owned requirement
+prose, IDs and criteria. Session snapshots are read-only. The progress file holds
+evidence and handoff; a custom progress path does not change completion authority.
+
 Read repository instructions and preserve concurrent work, original acceptance,
 failed evidence and unfinished files. Automated AI checks use prepared fixtures
 and mocked transports. Never load credentials into tests or spend provider credits.

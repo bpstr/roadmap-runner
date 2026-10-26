@@ -142,6 +142,24 @@ test('default scheduling honors acceptance dependencies and carries scoped immut
   assert.match(fs.readFileSync(snapshot, 'utf8'), /\[ \] AUTH-01/, 'old snapshot is immutable');
 });
 
+test('progress completion and stale or incomplete outcomes cannot unlock source dependencies', t => {
+  const original = roadmap(section('AUTH-01'), section('AUTH-02', { dependencies: 'AUTH-01' }));
+  const f = fixture(t, original);
+  fs.writeFileSync(path.join(f.dir, 'progress.md'), 'Status: COMPLETE\n- [x] AUTH-01 verified\n');
+  for (const outcome of ['verified', 'partial', 'failed']) {
+    const plan = new RoadmapPlan(f.file, f.dir, f.tracking, { taskState: {
+      'AUTH-01': { outcome, criteriaRevision: 'stale-criteria', remaining: [] },
+    } });
+    assert.equal(plan.select().task, 'AUTH-01', outcome);
+    assert.equal(plan.tasks.every(task => task.complete), false);
+  }
+  const revision = f.plan.tasks[0].criteriaRevision;
+  fs.writeFileSync(f.file, roadmap(section('AUTH-01', { checked: true }), section('AUTH-02', { dependencies: 'AUTH-01' })));
+  const restarted = new RoadmapPlan(f.file, f.dir, f.tracking);
+  assert.equal(restarted.select().task, 'AUTH-02');
+  assert.equal(restarted.tasks[0].criteriaRevision, revision);
+});
+
 test('useful exact partial continuation keeps task affinity beyond old attempt limits and restarts', t => {
   const f = fixture(t);
   for (let attempt = 1; attempt <= 32; attempt++) {
