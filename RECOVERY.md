@@ -36,6 +36,10 @@ resolver; exit 0 records a successful scheduling boundary, not acceptance comple
 These states do not advance a queued roadmap. Task-local blockers allow independent
 ready work to continue. Quota and
 capacity rejections use the existing bounded waits and preserve the session role.
+Generic Codex HTTP 429 failures use the same capacity cooldown and retry budget;
+they do not dispatch a semantic resolver while that budget remains. Explicit
+usage-limit evidence retains the separate quota reset/deadline, and mixed
+authentication or other errors retain the ordinary failure policy.
 
 The resolver reads the roadmap, handoff and attempt evidence, repairs what it can
 within the user's authority, and verifies the affected behavior. To resume, it

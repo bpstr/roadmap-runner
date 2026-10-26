@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { capacityRetrySettings } from '../lib/runner.js';
+import { capacityRetrySettings, runClient } from '../lib/runner.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cli = path.join(root, 'bin/roadmap-runner.js');
@@ -21,13 +21,15 @@ const count = fs.existsSync('count') ? Number(fs.readFileSync('count')) + 1 : 1;
 fs.writeFileSync('count', String(count));
 fs.appendFileSync('models', JSON.stringify(process.argv) + '\\n');
 const mode = process.env.TEST_MODE;
-if (mode === 'recover' && count > 1) {
+if ((mode === 'recover' || mode === 'http429-recover') && count > 1) {
  const tracking = process.argv.at(-1).split('Tracking file (progress / delivery evidence):')[1].trim().split('\\n')[0];
  fs.writeFileSync(tracking, fs.readFileSync(tracking, 'utf8').replace('Status: IN_PROGRESS', 'Status: COMPLETE'));
  console.log(JSON.stringify({type:'item.completed',item:{type:'agent_message',text:'RECOVERED'}}));
 } else {
- console.log(JSON.stringify({type:'error',message: mode === 'ordinary' ? 'Authentication failed' : 'Selected model is at capacity. Please try a different model.'}));
- if (mode === 'mixed') console.log(JSON.stringify({type:'turn.failed',error:{message:'Authentication failed'}}));
+ const message = mode === 'ordinary' ? 'Authentication failed' : mode.startsWith('http429') ? 'exceeded retry limit, last status: 429 Too Many Requests' : 'Selected model is at capacity. Please try a different model.';
+ console.log(JSON.stringify(mode === 'status429' ? {type:'turn.failed',error:{message:'request rejected',status_code:429}} : {type:'error',message}));
+ if (mode === 'mixed' || mode === 'http429-mixed') console.log(JSON.stringify({type:'turn.failed',error:{message:'Authentication failed'}}));
+ if (mode === 'http429-quota') console.log(JSON.stringify({type:'turn.failed',error:{message:'weekly usage limit',code:'usage_limit_reached'}}));
  process.stderr.write('OAuth refresh warning\\n');
  process.exitCode = 1;
 }
@@ -69,7 +71,39 @@ test('persistent capacity errors exhaust finite exponential retries', (t) => {
   assert.match(fs.readFileSync(path.join(f.temp, 'roadmap.md'), 'utf8'), /IN_PROGRESS/);
 });
 
-for (const mode of ['ordinary', 'mixed']) {
+test('generic Codex 429 recovers after cooldown without a resolver or model change', (t) => {
+  const f = fixture(t, 'http429-recover');
+  const result = spawnSync(process.execPath, f.args, f.options);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /retry 1\/2 in 1s \(same model\)/);
+  const calls = fs.readFileSync(path.join(f.temp, 'models'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(args => args.includes('unchanged-model') && /^Runner role: WORKER$/m.test(args.at(-1))));
+});
+
+test('persistent generic 429 preserves work after the finite cooldown budget', (t) => {
+  const f = fixture(t, 'http429');
+  const result = spawnSync(process.execPath, f.args, f.options);
+  assert.equal(result.status, 75, result.stderr);
+  assert.match(result.stdout, /retry 2\/2 in 2s/);
+  assert.equal(fs.readFileSync(path.join(f.temp, 'count'), 'utf8'), '3');
+  assert.match(fs.readFileSync(path.join(f.temp, 'roadmap.md'), 'utf8'), /IN_PROGRESS/);
+});
+
+for (const mode of ['status429', 'http429-quota']) {
+  test(`${mode} classification preserves quota precedence`, async (t) => {
+    const f = fixture(t, mode);
+    const prior = process.env.TEST_MODE;
+    process.env.TEST_MODE = mode;
+    t.after(() => { if (prior === undefined) delete process.env.TEST_MODE; else process.env.TEST_MODE = prior; });
+    const result = await runClient({client:'codex',executable:path.join(f.temp,'mock.js'),prompt:'prepared transport fixture',workdir:f.temp,model:'unchanged-model',timeoutMs:5000});
+    assert.equal(result.code, 1);
+    assert.equal(result.retryableCapacity, mode === 'status429');
+    assert.equal(Boolean(result.usageLimit), mode === 'http429-quota');
+  });
+}
+
+for (const mode of ['ordinary', 'mixed', 'http429-mixed']) {
   test(`${mode} failure dispatches a resolver without capacity retries`, (t) => {
     const f = fixture(t, mode);
     const result = spawnSync(process.execPath, f.args, f.options);

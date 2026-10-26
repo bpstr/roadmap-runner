@@ -797,14 +797,15 @@ Provider-specific behavior lives in small adapters under `lib/clients.js`. The r
 
 MIT.
 
-## Temporary Codex capacity failures
+## Temporary Codex capacity and HTTP 429 failures
 
-If Codex exits with code 1 and reports only the recognized "Selected model is at
-capacity" error, the runner waits five minutes and retries the same model. It
+If Codex exits with code 1 and reports only "Selected model is at capacity" or a
+generic HTTP 429 rejection, the runner waits five minutes and retries the same model. It
 allows ten retries after the initial failed attempt, then exits with code 75.
 Partial work and progress checkboxes are preserved; capacity does not mark the
 delivery state blocked or complete. Recognized usage limits use the separate durable
-quota pause below. Other worker errors stop without retrying. Capacity recovery
+quota pause below, even when a 429 also appears. An unrelated error in the same
+session retains the ordinary blocker/resolver policy. Capacity recovery
 applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Retry generic Codex HTTP 429 failures through the existing bounded capacity cooldown instead of immediately dispatching blocker resolvers. Preserve explicit quota pauses, mixed-error handling, the model and unfinished work.
+
 ## 0.12.4 — 2026-10-26
 
 - Park explicitly deferred roadmap passes, continue later queued work and revisit only after changed criteria, declared prerequisite inputs or a targeted resolver acknowledgment. Preserve unfinished acceptance and exit exhausted queues with a deferred summary.
