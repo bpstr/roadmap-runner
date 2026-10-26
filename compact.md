@@ -10,7 +10,7 @@ Tracking file (progress / delivery evidence):
 
 Tracking mode: ROADMAP_CHECKBOXES
 
-Live roadmap checkboxes control completion; session snapshots are read-only.
+The live roadmap's checkboxes control completion; session snapshots are read-only.
 Compact only the separate progress handoff and preserve the live roadmap's
 requirements and completion state. A progress checklist cannot complete source tasks.
 

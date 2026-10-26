@@ -11,7 +11,8 @@
     "retainedEvidence": "PR 14 passed all six existing prepared CI matrix jobs on d909783; issue 11 recovery behavior is already covered by release-0.12.3 implementation and CI evidence. Older local branch implementations are retained in main with later recovery and release corrections.",
     "completion": "New deterministic regressions, build, CLI help and whitespace pass; required hosted CI passes before merge.",
     "releaseGate": "The existing GitHub workflow runs the prepared test suite and package check on Node 20/22/24 for Ubuntu and macOS. No release or live provider run is requested.",
-    "expectedCost": "One build, two new prepared regressions, and the existing hosted CI gate; no provider calls, credentials or browser sessions."
+    "expectedCost": "One build, two new prepared regressions, and the existing hosted CI gate; no provider calls, credentials or browser sessions.",
+    "retestPolicy": "Retain both new passing regressions: neither dispatches a resolver or compactor. Recheck only the failed queue-recovery selector after the prompt wording correction. No local broad rerun; the existing explicit six-job hosted CI merge gate runs on the corrected head."
   },
   "localResults": {
     "buildExitCode": 0,
@@ -25,7 +26,15 @@
     "cliHelp": "--progress-file describes the handoff path and live roadmap completion.",
     "whitespace": "git diff --check passed.",
     "logs": "/tmp/roadmap-runner-merge-20261026",
-    "inference": "Prepared local clients only; no provider calls, credentials or live fixture recording."
+    "inference": "Prepared local clients only; no provider calls, credentials or live fixture recording.",
+    "recoveryRegression": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "log": "recovery-queue-corrected.log",
+      "scope": "Previously failing authorized recovery preserves the blocked source/progress FIFO and retained receipts selector."
+    }
   },
   "branchReconciliation": {
     "alreadyAncestors": [
@@ -41,5 +50,15 @@
       "preserve/stale-main-0121": "Equivalent status and split-dependency changes are incorporated in 8e45b36, with subsequent fixes retained."
     },
     "preservation": "Historical branch references and worktrees are retained; no stale branch tree replaces newer main behavior."
+  },
+  "hostedFailure": {
+    "run": "https://github.com/bpstr/roadmap-runner/actions/runs/40248552962",
+    "jobsFailed": 6,
+    "distinctFailingSelectors": 1,
+    "selector": "authorized recovery preserves the blocked source/progress FIFO and retained receipts",
+    "cause": "New resolver prose began with Live roadmap. The prepared client uses a multiline-capable Live roadmap header regex and parsed that prose as a source path. Rephrased resolver/compactor guidance to keep prose distinct from the existing header. Runtime code and acceptance remain unchanged.",
+    "reproducedLocally": "recovery-queue-1.log",
+    "preservedFullLog": "/tmp/roadmap-runner-merge-20261026/ci-failed.log",
+    "correctedLocalResult": "recovery-queue-corrected.log passed."
   }
 }

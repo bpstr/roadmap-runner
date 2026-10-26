@@ -5,7 +5,7 @@ Tracking file (progress / delivery evidence):
 {{PROGRESS_FILE}}
 Cold history: {{HISTORY_DIR}}
 
-Live roadmap checkboxes control completion and dependencies. Reconcile only
+The live roadmap's checkboxes control completion and dependencies. Reconcile only
 verified checkboxes and concise Status there; preserve controller-owned requirement
 prose, IDs and criteria. Session snapshots are read-only. The progress file holds
 evidence and handoff; a custom progress path does not change completion authority.
