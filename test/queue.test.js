@@ -92,6 +92,59 @@ test('queued roadmaps advance in FIFO order, preserve separate progress, and kee
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
 });
 
+test('live source completion survives restart, unlocks a dependent once and advances the preserved queue', async t => {
+  const f = fixture(t); const [first, second] = f.roadmaps;
+  const source = '# Completion contract\nStatus: IN_PROGRESS\n\n' +
+    '### Task DOC-01 Parent\n- [ ] DOC-01 Verify parent fixture.\nDependencies: none.\nAcceptance: Parent fixture passes.\n\n' +
+    '### Task DOC-02 Dependent\n- [ ] DOC-02 Verify dependent fixture.\nDependencies: DOC-01.\nAcceptance: Dependent fixture passes.\n';
+  fs.writeFileSync(first, source);
+  const progress = [path.join(f.workspace, 'parent-evidence.md'), path.join(f.workspace, 'next-evidence.md')];
+  fs.writeFileSync(f.worker, `#!${process.execPath}
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const prompt = process.argv.at(-1);
+assert.ok(!prompt.includes('Runner role: RESOLVER'), 'no recovery redispatch for completed work');
+const file = JSON.parse(prompt.match(/^Live roadmap[^:]*: (.+)$/m)[1]);
+const progress = prompt.match(/Tracking file \\(progress \\/ delivery evidence\\):\\s*\\n\\s*([^\\n]+)/)[1].trim();
+let source = fs.readFileSync(file, 'utf8');
+if (source.includes('DOC-01')) {
+  const task = source.includes('- [ ] DOC-01') ? 'DOC-01' : 'DOC-02';
+  const snapshot = fs.readFileSync(JSON.parse(prompt.match(/^Selected original task snapshot: (.+)$/m)[1]), 'utf8');
+  assert.ok(snapshot.includes('- [ ] ' + task), 'scheduler selected the expected original task');
+  fs.appendFileSync(file + '.tasks', task + '\\n');
+  source = source.replace('- [ ] ' + task, '- [x] ' + task);
+  fs.writeFileSync(file, source);
+  fs.writeFileSync(progress, 'Status: ' + (task === 'DOC-01' ? 'STOPPED' : 'COMPLETE') + '\\nParent fixture evidence retained.\\n');
+} else {
+  fs.appendFileSync(file + '.tasks', 'next\\n');
+  fs.writeFileSync(file, source.replace('- [ ]', '- [x]'));
+  fs.writeFileSync(progress, 'Status: COMPLETE\\nNext queued source verified.\\n');
+}
+`);
+  const queue = [{ roadmap: second, progressFile: progress[1] }];
+  const run = await f.start(queue, undefined, { progressFile: progress[0], sessionContinuation: false });
+  const stopped = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
+  assert.equal(stopped.reason, 'stopped');
+  assert.deepEqual(stopped.queue.map(item => item.state), ['stopped', 'pending']);
+  assert.equal(fs.readFileSync(first + '.tasks', 'utf8'), 'DOC-01\n');
+  assert.equal(fs.existsSync(second + '.tasks'), false);
+  const history = fs.readFileSync(progress[0], 'utf8');
+  fs.writeFileSync(progress[0], history.replace('Status: STOPPED', 'Status: IN_PROGRESS'));
+  const manager = new RunManager(f.workspace, f.registry);
+  const resumed = await manager.start({ workspace: f.workspace, roadmap: first, queue,
+    progressFile: progress[0], sessionContinuation: false, notify: 'off' }, { executable: f.worker });
+  f.runs.push(resumed.id);
+  const final = await wait(async () => { const s = await manager.status(resumed.id); return s.processState === 'exited' && s; });
+  assert.equal(final.exitCode, 0, final.output || final.reason);
+  assert.deepEqual(final.queue.map(item => item.state), ['complete', 'complete']);
+  assert.deepEqual(final.queue.map(item => item.progressFile), progress.map(file => fs.realpathSync(file)));
+  assert.equal(fs.readFileSync(first + '.tasks', 'utf8'), 'DOC-01\nDOC-02\n');
+  assert.equal(fs.readFileSync(second + '.tasks', 'utf8'), 'next\n');
+  assert.equal(fs.readFileSync(first, 'utf8').replaceAll('[x]', '[ ]'), source);
+  assert.match(fs.readFileSync(progress[0], 'utf8'), /Parent fixture evidence retained/);
+  assert.equal((await f.manager.status(run.id)).reason, 'stopped', 'original stopped run remains recorded');
+});
+
 test('default Codex continuation resumes within each roadmap and clears before the next queue entry', async t => {
   const f = fixture(t); const [first, second] = f.roadmaps;
   fs.writeFileSync(f.worker, `#!${process.execPath}

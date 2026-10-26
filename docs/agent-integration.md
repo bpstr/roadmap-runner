@@ -8,6 +8,12 @@ SDK. Installation alone does not edit app settings or start a run.
 These commands require version `0.8.0` or newer. If the published npm version is
 older, install from GitHub `main` as described in the [README](../README.md#install).
 
+Live roadmap checkboxes control task completion, dependency unlocking and queue
+advancement. Workers update verified checkboxes and concise Status there while
+preserving controller-owned requirement prose, IDs and criteria. Session snapshots
+are read-only. The separate progress file stores evidence and handoff;
+`--progress-file` and MCP `progressFile` change its location, not completion authority.
+
 ```sh
 roadmap-runner setup --app codex --app claude --app grok --scope project --dry-run
 roadmap-runner setup --app codex --scope project

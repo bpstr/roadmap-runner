@@ -48,7 +48,7 @@ Management options:
 
 Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
-  --progress-file <path> Override the bounded progress-state path; workers never edit source
+  --progress-file <path> Override handoff path; live roadmap checkboxes control completion
   --execution-plan <path> Select at most three finite outcomes from an existing progress authority
   --timeout <duration>   Per-run timeout. Default: 90m
   --resolver-timeout <duration> Blocker resolver timeout; default 10m

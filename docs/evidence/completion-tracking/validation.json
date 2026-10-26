@@ -1,0 +1,45 @@
+{
+  "status": "local_passed",
+  "issues": [
+    11,
+    12,
+    13
+  ],
+  "verificationPlan": {
+    "changedBehavior": "Documentation and CLI help describe live roadmap completion; deterministic regressions cover restart, dependency advancement, preserved queue paths and rejection of progress-only or stale outcomes.",
+    "affectedChecks": "Build TypeScript once; run only the new progress-completion task-selection and live-source queue regressions. Check CLI help and whitespace.",
+    "retainedEvidence": "PR 14 passed all six existing prepared CI matrix jobs on d909783; issue 11 recovery behavior is already covered by release-0.12.3 implementation and CI evidence. Older local branch implementations are retained in main with later recovery and release corrections.",
+    "completion": "New deterministic regressions, build, CLI help and whitespace pass; required hosted CI passes before merge.",
+    "releaseGate": "The existing GitHub workflow runs the prepared test suite and package check on Node 20/22/24 for Ubuntu and macOS. No release or live provider run is requested.",
+    "expectedCost": "One build, two new prepared regressions, and the existing hosted CI gate; no provider calls, credentials or browser sessions."
+  },
+  "localResults": {
+    "buildExitCode": 0,
+    "tests": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "retainedTaskSelection": "completion-tests-1.log: progress completion and stale or incomplete outcomes cannot unlock source dependencies passed; its inputs have not changed.",
+    "queueRegression": "completion-tests-final.log: restart, dependent selection exactly once and preserved custom FIFO paths passed.",
+    "initialFixtureFailure": "completion-tests-1.log: queue regression waited only for exited, while stopped managed runs report stopped. Corrected the terminal-state predicate without changing runtime behavior. Original failure log retained.",
+    "cliHelp": "--progress-file describes the handoff path and live roadmap completion.",
+    "whitespace": "git diff --check passed.",
+    "logs": "/tmp/roadmap-runner-merge-20261026",
+    "inference": "Prepared local clients only; no provider calls, credentials or live fixture recording."
+  },
+  "branchReconciliation": {
+    "alreadyAncestors": [
+      "codex/failed-attempt-loops",
+      "codex/preserve-local-main-56ae2ee",
+      "codex/reliable-roadmap-recovery",
+      "release/0.12.2"
+    ],
+    "retainedChanges": {
+      "fix/ownership-return-deferral": "Merged through PR 14 at 61aad1d after six CI jobs passed.",
+      "fix/queue-continuation-state-paths": "Controller-derived continuation state assertions from b5030e1 are present in current test/queue.test.js.",
+      "fix/meaningful-session-checkpoints": "README, prompt and progress-test changes match release commit a6f2357; remaining branch differences are subsequent recovery/release changes.",
+      "preserve/stale-main-0121": "Equivalent status and split-dependency changes are incorporated in 8e45b36, with subsequent fixes retained."
+    },
+    "preservation": "Historical branch references and worktrees are retained; no stale branch tree replaces newer main behavior."
+  }
+}

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align README, CLI help and agent guidance with live roadmap checkbox completion; clarify custom handoff paths and recovery from older progress-only instructions.
+
 - Honor explicit worker task deferrals independently of delivery outcomes. Rotate controller-selected tasks or enter recovery for a deferred broad roadmap, and clarify ownership-return handling without adding count-based loop cutoffs.
 
 ## 0.12.3 — 2026-10-25
