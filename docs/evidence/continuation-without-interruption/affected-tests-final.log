@@ -1,0 +1,185 @@
+TAP version 13
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-Ae9ey9
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-Ae9ey9/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-Ae9ey9/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-Ae9ey9/.roadmap-runner/roadmap-feba258e26e9/history (archived snapshots; not loaded by default)
+# Timeout:   5s per run
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-Ae9ey9/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-29T08:42:54.599Z =====
+# Subtest: ownership deferral persists without receipts and can be reconsidered after acknowledged repair
+ok 1 - ownership deferral persists without receipts and can be reconsidered after acknowledged repair
+  ---
+  duration_ms: 9.679291
+  type: 'test'
+  ...
+# Subtest: unknown scheduling values are rejected and interrupted deferrals do not suppress work
+ok 2 - unknown scheduling values are rejected and interrupted deferrals do not suppress work
+  ---
+  duration_ms: 5.591667
+  type: 'test'
+  ...
+# Subtest: resolver retry acknowledgments require a bounded unique list of exact task IDs
+ok 3 - resolver retry acknowledgments require a bounded unique list of exact task IDs
+  ---
+  duration_ms: 5.401208
+  type: 'test'
+  ...
+# Subtest: reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts
+ok 4 - reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts
+  ---
+  duration_ms: 4.740917
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-29T08:42:55.134Z =====
+# Iteration 2 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-m9dCKy
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-m9dCKy/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-m9dCKy/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-m9dCKy/.roadmap-runner/roadmap-c584234b12ba/history (archived snapshots; not loaded by default)
+# Timeout:   5s per run
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-m9dCKy/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-29T08:42:55.202Z =====
+# Subtest: reused ownership return rotates to independent work before deferring the roadmap
+ok 5 - reused ownership return rotates to independent work before deferring the roadmap
+  ---
+  duration_ms: 611.391833
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-29T08:42:55.463Z =====
+# Iteration 2 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-N6nf0N
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-N6nf0N/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-N6nf0N/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-N6nf0N/.roadmap-runner/roadmap-de15082ee628/history (archived snapshots; not loaded by default)
+# Timeout:   5s per run
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-N6nf0N/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-29T08:42:55.531Z =====
+# Subtest: partial ownership return rotates to independent work before deferring the roadmap
+ok 6 - partial ownership return rotates to independent work before deferring the roadmap
+  ---
+  duration_ms: 325.878542
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Subtest: broad roadmap ownership return defers the scope instead of repeating the synthetic task
+ok 7 - broad roadmap ownership return defers the scope instead of repeating the synthetic task
+  ---
+  duration_ms: 226.919167
+  type: 'test'
+  ...
+# Subtest: only a worker-declared complete prerequisite scope can permit a deferred retry
+ok 8 - only a worker-declared complete prerequisite scope can permit a deferred retry
+  ---
+  duration_ms: 6.16125
+  type: 'test'
+  ...
+# Subtest: a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes
+ok 9 - a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes
+  ---
+  duration_ms: 681.022417
+  type: 'test'
+  ...
+# Subtest: a structured explicit deferral with a BLOCKED handoff advances under park policy
+ok 10 - a structured explicit deferral with a BLOCKED handoff advances under park policy
+  ---
+  duration_ms: 609.249791
+  type: 'test'
+  ...
+# Subtest: a broad explicit deferral with a BLOCKED handoff advances under park policy
+ok 11 - a broad explicit deferral with a BLOCKED handoff advances under park policy
+  ---
+  duration_ms: 664.170542
+  type: 'test'
+  ...
+# Subtest: an explicit source BLOCKED gate still parks an otherwise deferred queue
+ok 12 - an explicit source BLOCKED gate still parks an otherwise deferred queue
+  ---
+  duration_ms: 380.770125
+  type: 'test'
+  ...
+# Subtest: a genuine blocker alongside an ownership deferral still parks the queue
+ok 13 - a genuine blocker alongside an ownership deferral still parks the queue
+  ---
+  duration_ms: 394.438458
+  type: 'test'
+  ...
+# Subtest: an explicit STOPPED handoff still stops an otherwise deferred queue
+ok 14 - an explicit STOPPED handoff still stops an otherwise deferred queue
+  ---
+  duration_ms: 538.786917
+  type: 'test'
+  ...
+# Subtest: unchanged deferred acceptance exits once with a deferred summary and survives a new managed run
+ok 15 - unchanged deferred acceptance exits once with a deferred summary and survives a new managed run
+  ---
+  duration_ms: 1032.160916
+  type: 'test'
+  ...
+# Subtest: an entirely deferred queue makes one pass without resolver churn or repeated dispatch
+ok 16 - an entirely deferred queue makes one pass without resolver churn or repeated dispatch
+  ---
+  duration_ms: 423.642041
+  type: 'test'
+  ...
+# Subtest: broad roadmap deferral advances and reopens only after declared prerequisite changes
+ok 17 - broad roadmap deferral advances and reopens only after declared prerequisite changes
+  ---
+  duration_ms: 404.407291
+  type: 'test'
+  ...
+# Subtest: changed criteria permit a new deferred pass without manufacturing acceptance
+ok 18 - changed criteria permit a new deferred pass without manufacturing acceptance
+  ---
+  duration_ms: 482.276625
+  type: 'test'
+  ...
+# Subtest: unrelated source edits and undeclared owner changes leave deferred task criteria parked
+ok 19 - unrelated source edits and undeclared owner changes leave deferred task criteria parked
+  ---
+  duration_ms: 429.934959
+  type: 'test'
+  ...
+# Subtest: an unrelated resolver repair retains an unchanged ownership deferral
+ok 20 - an unrelated resolver repair retains an unchanged ownership deferral
+  ---
+  duration_ms: 508.431458
+  type: 'test'
+  ...
+# Subtest: a resolver can explicitly acknowledge only the named deferred task for reassessment
+ok 21 - a resolver can explicitly acknowledge only the named deferred task for reassessment
+  ---
+  duration_ms: 689.967416
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8672.676583

@@ -28,6 +28,14 @@ and unchanged implementation/dependency inputs. Note churn and new sessions do
 not establish a changed condition. Reuse compatible passing receipts.
 
 2. Resolve the cause.
+Complete available local prerequisites within the authorized outcome at their
+existing owners. Owner labels, artifact generation and source-pin reconciliation
+are not themselves requests for new user approval. Use an authorized independent
+review process when required, preserving its independently constructed expectation;
+an explicitly human approval or missing authority remains a real gate. If the
+changed authority or supplied prerequisite already makes a finite task ready,
+verify that scheduling repair and hand it to a worker instead of completing the
+whole implementation inside this bounded recovery invocation.
 Make an authorized repair, supply an available prerequisite, or revise the next
 finite attempt based on evidence. Verify only the affected behavior with the
 smallest permitted check. Confirm the edit exited successfully and changed a

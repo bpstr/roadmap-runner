@@ -76,6 +76,8 @@ try {
   heartbeat = setInterval(persist, 2000);
   let result;
   while (record.queueIndex < record.queue.length) {
+    // Even a lifecycle that returns without dispatch must service stop/control I/O.
+    await new Promise<void>(resolve => setImmediate(resolve));
     if (controller.signal.aborted) { result = { reason: 'stopped', code: 130 }; break; }
     const item = record.queue[record.queueIndex];
     const firstDispatch = item.state === 'pending';

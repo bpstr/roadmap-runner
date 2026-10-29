@@ -1,0 +1,70 @@
+{
+  "plan": {
+    "changedBehavior": "Source-complete broad deferrals stay parked until a known input/completion transition; queue boundaries service stop/control I/O.",
+    "selectors": [
+      "npm run build (retained; TypeScript inputs unchanged since worker-yield build)",
+      "three new readiness cases (3 passed; retained)",
+      "queue/ownership deferral and managed queue tests, excluding the three retained new cases"
+    ],
+    "wideningReason": "Readiness is shared by broad and structured deferrals and queue selection; the worker yield affects queue/stop boundaries. These three files cover those paths and the pre-existing uncommitted lifecycle fix. Other application and full-suite checks are unnecessary.",
+    "completion": "New readiness regressions plus affected prepared deferral, queue, stop and restart cases pass; no unchanged check repeated.",
+    "expectedSeconds": 35,
+    "providerCalls": 0
+  },
+  "retainedBuild": {
+    "log": "build-before-fix.log",
+    "exit": 0,
+    "reason": "No TypeScript inputs changed afterward; library JS readiness is executed directly by tests."
+  },
+  "initialRegression": {
+    "exit": 1,
+    "tests": 1,
+    "pass": 0,
+    "fail": 1,
+    "log": "regression-before-fix.log",
+    "failure": "Prepared run did not finish; cleanup succeeded with the worker event-loop yield."
+  },
+  "intermediateAssertionFailure": {
+    "log": "readiness-tests.log",
+    "failure": "Structured source completion legitimately returns complete; incorrect expectation replaced with direct completion-baseline test."
+  },
+  "newReadinessCases": {
+    "exit": 0,
+    "tests": 3,
+    "pass": 3,
+    "fail": 0,
+    "skipped": 0,
+    "log": "readiness-tests-corrected.log"
+  },
+  "fullSuite": "not_run; no suite-wide impact",
+  "affectedChecks": {
+    "runtime": "Node24.19.0",
+    "exit": 0,
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "skipped": 0,
+    "log": "affected-tests.log",
+    "retainedNewTestsExcluded": 3
+  },
+  "combinedDistinctCases": {
+    "pass": 38,
+    "fail": 0
+  },
+  "sourceHashes": {
+    "src/worker.ts": "6e206a52b0594d47e220353cd0d6647327d23be6d292dd36c0275ff2aca6f5ca",
+    "src/lifecycle.ts": "11b2feb44c26ebb11b7c426b275c4b5df4bcec95f1177bf48649e2fc7c93d26f",
+    "lib/task-deferral.js": "f6e12a0f4e05ecb98fb5b81f306768888ed092e92fa714f28d297a47749f1a0d",
+    "test/queue-deferral.test.js": "47f1ef1401dea529130677636f04803a99ae5b73ada9f07b53fe891d459d9c35"
+  },
+  "manualResume": {
+    "roadmap": "005",
+    "state": "running",
+    "remainingQueue": [
+      "006",
+      "002 revisit",
+      "007",
+      "008"
+    ]
+  }
+}

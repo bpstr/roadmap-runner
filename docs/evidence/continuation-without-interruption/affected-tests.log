@@ -1,0 +1,104 @@
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-MTmKcy
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-MTmKcy/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-MTmKcy/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-MTmKcy/.roadmap-runner/roadmap-08680d9fc231/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-MTmKcy/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T08:40:49.157Z =====
+✔ ownership deferral persists without receipts and can be reconsidered after acknowledged repair (7.021833ms)
+✔ unknown scheduling values are rejected and interrupted deferrals do not suppress work (2.772ms)
+✔ resolver retry acknowledgments require a bounded unique list of exact task IDs (3.146542ms)
+✔ reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts (3.199833ms)
+Iteration 1 completed.
+
+===== iteration 2 | 2026-10-29T08:40:49.782Z =====
+Iteration 2 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-mRUQX2
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-mRUQX2/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-mRUQX2/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-mRUQX2/.roadmap-runner/roadmap-0fbbbf7a4a7f/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-mRUQX2/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T08:40:49.837Z =====
+✔ reused ownership return rotates to independent work before deferring the roadmap (684.289583ms)
+Iteration 1 completed.
+
+===== iteration 2 | 2026-10-29T08:40:50.182Z =====
+Iteration 2 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-AJx28Y
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-AJx28Y/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-AJx28Y/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-AJx28Y/.roadmap-runner/roadmap-f63ea33265da/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-AJx28Y/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T08:40:50.236Z =====
+✔ partial ownership return rotates to independent work before deferring the roadmap (398.074625ms)
+Iteration 1 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+✔ broad roadmap ownership return defers the scope instead of repeating the synthetic task (335.665083ms)
+✔ only a worker-declared complete prerequisite scope can permit a deferred retry (5.65475ms)
+✔ a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes (654.349584ms)
+✖ a structured explicit deferral with a BLOCKED handoff advances under park policy (632.50925ms)
+✔ a broad explicit deferral with a BLOCKED handoff advances under park policy (563.644875ms)
+✔ an explicit source BLOCKED gate still parks an otherwise deferred queue (473.020459ms)
+✔ a genuine blocker alongside an ownership deferral still parks the queue (500.516083ms)
+✔ unchanged deferred acceptance exits once with a deferred summary and survives a new managed run (835.401917ms)
+✔ an entirely deferred queue makes one pass without resolver churn or repeated dispatch (565.104792ms)
+✔ broad roadmap deferral advances and reopens only after declared prerequisite changes (545.400708ms)
+✔ changed criteria permit a new deferred pass without manufacturing acceptance (640.945584ms)
+✔ unrelated source edits and undeclared owner changes leave deferred task criteria parked (559.263959ms)
+✔ an unrelated resolver repair retains an unchanged ownership deferral (677.2845ms)
+✔ a resolver can explicitly acknowledge only the named deferred task for reassessment (743.745625ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9010.933875
+
+✖ failing tests:
+
+test at test/queue-deferral.test.js:110:36
+✖ a structured explicit deferral with a BLOCKED handoff advances under park policy (632.50925ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/queue-deferral.test.js:117:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

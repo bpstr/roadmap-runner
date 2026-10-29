@@ -1,0 +1,60 @@
+{
+  "plan": {
+    "changedBehavior": "Structured ownership deferral must advance ready independent work despite legacy BLOCKED progress; keep actual source and task blockers authoritative.",
+    "selectors": [
+      "npm run build",
+      "node --test --test-concurrency=1 test/queue-deferral.test.js test/ownership-deferral.test.js"
+    ],
+    "completion": "Build and affected prepared queue/deferral cases pass; source-level/genuine block guards remain effective.",
+    "scope": "Existing fake CLI transports only; no credentials, live provider calls or full suite.",
+    "expectedSeconds": 60
+  },
+  "buildExit": 0,
+  "affectedTestExit": 1,
+  "counts": {},
+  "elapsedSeconds": 9.08,
+  "fullLog": "docs/evidence/continuation-without-interruption/affected-tests.log",
+  "initialAttempt": {
+    "exit": 1,
+    "runtime": "Node26.4.0",
+    "counts": {
+      "tests": 20,
+      "pass": 19,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "failure": "Structured deferral progressed but stale in-memory status emitted one blocked attention event.",
+    "log": "docs/evidence/continuation-without-interruption/affected-tests.log"
+  },
+  "rerunReason": "Normalization now updates dispatch/attention contents and status; use installed Node24.19.0 runtime rather than shell Node26.4.0. Rerun only the two affected prepared queue/deferral files, not the full suite.",
+  "finalBuildExit": 0,
+  "finalAttempt": {
+    "runtime": "Node24.19.0",
+    "exit": 0,
+    "counts": {
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "elapsedSeconds": 8.75,
+    "log": "docs/evidence/continuation-without-interruption/affected-tests-final.log"
+  },
+  "localInstall": {
+    "exit": 0,
+    "path": "/Users/bpstr/.nvm/versions/node/v24.19.0/lib/node_modules/@bpstr/roadmap-runner",
+    "resolvedPath": "/Users/bpstr/Github/roadmap-runner",
+    "published": false
+  },
+  "diffCheckExit": 0,
+  "finalDiffChecks": {
+    "runner": 0,
+    "assignDirection": 0
+  },
+  "operationalRecord": "docs/evidence/continuation-without-interruption/operational.json",
+  "fullSuite": "not_run; affected queue/deferral tests cover changed control path"
+}

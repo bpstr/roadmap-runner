@@ -247,7 +247,9 @@ existing recovery workflow and holds the queue until it completes.
 
 An explicit worker `scheduling: "defer"` can exhaust the current roadmap pass
 without completing its acceptance. The queue parks that entry as `deferred` and
-continues later entries. It revisits deferred entries only after changed criteria,
+continues later entries. A legacy `BLOCKED` handoff alongside explicit task
+deferrals does not stop independent work; source-level blocks and genuine
+unresolved blockers retain their recovery policy. It revisits deferred entries only after changed criteria,
 changed worker-declared prerequisite inputs, or a resolver's targeted repair
 acknowledgment. A new session or unrelated completed roadmap is insufficient.
 When no pending or eligible work remains, the run exits once with code 0 and

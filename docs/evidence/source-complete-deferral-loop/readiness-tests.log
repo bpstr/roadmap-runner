@@ -1,0 +1,32 @@
+✖ a source-complete structured deferral advances once and stays parked across restarts (864.231416ms)
+✔ a source-complete broad deferral advances once and stays parked across restarts (488.706041ms)
+✔ completion after deferral permits one reassessment, while a legacy completed source stays parked (548.282875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2024.293167
+
+✖ failing tests:
+
+test at test/queue-deferral.test.js:112:36
+✖ a source-complete structured deferral advances once and stays parked across restarts (864.231416ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'complete'
+  - 'deferred'
+  
+      at TestContext.<anonymous> (file://<checkout>/test/queue-deferral.test.js:115:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'complete',
+    expected: 'deferred',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

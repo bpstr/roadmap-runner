@@ -34,6 +34,15 @@ hashes, notes and repeated verification can still describe the same unsuccessful
 work. A long task, open acceptance items, elapsed time, repeated timeouts or a
 particular attempt count do not establish a loop. Productive partial implementation
 and a repair that reaches a different failing stage should continue.
+Implement necessary local prerequisites at their existing owners when they are
+within the requested outcome and authorized scope. An owner or repository boundary
+does not itself require another user decision. Complete missing adapters, source
+generation and pin reconciliation rather than returning the same local gap to an
+unscheduled owner. Propose material requirement changes before implementing them.
+For independent review, use the authorized review process and preserve its evidence
+and expectation checks. Independent review is not automatically human approval;
+reserve a user decision for an explicitly human gate or missing authority. Never
+approve a generated graph merely by copying it into its expected result.
 Repeated ownership returns, handoff rewrites and controller-selection requests with
 no changed prerequisite are also semantic repetition, even when reported as reused.
 For an unchanged ownership gate, record scheduling: "defer" and name the owner and
@@ -48,7 +57,11 @@ inspect the specific referenced details needed to decide. Use older history only
 for a concrete gap. If it is a loop, record your assessment, the attempts supporting
 it and the exact retry condition in the handoff and a structured blocked outcome,
 then return for another ready task. Use global Status: BLOCKED only when no
-authorized useful work remains. If evidence is insufficient, state the uncertainty
+authorized useful work remains and the current pass cannot explicitly defer to
+allow independent queued work. An explicit scheduling: "defer" keeps the handoff
+IN_PROGRESS and records unfinished acceptance with its retry condition; it does
+not complete that task or authorize its dependents.
+If evidence is insufficient, state the uncertainty
 and the smallest useful next action; do not manufacture a loop verdict from counts.
 If work has changed or previous attempts have distinct useful outcomes, record
 the changed input/next action and proceed. When Runner context

@@ -1,0 +1,15 @@
+{
+  "dataVolumeFreeBytes": 28581191680,
+  "belowCleanupThreshold": true,
+  "sessionArtifactBytes": {
+    "docs/evidence/continuation-without-interruption": 16929,
+    "dist": 153721
+  },
+  "removedPaths": [],
+  "reclaimedBytes": 0,
+  "cleanupDisposition": "Validation evidence retained; compiled dist is the active local package. No inactive large session outputs found.",
+  "remainingMockProcessPids": [],
+  "browserOrTemporaryServerStartedByController": false,
+  "activeRunnerPreserved": "aa5b88264798523a491f2409",
+  "timedKeepAwakePreserved": 89796
+}

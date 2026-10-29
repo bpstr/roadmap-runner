@@ -1,0 +1,100 @@
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jIXurV
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jIXurV/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jIXurV/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jIXurV/.roadmap-runner/roadmap-badc1c025ab2/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jIXurV/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T18:02:26.646Z =====
+✔ ownership deferral persists without receipts and can be reconsidered after acknowledged repair (6.059125ms)
+✔ unknown scheduling values are rejected and interrupted deferrals do not suppress work (2.876459ms)
+✔ resolver retry acknowledgments require a bounded unique list of exact task IDs (3.126291ms)
+✔ reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts (8.81975ms)
+Iteration 1 completed.
+
+===== iteration 2 | 2026-10-29T18:02:27.315Z =====
+Iteration 2 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jtJnDZ
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jtJnDZ/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jtJnDZ/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jtJnDZ/.roadmap-runner/roadmap-7586f5ed3d96/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-jtJnDZ/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T18:02:27.374Z =====
+✔ reused ownership return rotates to independent work before deferring the roadmap (731.733ms)
+Iteration 1 completed.
+
+===== iteration 2 | 2026-10-29T18:02:27.752Z =====
+Iteration 2 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-VdfCsf
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-VdfCsf/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-VdfCsf/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-VdfCsf/.roadmap-runner/roadmap-54fd830ec944/history (archived snapshots; not loaded by default)
+Timeout:   5s per run
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 5s
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-VdfCsf/progress.md.events.jsonl
+===== iteration 1 | 2026-10-29T18:02:27.816Z =====
+✔ partial ownership return rotates to independent work before deferring the roadmap (441.21325ms)
+Iteration 1 completed.
+
+Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+✔ broad roadmap ownership return defers the scope instead of repeating the synthetic task (384.2665ms)
+✔ only a worker-declared complete prerequisite scope can permit a deferred retry (6.154041ms)
+✔ a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes (642.756417ms)
+✔ a structured explicit deferral with a BLOCKED handoff advances under park policy (681.061166ms)
+✔ a broad explicit deferral with a BLOCKED handoff advances under park policy (569.262834ms)
+✔ an explicit source BLOCKED gate still parks an otherwise deferred queue (450.291416ms)
+✔ a genuine blocker alongside an ownership deferral still parks the queue (474.755125ms)
+✔ an explicit STOPPED handoff still stops an otherwise deferred queue (429.557167ms)
+✔ unchanged deferred acceptance exits once with a deferred summary and survives a new managed run (748.796916ms)
+✔ an entirely deferred queue makes one pass without resolver churn or repeated dispatch (517.934041ms)
+✔ broad roadmap deferral advances and reopens only after declared prerequisite changes (542.018833ms)
+✔ changed criteria permit a new deferred pass without manufacturing acceptance (612.416291ms)
+✔ unrelated source edits and undeclared owner changes leave deferred task criteria parked (562.723834ms)
+✔ an unrelated resolver repair retains an unchanged ownership deferral (590.17025ms)
+✔ a resolver can explicitly acknowledge only the named deferred task for reassessment (683.757208ms)
+✔ queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors (647.721083ms)
+✔ live source completion survives restart, unlocks a dependent once and advances the preserved queue (642.6415ms)
+✔ default Codex continuation resumes within each roadmap and clears before the next queue entry (624.66075ms)
+✔ macOS sleep prevention spans queue handoff and releases at completion (538.968666ms)
+✔ macOS sleep prevention releases when a queued run is stopped (385.06375ms)
+✔ CLI queue appends to an active run and rejects duplicates and terminal runs (371.515458ms)
+✔ a blocked or failed roadmap never starts the next queued roadmap (908.267917ms)
+✔ all queue entries are validated before launch, including path and progress aliases (5.29325ms)
+✔ foreground CLI accepts repeated --queue flags and completes every roadmap (500.571875ms)
+✔ CLI queue specification preserves FIFO order and every custom progress path (486.100083ms)
+✔ authorized recovery preserves the blocked source/progress FIFO and retained receipts (625.121292ms)
+✔ a queued source removed before handoff fails the run and preserves later entries (363.794334ms)
+✔ LLM loop detection blocks managed execution and leaves queued work pending (493.708209ms)
+✔ fully blocked managed runs stop once, retain stopped status, and leave the queue pending (595.09875ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16509.234958

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { RunManager } from '../dist/run-manager.js';
 import { readRun } from '../dist/run-state.js';
+import { deferredRoadmapReady, saveDeferral } from '../lib/task-deferral.js';
 
 // Each client process runs this prepared script. There is no provider transport.
 function preparedClient(config) {
@@ -50,8 +51,10 @@ function preparedClient(config) {
     }
     if (!first && config.unrelatedCriteria) fs.appendFileSync('first.md', '\nB-01 receipt annotation.\n');
   }
+  if (deferred && config.sourceBlocked) fs.writeFileSync(source, 'Status: BLOCKED\n' + fs.readFileSync(source, 'utf8'));
+  if (deferred && config.sourceCompleteOnDefer) fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replaceAll('- [ ]', '- [x]'));
   const complete = !fs.readFileSync(source, 'utf8').includes('- [ ]');
-  fs.writeFileSync(progress, 'Status: ' + (blocked ? 'BLOCKED' : complete ? 'COMPLETE' : 'IN_PROGRESS') + '\n## Current handoff\nPrepared queue pass.\n');
+  fs.writeFileSync(progress, 'Status: ' + (blocked ? 'BLOCKED' : deferred ? config.deferredStatus || 'IN_PROGRESS' : complete ? 'COMPLETE' : 'IN_PROGRESS') + '\n## Current handoff\nPrepared queue pass.\n');
 }
 
 async function waitFor(read, timeout = 12000) {
@@ -80,10 +83,11 @@ function fixture(t, config = {}) {
   });
   const start = async () => {
     const run = await manager.start({ workspace, roadmap: first, progressFile: 'custom/first-progress.md',
-      queue: [{ roadmap: second, progressFile: 'custom/second-progress.md' }], notify: 'off', notifyOn: ['runner.queue_deferred'], timeout: '5s', resolverTimeout: '5s' }, { executable });
+      queue: [{ roadmap: second, progressFile: 'custom/second-progress.md' }], notify: 'off', notifyOn: ['runner.queue_deferred'], timeout: '5s', resolverTimeout: '5s',
+      ...(config.blockedPolicy ? { blockedPolicy: config.blockedPolicy } : {}) }, { executable });
     runs.push(run.id);
     const result = await waitFor(async () => { const state = await manager.status(run.id); return ['exited', 'stopped', 'unknown'].includes(state.processState) && state; });
-    if (result.reason === 'stopped' || result.processState === 'unknown') {
+    if ((result.reason === 'stopped' && !config.expectedStop) || result.processState === 'unknown') {
       const output = fs.readFileSync(path.join(registry, 'runs', run.id, 'output.log'), 'utf8');
       assert.fail(`Prepared queue stopped: ${JSON.stringify({ calls: JSON.parse(fs.readFileSync(path.join(workspace, 'calls.json'), 'utf8')), output: output.slice(-5000) })}`);
     }
@@ -103,6 +107,76 @@ test('a deferred roadmap advances the queue and revisits its dependents only aft
   assert.equal(path.basename(result.queue[0].progressFile), 'first-progress.md');
   assert.equal(result.events.filter(event => event.type === 'runner.completed').length, 1);
   assert.equal(result.events.filter(event => event.type === 'runner.roadmap_deferred').length, 1);
+});
+
+test('a source-complete broad deferral advances once and stays parked across restarts', async t => {
+  const f = fixture(t, { broad: true, sourceCompleteOnDefer: true, deferredStatus: 'IN_PROGRESS' });
+  const result = await f.start();
+  assert.equal(result.reason, 'deferred');
+  assert.deepEqual(result.queue.map(item => item.state), ['deferred', 'complete']);
+  assert.deepEqual(f.calls().map(call => call.source), ['first.md', 'second.md']);
+  assert.equal(result.events.filter(event => event.type === 'runner.roadmap_deferred').length, 1);
+  const again = await f.start();
+  assert.equal(again.reason, 'deferred');
+  assert.deepEqual(f.calls().map(call => call.source), ['first.md', 'second.md']);
+});
+
+test('completion after deferral permits one reassessment, while a legacy completed source stays parked', async t => {
+  const f = fixture(t, { broad: true });
+  const result = await f.start();
+  const item = result.queue[0];
+  assert.equal(deferredRoadmapReady(item, f.workspace), false);
+  fs.writeFileSync(f.first, fs.readFileSync(f.first, 'utf8').replaceAll('- [ ]', '- [x]'));
+  assert.equal(deferredRoadmapReady(item, f.workspace), true);
+  const saved = JSON.parse(fs.readFileSync(item.deferralFile, 'utf8'));
+  for (const source of saved.sources) { delete source.openTasks; delete source.completedTasks; }
+  fs.writeFileSync(item.deferralFile, JSON.stringify(saved));
+  assert.equal(deferredRoadmapReady(item, f.workspace), false);
+});
+
+test('task completion already captured by a deferral does not authorize another pass', async t => {
+  const f = fixture(t);
+  const result = await f.start(), item = result.queue[0];
+  fs.writeFileSync(f.first, fs.readFileSync(f.first, 'utf8').replaceAll('- [ ]', '- [x]'));
+  const saved = JSON.parse(fs.readFileSync(item.deferralFile, 'utf8'));
+  saveDeferral({ stateDir: path.dirname(item.deferralFile), file: item.progressFile }, f.first, saved.tasks);
+  assert.equal(deferredRoadmapReady(item, f.workspace), false);
+});
+
+for (const broad of [false, true]) test(`a ${broad ? 'broad' : 'structured'} explicit deferral with a BLOCKED handoff advances under park policy`, async t => {
+  const f = fixture(t, { broad, deliverOwner: true, deferredStatus: 'BLOCKED', blockedPolicy: 'park' });
+  const result = await f.start();
+  assert.equal(result.reason, 'complete');
+  assert.deepEqual(result.queue.map(item => item.state), ['complete', 'complete']);
+  assert.ok(f.calls().every(call => call.role === 'WORKER'));
+  assert.equal(result.events.filter(event => event.type === 'runner.roadmap_deferred').length, 1);
+  assert.equal(result.events.filter(event => event.type === 'runner.blocked').length, 0);
+});
+
+test('an explicit source BLOCKED gate still parks an otherwise deferred queue', async t => {
+  const f = fixture(t, { deferredStatus: 'BLOCKED', sourceBlocked: true, blockedPolicy: 'park' });
+  const result = await f.start();
+  assert.equal(result.reason, 'blocked');
+  assert.deepEqual(result.queue.map(item => item.state), ['blocked', 'pending']);
+  assert.equal(f.calls().length, 1);
+  assert.ok(fs.readFileSync(f.first, 'utf8').startsWith('Status: BLOCKED\n'));
+});
+
+test('a genuine blocker alongside an ownership deferral still parks the queue', async t => {
+  const f = fixture(t, { globalBlocker: true, blockedPolicy: 'park' });
+  const result = await f.start();
+  assert.equal(result.reason, 'blocked');
+  assert.deepEqual(f.calls().map(call => call.task), ['A-01', 'B-01']);
+  assert.deepEqual(result.queue.map(item => item.state), ['blocked', 'pending']);
+});
+
+test('an explicit STOPPED handoff still stops an otherwise deferred queue', async t => {
+  const f = fixture(t, { deferredStatus: 'STOPPED', expectedStop: true });
+  const result = await f.start();
+  assert.equal(result.reason, 'stopped');
+  assert.deepEqual(result.queue.map(item => item.state), ['stopped', 'pending']);
+  assert.equal(f.calls().length, 1);
+  assert.equal(result.events.filter(event => event.type === 'runner.roadmap_deferred').length, 0);
 });
 
 test('unchanged deferred acceptance exits once with a deferred summary and survives a new managed run', async t => {

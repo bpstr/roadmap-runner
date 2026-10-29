@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Advance past source-complete deferred roadmaps without repeatedly selecting unchanged work. Persist completion baselines and keep stop/control requests responsive during queue transitions.
+- Honor explicit task deferrals when a worker also writes a legacy blocked handoff, so independent queued work continues without a manual restart. Preserve source-level blocks, genuine blockers and explicit stops.
+- Clarify that authorized local prerequisites remain implementation work and independent review does not automatically require human approval.
 - Retry generic Codex HTTP 429 failures through the existing bounded capacity cooldown instead of immediately dispatching blocker resolvers. Preserve explicit quota pauses, mixed-error handling, the model and unfinished work.
 
 ## 0.12.4 — 2026-10-26

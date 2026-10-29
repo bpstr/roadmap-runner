@@ -1,0 +1,20 @@
+{
+  "temporaryTestProcesses": [],
+  "newManagedRunId": "c55f64d76ea0b7f7fefe5756",
+  "newManagedPid": 43410,
+  "preservedForUser": "Roadmap005 implementation and remaining FIFO",
+  "browserOrServerStarted": false,
+  "stoppedPid": 64237,
+  "stoppedProcess": "roadmap-runner/dist/worker.js",
+  "gracefulStopFailed": true,
+  "sourceLogsPreserved": true,
+  "freeBytes": 22326525952,
+  "sessionPathBytes": {
+    "/Users/bpstr/Github/roadmap-runner/dist": 153879,
+    "/Users/bpstr/Github/roadmap-runner/docs/evidence/source-complete-deferral-loop": 12245,
+    "/Users/bpstr/Github/assign/.codex/tmp/runner-deferral-incident-20261029": 19820
+  },
+  "pathsRemoved": [],
+  "reclaimedBytes": 0,
+  "localInstalledPackage": "/Users/bpstr/Github/roadmap-runner"
+}

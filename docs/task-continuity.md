@@ -72,6 +72,11 @@ Deferrals persist across restarts. Criteria changes, a resolver's explicit
 scope permit reassessment. Declare that scope in `failure.inputPaths` with
 `coverageComplete: true`; `nextAction` alone supplies a human-readable retry
 condition. Unrelated file changes and completed roadmaps do not permit a retry.
+The deferral manifest records whether source checkboxes were already complete.
+Completion permits reassessment only when it happens after that baseline; an
+already checked source can still have acceptance deferred to another owner.
+Legacy manifests without a completion baseline do not reopen solely because the
+source is complete. Changed criteria and declared prerequisites still apply.
 At queue boundaries the controller revisits eligible deferred entries before the
 next pending entry. If none is eligible and no pending entry remains, it exits
 once with reason/state `deferred`, per-entry evidence pointers and a terminal

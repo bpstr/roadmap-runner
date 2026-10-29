@@ -238,8 +238,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
     tracking.refreshSource(iteration);
     tracking.assertBounded();
-    const contents = fs.readFileSync(tracking.file, "utf8");
-    const status = tracking.deliveryStatus(roadmapStatus(contents));
+    let contents = fs.readFileSync(tracking.file, "utf8");
+    let status = tracking.deliveryStatus(roadmapStatus(contents));
     const compacting = tracking.needsCompaction;
 
     const sourceStatus = roadmapStatus(fs.readFileSync(roadmap, 'utf8'));
@@ -247,8 +247,21 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       await recovery.event('runner.stopped', { reason: recovery.state.stopped?.reason || 'roadmap_stopped', code: 75 });
       return { code: 75, reason: 'stopped' };
     }
-    if (!compacting && !recovery.state.blocker && (status === 'blocked' || sourceStatus === 'blocked')) await block('roadmap_blocked');
+    const fallbackTaskId = `roadmap-${createHash('sha256').update(roadmap).digest('hex').slice(0, 12)}`;
+    const fallbackAssessment = !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision);
+    if (fallbackAssessment) deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision, ...fallbackAssessment });
     const explicitDeferrals = deferredTasks.length > 0 && deferredTasks.every(task => task.reason === 'worker_requested_deferral');
+    // A worker can retain an ownership gate while explicitly deferring dispatch.
+    // Normalize only that legacy handoff status so independent work can proceed
+    // and a later prerequisite change does not inherit a stale global blocker.
+    const deferredHandoff = !compacting && explicitDeferrals && status === 'blocked' && sourceStatus !== 'blocked' &&
+      !recovery.state.blocker && !tracking.needsReconciliation && !recovery.state.requiresWorker && !recovery.state.quota;
+    if (deferredHandoff) {
+      contents = withStatus(contents, 'IN_PROGRESS');
+      fs.writeFileSync(tracking.file, contents);
+      status = tracking.deliveryStatus(roadmapStatus(contents));
+    }
+    if (!compacting && !recovery.state.blocker && (sourceStatus === 'blocked' || (status === 'blocked' && !deferredHandoff))) await block('roadmap_blocked');
     if (!compacting && !recovery.state.blocker && !batch && plan) {
       const schedule = plan.schedulingOutcome({ deferredTaskIds: explicitDeferrals ? deferredTasks.map(task => task.task) : [] });
       if (schedule.status === 'deferred') {
@@ -267,10 +280,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
         }
       }
     }
-    const fallbackTaskId = `roadmap-${createHash('sha256').update(roadmap).digest('hex').slice(0, 12)}`;
-    const fallbackAssessment = !plan && memoryFor().assessedBlocker(fallbackTaskId, tracking.requirementsRevision);
     if (!compacting && !recovery.state.blocker && fallbackAssessment) {
-      deferredTasks.push({ task: fallbackTaskId, roadmap, criteriaRevision: tracking.requirementsRevision, ...fallbackAssessment });
       if (fallbackAssessment.reason === 'worker_requested_deferral' && !tracking.needsReconciliation &&
           !recovery.state.requiresWorker && !recovery.state.quota) return await deferRoadmap();
       await block(fallbackAssessment.reason || 'agent_assessed_blocker');

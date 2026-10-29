@@ -1,0 +1,11 @@
+✔ a source-complete broad deferral advances once and stays parked across restarts (691.122791ms)
+✔ completion after deferral permits one reassessment, while a legacy completed source stays parked (370.49125ms)
+✔ task completion already captured by a deferral does not authorize another pass (533.863042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1727.60975
