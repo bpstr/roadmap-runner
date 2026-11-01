@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-30T20:38:59.574763+00:00",
+  "linksChecked": 22,
+  "errors": [],
+  "historicalWorkerTurns": 25,
+  "fullSourceComparisons": 25,
+  "originalRequirementTextChanges": 0,
+  "preparedCLIReproductions": 2,
+  "paidCalls": 0,
+  "applicationSuiteRuns": 0,
+  "files": [
+    {
+      "path": "docs/investigations/2026-10-30-roadmap-005-closure-stall.md",
+      "sha256": "7f8d71a05cd3f0191c7ed95846f46ad8afa7487a9f32d10706c32d7675527f4a",
+      "bytes": 14776
+    },
+    {
+      "path": "docs/investigations/closure-stall-reproduction.mjs",
+      "sha256": "475a8023edfd232cc7c02fb6cf1d7eff86fdf2199979e07a59c8a8656818cb3a",
+      "bytes": 4007
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/code-identities.json",
+      "sha256": "8e68fe501584cd87b08732828a7750a691be021d6de4ef8ff4ab24345fc9c142",
+      "bytes": 2630
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/prepared-installed.json",
+      "sha256": "77ed09b4fc237ebe047adb68201e0252f84b65ca71b93277b1cc815109d2f61f",
+      "bytes": 706
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/prepared-repository.json",
+      "sha256": "77ed09b4fc237ebe047adb68201e0252f84b65ca71b93277b1cc815109d2f61f",
+      "bytes": 706
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/summary.json",
+      "sha256": "03ac513c9268decf1a7e96099458e17bc94156ccf8e624f7b911064bd9a2264f",
+      "bytes": 1493
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/task-index-analysis.json",
+      "sha256": "20162a2d598a8c3f17878c6035786c76d80f4d35dcf3df8522344c6eab27581f",
+      "bytes": 7829
+    },
+    {
+      "path": "docs/evidence/closure-stall-20261030/timeline.json",
+      "sha256": "cbff84deb98ebe78f197aceab6a193d0603e7af9bc0bc1a3a113110c417edf1f",
+      "bytes": 52538
+    }
+  ]
+}

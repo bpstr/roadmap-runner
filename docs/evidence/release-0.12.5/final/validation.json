@@ -1,0 +1,170 @@
+{
+  "version": "0.12.5",
+  "status": "local_passed_hosted_ci_pending",
+  "preparedOnly": true,
+  "paidCalls": 0,
+  "localFullSuiteRuns": 0,
+  "results": {
+    "build": {
+      "exitCode": 0,
+      "log": "build.log"
+    },
+    "affectedTests": {
+      "tests": 27,
+      "pass": 27,
+      "fail": 0,
+      "skipped": 0,
+      "log": "affected-tests.log"
+    },
+    "managedSchema": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0,
+      "log": "managed-default.log"
+    },
+    "package": {
+      "exitCode": 0,
+      "files": 76,
+      "packedBytes": 195394,
+      "log": "package.log"
+    },
+    "whitespace": "passed"
+  },
+  "retainedMatchingFiles": [
+    "RECOVERY.md",
+    "docs/investigations/closure-stall-remediation.md",
+    "docs/mcp-events.md",
+    "lib/recovery.js",
+    "lib/task-memory.js",
+    "lib/task-plan.js",
+    "scripts/check-package.js",
+    "src/events.ts",
+    "src/run-state.ts",
+    "src/worker.ts",
+    "test/agent-integration.test.js",
+    "test/queue.test.js",
+    "test/runtime-continuity-integration.test.js",
+    "test/task-continuity-integration.test.js"
+  ],
+  "releaseGate": "Existing six-job Node 20/22/24 Ubuntu/macOS CI on main; full suite required there, not repeated locally.",
+  "priorPendingResolution": "The prior six-hour timeout work is verified. No repository setting implements the prior unspecified 90-second large-check or 10-minute compilation limits; no invented settings added. Current release request proceeds with implemented controls.",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "12751488756ea2136c1f3f3d59e0e530f0b39dc3a320714eedaed836e0678a37"
+    },
+    {
+      "path": "README.md",
+      "sha256": "28a9f59cdd5ad02017ff33732e3071fad758b110a81fe5dda90fbdeccdfa132a"
+    },
+    {
+      "path": "RECOVERY.md",
+      "sha256": "69449c64a78e4e879e6ce5f4ed5b0392a8dccb770e966dc0bb5a9d775c79bcf4"
+    },
+    {
+      "path": "bin/roadmap-runner.js",
+      "sha256": "2861a83b05d077d477bb575713e7ea0b5ae89d45d0a56988c491cfc618888686"
+    },
+    {
+      "path": "docs/mcp-events.md",
+      "sha256": "6bf51f524c418d88fa512ea5870c7427bedb6fe7fddbba141bf97e6ff9d2efce"
+    },
+    {
+      "path": "docs/task-continuity.md",
+      "sha256": "70f416d99834e90d1af1715cc437915d61bf5e8ef3eea5504fd3ba15c1dc19fd"
+    },
+    {
+      "path": "lib/progress-ledger.js",
+      "sha256": "c2099947c3527022639274daabb4ff73826c8e1bba5c8f9aac0fbe9c5a113bdc"
+    },
+    {
+      "path": "lib/recovery.js",
+      "sha256": "99852ba1ebf0d45369073d70465f65684747530644440fd098084284741cc1f4"
+    },
+    {
+      "path": "lib/runner.js",
+      "sha256": "105587db4d8fa3a88c428d584674773725864b61020ae36ec9608c75c0f1ada3"
+    },
+    {
+      "path": "lib/task-memory.js",
+      "sha256": "d9892274ab400bd8156115d08ba69e88f934a7fd1fb7c460ef8db3a21c8a3ec4"
+    },
+    {
+      "path": "lib/task-plan.js",
+      "sha256": "310a99a8ab059d62036e737bc9060530bfa78b4dafc51bfc478c6c327630abee"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "00e16400aa3c123e68981629cda94a5a0c8f8bcf258c03e8f3ee485a4f28b28a"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9f9deff5f14692890e6d417b5633936adb2df446a1a40672a111f502404e720c"
+    },
+    {
+      "path": "scripts/check-package.js",
+      "sha256": "81524e5ef0ac9a5a5712fd651053a066d0373277ea1a452a94f66b41706dafe0"
+    },
+    {
+      "path": "src/events.ts",
+      "sha256": "348c97a0d92eada60dbd8cfc11c782322a42bbb8de261dd4051eed93229981aa"
+    },
+    {
+      "path": "src/lifecycle.ts",
+      "sha256": "fbb27b4607b73d247a41eae3a9a381c6a3a39e8b87f7648abf49c5562f30342d"
+    },
+    {
+      "path": "src/run-manager.ts",
+      "sha256": "5fb50e2d5adc8825db5b9af3596dd6cb74656ceb1d273c948473fb3059eb5e0e"
+    },
+    {
+      "path": "src/run-state.ts",
+      "sha256": "883f0307a1450c6f7c9cc3a57eaa0375d0bdf3e024f3e98c295c75724448802a"
+    },
+    {
+      "path": "src/worker.ts",
+      "sha256": "7a2aa769440ad0fc484b69cf6ff15e82941149e0afd79f73aaa3f894caf6b0be"
+    },
+    {
+      "path": "test/agent-integration.test.js",
+      "sha256": "401506b751ca46bcd46530f43e8ecf69f2117f4af838122e567a95c9e3e1f820"
+    },
+    {
+      "path": "test/closure-stall-integration.test.js",
+      "sha256": "1274f019eec4455bb1c419c6f2b23aff90e0d957a38d098b108f27a27797a80d"
+    },
+    {
+      "path": "test/execution-reset.test.js",
+      "sha256": "ac383cf92597bd3d9122e5087dbbb1a727abd94e58edada266966c48e0c2324f"
+    },
+    {
+      "path": "test/progress-ledger.test.js",
+      "sha256": "e5ceb7168b6bd9862958abdc3e7e01dfa1a8dcbdade5ace85ddd6492dabb8cdc"
+    },
+    {
+      "path": "test/queue.test.js",
+      "sha256": "fda4e7929ef3e979a76441a2d1c9336462a3046da5c10dde91c252ec42af65a9"
+    },
+    {
+      "path": "test/runner.test.js",
+      "sha256": "1f57f80aa3a3182061b601a1b94c257fe76fd1f067c65a060cc2ade9b47d3a31"
+    },
+    {
+      "path": "test/runtime-continuity-integration.test.js",
+      "sha256": "070203200c731559349f8f3f9b0f416fc173949b4c3cdb3d23888fb7567d5975"
+    },
+    {
+      "path": "test/task-continuity-integration.test.js",
+      "sha256": "b4c0d2eb91b559c991e07520356d1b8dac8cef862e9e58778f0149faf96bfa24"
+    }
+  ],
+  "hygiene": {
+    "freeSpaceGiB": 35,
+    "browsersStarted": [],
+    "serversStarted": [],
+    "removedPaths": [],
+    "reclaimedBytes": 0,
+    "notes": "Only small reproducible build output (220 KiB) and evidence produced. Existing 39 MiB dependencies untouched. No large inactive session artifact to remove; unrelated caches and services preserved."
+  }
+}

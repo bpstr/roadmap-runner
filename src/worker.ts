@@ -89,6 +89,7 @@ try {
     result = await runLifecycle({ ...record.options,
       roadmap: record.queueIndex === 0 ? record.options.roadmap : item.roadmap,
       recoverBlocked: firstDispatch && record.queueIndex === 0 && record.options.recoverBlocked,
+      progressReview: record.queueIndex === 0 ? record.options.progressReview : undefined,
       progressFile: record.queueIndex === 0 ? record.options.progressFile : item.progressFile, runId: id, onProcess: ({ pid, active }) => {
       record.childGroups = active ? [...new Set([...(record.childGroups || []), pid])] : (record.childGroups || []).filter(value => value !== pid);
       persist();
@@ -100,6 +101,12 @@ try {
         if (event.type === 'runner.completed' && record.queue.some((queued, index) => index !== record.queueIndex && queued.state !== 'complete')) event.type = 'runner.roadmap_completed';
         if (event.type === 'runner.turn_starting' && event.role === 'worker') { record.roadmap = event.roadmap; record.task = event.task; record.batch = event.batch; }
         record.sourceRevision = event.sourceRevision; record.role = event.role || record.role; record.iteration = event.iteration ?? record.iteration;
+        if (event.progress) { record.progress = event.progress; if (event.progress.scheduling) record.scheduling = event.progress.scheduling; }
+        if (event.type === 'runner.scheduling') record.scheduling = { mode: event.mode, reasons: event.reasons, reasonsTruncated: event.reasonsTruncated };
+        if (event.runtime) record.runtime = event.runtime;
+        if (event.notificationMode) record.notificationMode = event.notificationMode;
+        if (event.scheduledSupervision !== undefined) record.scheduledSupervision = event.scheduledSupervision;
+        if (event.type === 'runner.progress_review_required') { record.roadmapState = 'review_required'; record.waitReason = 'progress_review'; }
         if (event.type === 'runner.blocked') record.roadmapState = 'blocked';
         if (event.type === 'runner.unblocked' || (event.type === 'runner.turn_starting' && event.role === 'worker')) record.roadmapState = 'in_progress';
         if (event.type === 'runner.completed') record.roadmapState = 'complete';
@@ -115,7 +122,7 @@ try {
         appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
       },
     });
-    item.state = ['complete', 'deferred', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification'].includes(result.reason) ? result.reason : 'failed';
+    item.state = ['complete', 'deferred', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification', 'review_required'].includes(result.reason) ? result.reason : 'failed';
     if (result.deferralFile) item.deferralFile = result.deferralFile;
     else delete item.deferralFile;
     if (result.reason === 'blocked') record.roadmapState = 'blocked';
@@ -150,7 +157,7 @@ try {
   if (!controller.signal.aborted) await notifier.flush();
   await notifier.close();
   await sleep.close();
-  record.processState = result.reason === 'stopped' ? 'stopped' : 'exited'; record.reason = result.reason; record.exitCode = result.code; record.endedAt = new Date().toISOString(); record.waitReason = null;
+  record.processState = result.reason === 'stopped' ? 'stopped' : 'exited'; record.reason = result.reason; record.exitCode = result.code; record.endedAt = new Date().toISOString(); record.waitReason = result.reason === 'review_required' ? 'progress_review' : null;
   persist();
 } catch (error) {
   if (record.queue[record.queueIndex]?.state === 'running') record.queue[record.queueIndex].state = 'failed';

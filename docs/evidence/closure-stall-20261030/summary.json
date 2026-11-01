@@ -1,0 +1,91 @@
+[
+  {
+    "id": "c55f64d76ea0b7f7fefe5756",
+    "wallHours": 13.15,
+    "turns": 13,
+    "uniqueTasks": 1,
+    "originalBefore": {
+      "closed": 0,
+      "total": 17
+    },
+    "originalAfter": {
+      "closed": 10,
+      "total": 17
+    },
+    "closureEvents": [
+      [
+        1,
+        [
+          "API-06.5-I1",
+          "API-06.13-I1"
+        ]
+      ],
+      [
+        2,
+        [
+          "API-06.7-I1",
+          "API-06.7-I2"
+        ]
+      ],
+      [
+        3,
+        [
+          "API-06.6-I1"
+        ]
+      ],
+      [
+        4,
+        [
+          "API-02.13-I1"
+        ]
+      ],
+      [
+        5,
+        [
+          "API-07.3-I1",
+          "API-07.4-I1"
+        ]
+      ],
+      [
+        6,
+        [
+          "API-02.10-I1",
+          "API-02.10-I2"
+        ]
+      ]
+    ],
+    "reopened": [],
+    "missingSourceComparisons": 0,
+    "outcomes": {
+      "implemented": 5,
+      "partial": 8
+    },
+    "sourceRevisions": 13,
+    "criteriaRevisions": 8,
+    "attentionEvents": 8
+  },
+  {
+    "id": "ddb0a93744ed265ff19e4b48",
+    "wallHours": 7.216,
+    "turns": 12,
+    "uniqueTasks": 1,
+    "originalBefore": {
+      "closed": 10,
+      "total": 17
+    },
+    "originalAfter": {
+      "closed": 10,
+      "total": 17
+    },
+    "closureEvents": [],
+    "reopened": [],
+    "missingSourceComparisons": 0,
+    "outcomes": {
+      "implemented": 11,
+      "partial": 1
+    },
+    "sourceRevisions": 12,
+    "criteriaRevisions": 3,
+    "attentionEvents": 8
+  }
+]

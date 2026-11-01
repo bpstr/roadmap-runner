@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+ok 1 - managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+  ---
+  duration_ms: 1452.885917
+  type: 'test'
+  ...
+# Subtest: live source completion survives restart, unlocks a dependent once and advances the preserved queue
+ok 2 - live source completion survives restart, unlocks a dependent once and advances the preserved queue
+  ---
+  duration_ms: 826.059208
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2851.913625

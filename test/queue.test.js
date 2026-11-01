@@ -14,6 +14,16 @@ const wait = async check => {
   while (Date.now() < deadline) { const value = await check(); if (value) return value; await new Promise(resolve => setTimeout(resolve, 25)); }
   throw new Error('Queue fixture deadline exceeded');
 };
+const allEvents = async (manager, id) => {
+  const events = []; let cursor = 0;
+  for (;;) {
+    const page = await manager.status(id, { cursor, outputBytes: 0 });
+    events.push(...page.events);
+    if (!page.eventsTruncated) return events;
+    assert.ok(page.cursor > cursor, 'paginated event history must advance');
+    cursor = page.cursor;
+  }
+};
 const fixture = t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rr-queue-'));
   const registry = path.join(dir, 'registry'); const workspace = path.join(dir, 'workspace'); fs.mkdirSync(workspace);
@@ -83,10 +93,11 @@ test('queued roadmaps advance in FIFO order, preserve separate progress, and kee
   const final = await wait(async () => { const s = await f.manager.status(run.id); return ['exited', 'stopped'].includes(s.processState) && s; });
   assert.equal(final.exitCode, 0); assert.equal(final.reason, 'complete');
   assert.deepEqual(final.queue.map(item => item.state), ['complete', 'complete', 'complete']);
-  assert.equal(final.events.filter(event => event.type === 'runner.completed').length, 1);
-  assert.equal(final.events.filter(event => event.type === 'runner.roadmap_completed').length, 2);
-  assert.equal(final.events.filter(event => event.type === 'runner.started').length, 3);
-  assert.deepEqual(final.events.map(event => event.sequence), final.events.map((_, i) => i + 1));
+  const events = await allEvents(f.manager, run.id);
+  assert.equal(events.filter(event => event.type === 'runner.completed').length, 1);
+  assert.equal(events.filter(event => event.type === 'runner.roadmap_completed').length, 2);
+  assert.equal(events.filter(event => event.type === 'runner.started').length, 3);
+  assert.deepEqual(events.map(event => event.sequence), events.map((_, i) => i + 1));
   const page = await f.manager.status(run.id, { cursor }); assert.ok(page.events.every(event => event.sequence > cursor));
   for (const file of f.roadmaps) assert.ok(!fs.readFileSync(file, 'utf8').includes('COMPLETE'));
   for (const lock of readRun(f.registry, run.id).locks) assert.equal(fs.existsSync(lock), false);
@@ -314,7 +325,7 @@ test('LLM loop detection blocks managed execution and leaves queued work pending
   assert.deepEqual(final.queue.map(item => item.state), ['stopped', 'pending']);
   assert.equal(f.started(second), false);
   assert.equal(fs.readFileSync(first + '.started', 'utf8').trim().split('\n').length, 3);
-  assert.ok(final.events.some(e => e.type === 'runner.blocked' && !e.terminal));
+  assert.ok((await allEvents(f.manager, run.id)).some(e => e.type === 'runner.blocked' && !e.terminal));
 });
 
 

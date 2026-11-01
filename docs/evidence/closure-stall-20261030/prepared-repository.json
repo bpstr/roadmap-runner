@@ -1,0 +1,28 @@
+{
+  "preparedOnly": true,
+  "paidCalls": 0,
+  "credentialEnvironmentForwarded": false,
+  "calls": 4,
+  "uniqueControllerTasks": 1,
+  "criteriaRevisions": 1,
+  "closedCriteria": 0,
+  "controllerRejectedContinuation": false,
+  "termination": "fixture explicitly wrote STOPPED after four calls",
+  "exitCode": 75,
+  "eventTypes": [
+    "runner.started",
+    "runner.turn_starting",
+    "runner.task_result",
+    "runner.turn_finished",
+    "runner.turn_starting",
+    "runner.task_result",
+    "runner.turn_finished",
+    "runner.turn_starting",
+    "runner.task_result",
+    "runner.turn_finished",
+    "runner.turn_starting",
+    "runner.task_result",
+    "runner.turn_finished",
+    "runner.stopped"
+  ]
+}

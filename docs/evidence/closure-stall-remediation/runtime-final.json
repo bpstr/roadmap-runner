@@ -1,0 +1,146 @@
+{
+  "root": "/Users/bpstr/Github/roadmap-runner",
+  "bundleHash": "b468a15f06a1d3881ee176b031a4d7a1ad781409eaaa4ebe5d16b795e16178e2",
+  "manifest": [
+    {
+      "file": "package.json",
+      "sha256": "225e5e7a5405516b7724328777b8760ddf131737eb26b11dda4b51878dd27bc3"
+    },
+    {
+      "file": "bin/roadmap-runner.js",
+      "sha256": "1bfbb0549cdd7753c763be37949869c01a3b39eba9ee2da716b44b3c541d1fe9"
+    },
+    {
+      "file": "prompt.md",
+      "sha256": "a579bdce0ca455b2436a6cef0d79877145737f60e9aa7ddea4e3283db77be4ff"
+    },
+    {
+      "file": "resolver.md",
+      "sha256": "44a09ae65a15003c10eb02a54730331c36718f748e348126ebc7e4e7b82769da"
+    },
+    {
+      "file": "compact.md",
+      "sha256": "33f4e3bf92c3a28d18f4efb50120852496ea1fe63221d47f0f333965af3bc94c"
+    },
+    {
+      "file": "dist/doctor.js",
+      "sha256": "8eeb9449fcb1011867b4ac3a4a286a36dd611a23a0f91e9221ac23124773494b"
+    },
+    {
+      "file": "dist/events.js",
+      "sha256": "3491e1a10daa33bb094b5b6612bb9515224efcc41ae73a9b8e935444aa27ec12"
+    },
+    {
+      "file": "dist/lifecycle.js",
+      "sha256": "791ee436de3f0558303b807dafb20bd38da95572cbf31f5007fef7edaf6048e1"
+    },
+    {
+      "file": "dist/mcp.js",
+      "sha256": "1e762fe7665386c6c171a9ae22a20379bc7b31a09ddff28418c07825b3704667"
+    },
+    {
+      "file": "dist/notification-permission.js",
+      "sha256": "63603d387bc06313e8d81d3b4b19c65095762b443c43e5d8728e9e81c653541c"
+    },
+    {
+      "file": "dist/notifications.js",
+      "sha256": "984d256739e1be88cadd3e9725ffaf6b1c74255500a67e86eef2f9b729b5c2e4"
+    },
+    {
+      "file": "dist/roadmap-contract.js",
+      "sha256": "fd72ac0881fa6214c36271472304676e3f196196d9cffb29d05b43782eeb253d"
+    },
+    {
+      "file": "dist/run-manager.js",
+      "sha256": "34ab0e0a4bce978e6006c2e342167501ae1b4657963c5eb2cf1cf2f922119558"
+    },
+    {
+      "file": "dist/run-state.js",
+      "sha256": "30e8b3e090c2c8125e28b5b5cc4f5bed48b2e527251853c17e5119f167ae3a12"
+    },
+    {
+      "file": "dist/setup.js",
+      "sha256": "850ae000f0cefb18175cc26949e1d2988547214d3fdf71b84703150892d2aa37"
+    },
+    {
+      "file": "dist/sleep-inhibitor.js",
+      "sha256": "2970186786903cdfbc5e2e2f60e23ffcd9a476632c8523476298f8face955494"
+    },
+    {
+      "file": "dist/worker.js",
+      "sha256": "96f0e3a4243834be1d044dcb2ad7358322852ff334c0dad87c65442c640955f1"
+    },
+    {
+      "file": "lib/checkpoint.js",
+      "sha256": "24f24b60a9538156ebe3604e3c3d9eb3cfab5da08134c906bf3150f99467c20b"
+    },
+    {
+      "file": "lib/clients.js",
+      "sha256": "4aa80e848ea1bfee24b44d5e282a981162b4376ad8f829bf20ea51c4568cf911"
+    },
+    {
+      "file": "lib/continuation.js",
+      "sha256": "e4686ce4ec48ec41f327639d318441dd6a4d798f67c2543a17acbbd7993862ea"
+    },
+    {
+      "file": "lib/execution.js",
+      "sha256": "40ff0694df06f28e48756fa3668f0e5653f412adbb06b29f6f1df6f9ea1e067b"
+    },
+    {
+      "file": "lib/handoff.js",
+      "sha256": "10e8e19bd5b63a3ccdf0363f520c2ede5924127ca05ff33049a3ca0a601df2ee"
+    },
+    {
+      "file": "lib/progress-ledger.js",
+      "sha256": "6e2d255ec5734b04b6eaf9e07e1acff2ae8b51c5256506a4fb415d5ba43623a2"
+    },
+    {
+      "file": "lib/recovery-runs.js",
+      "sha256": "0f28a5884a93cb22736e4d9c273f050ec7e2e950da54c1cd7dea0c277e579129"
+    },
+    {
+      "file": "lib/recovery.js",
+      "sha256": "99852ba1ebf0d45369073d70465f65684747530644440fd098084284741cc1f4"
+    },
+    {
+      "file": "lib/run-evidence.js",
+      "sha256": "c8cefedf3fd8892fd846e2aaa1486885d4524583bfadc06b70e44ad1ad11c6ec"
+    },
+    {
+      "file": "lib/runner.js",
+      "sha256": "4c53ccb5e509c3bedc4057ff8d84796a03892b6eca1e3fa4024aff3095fe5b73"
+    },
+    {
+      "file": "lib/task-deferral.js",
+      "sha256": "f6e12a0f4e05ecb98fb5b81f306768888ed092e92fa714f28d297a47749f1a0d"
+    },
+    {
+      "file": "lib/task-index.js",
+      "sha256": "5c1e2cb7d1044bac51613b4ec749e312404c9b949612e507a594ff29addd8f19"
+    },
+    {
+      "file": "lib/task-memory.js",
+      "sha256": "d9892274ab400bd8156115d08ba69e88f934a7fd1fb7c460ef8db3a21c8a3ec4"
+    },
+    {
+      "file": "lib/task-plan.js",
+      "sha256": "310a99a8ab059d62036e737bc9060530bfa78b4dafc51bfc478c6c327630abee"
+    },
+    {
+      "file": "lib/telemetry.js",
+      "sha256": "248db6443216c628337671483d31e5b57cdcc78d9f99efd0bc84ae5635258883"
+    },
+    {
+      "file": "lib/tracking.js",
+      "sha256": "8fe2bdcb80274760e84892ae4170eab4fb7bfa67f8cbd99e16d25ddcd9d1ddda"
+    },
+    {
+      "file": "lib/verification.js",
+      "sha256": "2d7d24c3eea17d7e9b93e853bc43d9bf6c05655ad0febeed7f98098ba9247655"
+    },
+    {
+      "file": "lib/wait.js",
+      "sha256": "3d149f99f942595f608a8aa7e130d7c840a55ac4629b46811be0dcc1dfbf1c4d"
+    }
+  ]
+}

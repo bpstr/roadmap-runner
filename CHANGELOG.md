@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.12.5 — 2026-11-01
+
+- Extend the default per-client runner session timeout from 90 minutes to six hours in CLI and managed runs; preserve explicit overrides and separate cumulative progress limits.
+- Park stalled runs for explicit progress review with persisted worker-turn and active-time limits. Track original checkbox closure separately from contributions and reviewed subgaps; retain scope growth, closure age and budgets across restarts.
+- Support an explicit `continue` progress-review policy that records bounded window renewals and keeps working until completion or stop, preserving cumulative accounting and unfinished acceptance.
+- Expose scheduling fallback reasons, pending acknowledgment and runtime bundle identities in events/status. Give reviewed handoffs precedence over obsolete task continuation while preserving history; clarify per-session timeout semantics.
 - Advance past source-complete deferred roadmaps without repeatedly selecting unchanged work. Persist completion baselines and keep stop/control requests responsive during queue transitions.
 - Honor explicit task deferrals when a worker also writes a legacy blocked handoff, so independent queued work continues without a manual restart. Preserve source-level blocks, genuine blockers and explicit stops.
 - Clarify that authorized local prerequisites remain implementation work and independent review does not automatically require human approval.

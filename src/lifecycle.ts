@@ -18,6 +18,7 @@ import { saveDeferral } from "../lib/task-deferral.js";
 import { checkpointDelay, readCheckpointAcknowledgment } from "../lib/checkpoint.js";
 import { selectContinuation, rememberContinuation } from "../lib/continuation.js";
 import { atomicJson } from "./run-state.js";
+import { ProgressLedger, progressSettings, runtimeIdentity } from "../lib/progress-ledger.js";
 import { CLIENT_NAMES, buildClientInvocation } from "../lib/clients.js";
 import {
   capacityRetrySettings,
@@ -37,6 +38,7 @@ const COMPACT_TEMPLATE = fs.readFileSync(path.join(ROOT, "compact.md"), "utf8");
 const RESOLVER_TEMPLATE = fs.readFileSync(path.join(ROOT, "resolver.md"), "utf8");
 const RESOLVER_REVISION = createHash("sha256").update(RESOLVER_TEMPLATE).digest("hex").slice(0, 12);
 const COMPACT_REVISION = createHash("sha256").update(COMPACT_TEMPLATE).digest("hex").slice(0, 12);
+const RUNTIME_IDENTITY = runtimeIdentity(ROOT);
 
 
 const fail = (message, code = 1) => { throw Object.assign(new Error(message), { exitCode: code }); };
@@ -49,9 +51,11 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let recovery;
   let notifications;
   let sleep;
+  let activeProgress;
   try {
     options = { ...options, capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
     const { timeoutMs: resolverTimeoutMs, attempts: resolverAttempts, blockedPolicy } = resolverSettings(options);
+    progressSettings(options);
 
   let roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
@@ -89,6 +93,17 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   const progressPath = trackingPaths(roadmap, options.progressFile, workdir).file;
   if (fs.existsSync(progressPath)) validateControlFile(progressPath);
   let tracking = prepareTracking(roadmap, options.progressFile, workdir);
+  const progressLedgers = new Map<string, any>();
+  const progressFor = (owner = roadmap) => {
+    owner = path.resolve(workdir, owner);
+    if (!progressLedgers.has(owner)) {
+      const locations = owner === roadmap ? tracking : trackingPaths(owner, tracking.file, workdir);
+      progressLedgers.set(owner, new ProgressLedger({ roadmap: owner, tracking: { ...locations,
+        evidenceDir: locations.evidenceDir || path.join(locations.stateDir, 'evidence') }, options }));
+    }
+    return progressLedgers.get(owner);
+  };
+  let progress = progressFor();
   const execution = options.executionPlan ? new ExecutionPlan(options.executionPlan, workdir, tracking) : null;
   const queuedDelivery = options.deliveryPlan ? new ExecutionPlan(options.deliveryPlan, workdir, tracking) : null;
   const defaultPlan = !execution && !queuedDelivery ? new RoadmapPlan(roadmap, workdir, tracking) : null;
@@ -109,7 +124,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
         memories.set(owner, new TaskMemory({ workdir, tracking: memoryTracking, roadmap: owner }));
       } catch (error) { return disableMemory(owner, error); }
     }
-    return memories.get(owner);
+    const memory = memories.get(owner);
+    memory.handoffEpoch = progressFor(owner).state.handoffEpoch;
+    return memory;
   };
   const continuationFile = path.join(tracking.stateDir, 'continuation.json');
   let previousConversation = null;
@@ -147,7 +164,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     onEvent = event => notifications.enqueue(event);
   }
   recovery = new Recovery({ tracking, roadmap, settings: options.recovery, wait: ms => waitForRetry(ms, signal), signal, onEvent, runId: options.runId });
-  await recovery.event("runner.started");
+  const identityFile = path.join(tracking.evidenceDir, `runtime-${RUNTIME_IDENTITY.bundleHash}.json`);
+  atomicJson(identityFile, RUNTIME_IDENTITY);
+  await recovery.event("runner.started", { runtime: { bundleHash: RUNTIME_IDENTITY.bundleHash, root: ROOT, identityFile, promptRevision: PROMPT_REVISION },
+    progress: progress.summary(), notificationMode: options.notify || 'attention', scheduledSupervision: false });
   if (!managedSleep) { sleep = new SleepInhibitor(options.preventSleep); await sleep.start(); }
   await onReady?.(tracking);
   const runs = new RunEvidence({ roadmap, tracking });
@@ -185,7 +205,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log(`Progress:  ${tracking.file} (bounded handoff/evidence; task states in roadmap)`);
   console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
   console.log(`History:   ${tracking.historyDir} (archived snapshots; not loaded by default)`);
-  console.log(`Timeout:   ${options.timeout} per run`);
+  console.log(`Timeout:   ${options.timeout} per session`);
+  console.log(`Progress:  review after ${progress.state.limits.turn} worker turns without measured reduction or ${progress.state.limits.reviewMs}ms active; total active budget ${progress.state.limits.activeMs}ms (persisted)`);
+  if (Number(options.supervisorEvery)) console.warn('Warning: --supervisor-every is deprecated; no scheduled supervisors run. Progress limits still apply.');
   console.log(`Prompt:    ${PROMPT_REVISION} (work through meaningful checkpoints)`);
   console.log(`Recovery: resolver on blockers; timeout ${options.resolverTimeout || "10m"}`);
   console.log("Press Ctrl-C to stop.");
@@ -213,9 +235,14 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let iteration = runs.records.at(-1)?.iteration ?? 0;
   let capacityFailures = 0;
   let retryDelay = options.capacity.delayMs;
+  let schedulingAnnounced = false;
 
   while (true) {
     if (signal.aborted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
+    if (progress.syncHandoff()) {
+      previousConversation = null; saveContinuation();
+      await recovery.event('runner.handoff_reconciled', { reason: 'current_handoff_supersedes_continuation', handoffEpoch: progress.state.handoffEpoch });
+    }
     defaultPlan?.read();
     const plan = execution || queuedDelivery || (defaultPlan?.reliable ? defaultPlan : null);
     plan?.read();
@@ -224,7 +251,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       if (task.complete) continue;
       const memory = memoryFor(task.roadmap || roadmap);
       const latest = memory.latest(task.task || task.id);
-      if (latest) plan.setContinuation(task.task || task.id, latest);
+      if (latest || memory.handoffEpoch) plan.setContinuation(task.task || task.id, latest);
       const assessment = memory.assessedBlocker(task.task || task.id, task.criteriaRevision);
       if (assessment) deferredTasks.push({ task: task.task || task.id, roadmap: path.resolve(workdir, task.roadmap || roadmap), criteriaRevision: task.criteriaRevision, ...assessment });
     }
@@ -235,9 +262,21 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       tracking = prepareTracking(roadmap, tracking.file, workdir);
       recovery.tracking = tracking; recovery.roadmap = roadmap;
       runs.selectSource(roadmap, tracking);
+      progress = progressFor();
     }
     tracking.refreshSource(iteration);
     tracking.assertBounded();
+    const measured = progress.observe();
+    measured.additions += progress.initialObservation?.additions || 0;
+    progress.initialObservation = null;
+    if (measured.additions) await recovery.event('runner.scope_changed', { reason: 'scope_growth', attentionFingerprint: progress.state.sourceRevision, additions: measured.additions, progress: progress.summary() });
+    const scheduling = execution || queuedDelivery ? { mode: 'finite', reasons: [] } : defaultPlan.scheduling;
+    if (!schedulingAnnounced || JSON.stringify(progress.state.scheduling) !== JSON.stringify(scheduling)) {
+      schedulingAnnounced = true;
+      progress.state.scheduling = scheduling; progress.save();
+      await recovery.event('runner.scheduling', { ...scheduling, progress: progress.summary() });
+      if (scheduling.mode === 'broad') console.warn(`Warning: broad roadmap scheduling has no per-task controller selection: ${JSON.stringify(scheduling.reasons)}. Persisted progress review limits apply.`);
+    }
     let contents = fs.readFileSync(tracking.file, "utf8");
     let status = tracking.deliveryStatus(roadmapStatus(contents));
     const compacting = tracking.needsCompaction;
@@ -298,6 +337,31 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       console.log(`Roadmap complete after ${iteration} iteration(s).`);
       return { code: 0, reason: 'complete' };
     }
+    // A plateau is independent of worker outcome, blocker self-declaration and
+    // client conversation identity. Review never launches another model by itself.
+    if (options.progressReview) {
+      if (progress.applyReview(path.resolve(workdir, options.progressReview))) {
+        previousConversation = null; saveContinuation();
+        await recovery.event('runner.progress_reviewed', { reason: 'bounded_extension', progress: progress.summary() });
+      }
+      options.progressReview = undefined;
+    }
+    if (options.progressReviewPolicy === 'continue' && progress.reason()) {
+      const renewal = progress.continueReview();
+      await recovery.event('runner.progress_reviewed', { reason: 'operator_continue_policy', reviewReason: renewal.request.reason,
+        reviewId: renewal.request.id, requestFile: renewal.request.requestFile, decisionFile: renewal.decisionFile, progress: progress.summary() });
+      console.warn(`Progress window renewed (${renewal.request.reason}) under operator continue policy; acceptance unchanged.`);
+    }
+    const reviewReason = progress.reason();
+    if (reviewReason) {
+      const handoff = tracking.archive({ kind: 'progress-review', iteration });
+      const request = progress.requestReview(reviewReason);
+      await recovery.event('runner.progress_review_required', { reason: reviewReason, terminal: true, handoff,
+        reviewId: request.id, attentionFingerprint: request.id, requestFile: request.requestFile, notificationMode: options.notify || 'attention',
+        acknowledgment: 'required; journal access and desktop submission do not acknowledge review', progress: progress.summary() });
+      console.warn(`Progress review required (${reviewReason}). Parked with acceptance unchanged. Review request: ${request.requestFile}`);
+      return { code: 75, reason: 'review_required' };
+    }
     if (!resolving) await recovery.attention(contents, status, iteration);
     if (!compacting && !resolving) iteration += 1;
     const role = compacting ? "compactor" : resolving ? "resolver" : "worker";
@@ -313,6 +377,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (role === 'worker') {
       try { taskContext = taskMemory.prepare({ sessionId, taskId, criteriaRevision }); }
       catch (error) { disableMemory(taskOwner, error); }
+      if (taskContext && progress.state.handoffEpoch) taskContext.context += '\nHandoff precedence: the current reviewed handoff supersedes historical nextAction, previous checkpoints and run-history continuation. Reconcile recovery against the current handoff before resuming any historical work.\n';
     }
     const promptRevision = compacting ? COMPACT_REVISION : resolving ? RESOLVER_REVISION : PROMPT_REVISION;
     console.log(`===== ${compacting ? "compaction before next worker; after iteration" : "iteration"} ${iteration} | ${new Date().toISOString()} =====`);
@@ -323,7 +388,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const sourceRevision = tracking.sourceRevision;
     const sourceContents = fs.readFileSync(tracking.sourceSnapshot, "utf8");
     const snapshot = compacting ? tracking.archive({ kind: "before-compaction", iteration }) : null;
-    const sessionTimeoutMs = compacting || resolving ? Math.min(timeoutMs, resolverTimeoutMs) : timeoutMs;
+    const sessionTimeoutMs = Math.min(compacting || resolving ? Math.min(timeoutMs, resolverTimeoutMs) : timeoutMs, progress.remainingMs());
     const checkpointAtMs = checkpointDelay(sessionTimeoutMs, batch?.budgetMinutes);
     const checkpointFile = path.join(tracking.evidenceDir, `${sessionId}-checkpoint.json`);
     const checkpointAckFile = path.join(tracking.evidenceDir, `${sessionId}-checkpoint-ack.json`);
@@ -343,13 +408,17 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${selectionContext}${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     const implementationBefore = !compacting && !resolving && batch ? plan.observe(batch) : undefined;
     const before = tracking.contextBytes(iterationPrompt);
-    const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision,
+    const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision, handoffEpoch: progress.state.handoffEpoch,
       batch: batch ? { id: batch.id, deliverable: batch.deliverable, boundary: batch.boundary, completion: batch.completion,
         sourcePointers: batch.sourcePointers, prerequisites: batch.prerequisites, phase: batch.phase } : null })).digest('hex');
     const conversation = selectContinuation({ enabled: continuationAvailable, previous: previousConversation,
       client: options.client, task: `${taskOwner}#${taskId}`, role, scopeRevision: conversationScope,
       workdir, model: options.model, effort: options.effort, executable: options.executable });
+    const progressScopeFile = path.join(tracking.evidenceDir, `${sessionId}-progress-scope.json`);
+    atomicJson(progressScopeFile, { ledgerId: progress.state.id, sourceRevision, criteriaRevision, task: taskId,
+      runtimeBundleHash: RUNTIME_IDENTITY.bundleHash, criteria: progress.state.criteria.filter(item => !item.checked && !item.missing).map(item => item.key) });
     await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, task: taskId, batch: batch?.id, contextBytes: before,
+      scheduling, progress: progress.summary(), progressScopeFile,
       continuation: { resumed: Boolean(conversation.resumeSessionId), reason: conversation.reason } });
     const clientOptions = {
       signal,
@@ -386,6 +455,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       },
       onOutput: output?.write,
     };
+    activeProgress = progress;
+    progress.beginSession(role, sessionTimeoutMs);
     let result = await runClient(clientOptions);
     if (result.resumeUnavailable && conversation.resumeSessionId) {
       // A provider-confirmed missing thread before any agent activity is a
@@ -422,9 +493,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
 
     const elapsedMs = Math.round(performance.now() - started);
+    progress.finishSession(elapsedMs, workerOutcome?.outcome?.outcome);
+    activeProgress = null;
     const metrics = sessionMetrics(result, { client: options.client, effort: options.effort, startedAt, elapsedMs,
       before, after: tracking.contextBytes(iterationPrompt) });
     const receipt = { sessionId, role, iteration, sourceRevision, promptRevision, task: taskId, batch: batch?.id, code: result.code,
+      runtimeBundleHash: RUNTIME_IDENTITY.bundleHash, criteriaRevision, progressScopeFile,
       taskResultFile: workerOutcome?.outcome ? taskContext.resultFile : null,
       continuation: { resumed: Boolean(conversation.resumeSessionId), reason: conversation.reason },
       timedOut: result.timedOut, interrupted: result.interrupted, ...metrics };
@@ -433,6 +507,11 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     tracking.refreshSource(iteration);
     const after = fs.readFileSync(tracking.file, "utf8");
     const afterSource = fs.readFileSync(tracking.sourceSnapshot, "utf8");
+    progress.rememberHandoff();
+    const reduction = progress.observe();
+    if (reduction.closures) await recovery.event('runner.progress_observed', { kind: 'source_checkbox_closure', ...reduction, progress: progress.summary() });
+    if (reduction.additions) await recovery.event('runner.scope_changed', { reason: 'scope_growth', attentionFingerprint: progress.state.sourceRevision, additions: reduction.additions, progress: progress.summary() });
+    await recovery.event('runner.progress_updated', { progress: progress.summary() });
     const completedHandoff = tracking.archive({ kind: role, iteration, metadata: {
       ...receipt,
       signal: result.signal || null, timedOut: result.timedOut, interrupted: result.interrupted, usageLimit: result.usageLimit || null,
@@ -567,6 +646,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!stopped) console.error(`roadmap-runner: ${error.message}`);
     return { code: stopped ? 130 : error.exitCode || 1, reason: stopped ? "stopped" : error.reason || "failed" };
   } finally {
+    if (activeProgress?.state.session) {
+      const session = activeProgress.state.session;
+      activeProgress.finishSession(Math.max(0, Math.min(Date.now() - session.started, session.timeoutMs)), null);
+    }
     await sleep?.close();
     if (notifications) { if (!signal.aborted) await notifications.flush(); await notifications.close(); }
     if (!suppliedSignal) { process.removeListener("SIGINT", interrupt); process.removeListener("SIGTERM", interrupt); }

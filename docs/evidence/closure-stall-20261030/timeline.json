@@ -1,0 +1,1568 @@
+{
+  "schemaVersion": 1,
+  "runs": [
+    {
+      "runId": "c55f64d76ea0b7f7fefe5756",
+      "createdAt": "2026-10-29T17:59:56.717Z",
+      "endedAt": "2026-10-30T07:08:56.044Z",
+      "wallSeconds": 47339.327,
+      "terminalReason": "stopped",
+      "exitCode": 130,
+      "options": {
+        "timeout": "90m",
+        "supervisorEvery": 0,
+        "notify": "off",
+        "notifyOn": [],
+        "blockedPolicy": "park",
+        "resolverAttempts": 3,
+        "sessionContinuation": false,
+        "executionPlan": null
+      },
+      "eventCounts": {
+        "runner.started": 1,
+        "runner.turn_starting": 13,
+        "runner.task_result": 13,
+        "runner.turn_finished": 13,
+        "runner.needs_attention": 7,
+        "runner.capacity_wait": 1,
+        "runner.stopped": 1
+      },
+      "turns": [
+        {
+          "iteration": 1,
+          "sessionId": "850f776e-0803-47ab-9329-3ecd7a8db4c8",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T17:59:56.854Z",
+          "finishedAt": "2026-10-29T18:27:15.814Z",
+          "elapsedMs": 1638961,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "implement-search-request-cost-and-cancellation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "10c40ecbd2f6af9f668d68a64ffab626cb205c968278d2bcc4039e19a61800d7",
+          "sourceBefore": "07720fec8731306a8c8096609998438a637c617fa90d828b705a6ca87f92aa16",
+          "sourceAfter": "10b752f92c036d6db1cef4cbbd2d4d2812805ddf558783ed32c4a2d51070ccbd",
+          "originalBefore": {
+            "closed": 0,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 2,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-06.5-I1",
+            "API-06.13-I1"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 17,
+          "changedFileCount": 21,
+          "receiptCount": 6,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 20707,
+            "source": 52818,
+            "progress": 3499
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 2,
+          "sessionId": "79065520-7b5f-452c-bb6d-fd1a979f9adb",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T18:27:15.857Z",
+          "finishedAt": "2026-10-29T19:21:42.418Z",
+          "elapsedMs": 3266494,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "repair-catalog-comment-cost-boundaries",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "69b6a3072e016e168447549d3a1bc02e454b36c641f99826eef5302d222a88a2",
+          "sourceBefore": "10b752f92c036d6db1cef4cbbd2d4d2812805ddf558783ed32c4a2d51070ccbd",
+          "sourceAfter": "4f2b6cf61d34a9293b0b253008aa03d4f2ef26caee694dc88e8a562ea9e3eccb",
+          "originalBefore": {
+            "closed": 2,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 4,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-06.7-I1",
+            "API-06.7-I2"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 2,
+          "claimedRemainingItems": 15,
+          "changedFileCount": 22,
+          "receiptCount": 15,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 27832,
+            "source": 55299,
+            "progress": 6686
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 3,
+          "sessionId": "d55cdab8-84e0-4991-a05f-0306e7a066c3",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T19:21:42.487Z",
+          "finishedAt": "2026-10-29T19:40:08.202Z",
+          "elapsedMs": 1105697,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "select-activity-members-before-child-materialization",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "7bb37d366cdab4578748d4af8c47f9dc46253a962071cce1782e71e96a353a35",
+          "sourceBefore": "4f2b6cf61d34a9293b0b253008aa03d4f2ef26caee694dc88e8a562ea9e3eccb",
+          "sourceAfter": "b058aff81d29d3acc11ef3fe73b3f35ab75d74e116bd519d6a08d5c6887ebe6d",
+          "originalBefore": {
+            "closed": 4,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 5,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-06.6-I1"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 1,
+          "claimedRemainingItems": 14,
+          "changedFileCount": 19,
+          "receiptCount": 7,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 30156,
+            "source": 56049,
+            "progress": 7573
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 4,
+          "sessionId": "f679b1b7-a13c-418e-9d3b-435ec0ac7d34",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T19:40:08.256Z",
+          "finishedAt": "2026-10-29T20:55:21.811Z",
+          "elapsedMs": 4513574,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "prepay-maintenance-read-admission",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "c4e5d917825afe224e57d6127fbdc4f7bb44e9d85d5d4eb539e5d2cc1d51b329",
+          "sourceBefore": "b058aff81d29d3acc11ef3fe73b3f35ab75d74e116bd519d6a08d5c6887ebe6d",
+          "sourceAfter": "f4b4cf4cbe5bfaaf78e23bf9a25d863a5b84faac9766bf5cbe9cae17da6b7566",
+          "originalBefore": {
+            "closed": 5,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 6,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-02.13-I1"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 13,
+          "changedFileCount": 34,
+          "receiptCount": 15,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 31165,
+            "source": 56803,
+            "progress": 6565
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 5,
+          "sessionId": "409ecb7d-ba88-4d43-8fdb-672257d66f1f",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T20:55:21.884Z",
+          "finishedAt": "2026-10-29T22:15:11.632Z",
+          "elapsedMs": 4789711,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "guard-default-provider-egress",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "19614e919e36e47302e2cb9dcb24a9c4a2e4f974889ca71335aba258e0f26590",
+          "sourceBefore": "f4b4cf4cbe5bfaaf78e23bf9a25d863a5b84faac9766bf5cbe9cae17da6b7566",
+          "sourceAfter": "7e9226622f456dff77c14667804c16b270231d9ec34fa3b25728ec32b309a0c0",
+          "originalBefore": {
+            "closed": 6,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 8,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-07.3-I1",
+            "API-07.4-I1"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 11,
+          "changedFileCount": 72,
+          "receiptCount": 9,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 31831,
+            "source": 57578,
+            "progress": 6618
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 6,
+          "sessionId": "29c1cda2-1803-47bd-8d98-2605bb17d7dd",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T22:15:11.700Z",
+          "finishedAt": "2026-10-29T22:26:48.142Z",
+          "elapsedMs": 696439,
+          "exitCode": 1,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "complete-shared-representation-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "bf18dea6365dd3522968068bbcd9f8b122303473bf22cafa670a3070d5ca1392",
+          "sourceBefore": "7e9226622f456dff77c14667804c16b270231d9ec34fa3b25728ec32b309a0c0",
+          "sourceAfter": "f4d1fb5468d0325ab6f72f42fd059b0947fb56afaa32f78db59acd48538995cf",
+          "originalBefore": {
+            "closed": 8,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [
+            "API-02.10-I1",
+            "API-02.10-I2"
+          ],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 2,
+          "changedFileCount": 3,
+          "receiptCount": 1,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32335,
+            "source": 58757,
+            "progress": 7277
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 7,
+          "sessionId": "9e5d13db-87f7-44c2-8523-8b97bdec91cc",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T22:31:48.259Z",
+          "finishedAt": "2026-10-29T23:56:09.056Z",
+          "elapsedMs": 5060833,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "authority-bound-response-reservations",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "f5e42b63eb512a87c89e6a9a92f86ab0e141392b4293ffa46026d62a1d8cee2e",
+          "sourceBefore": "f4d1fb5468d0325ab6f72f42fd059b0947fb56afaa32f78db59acd48538995cf",
+          "sourceAfter": "4e4749f383f116315fbe280c306b044a1fc076821556b5fadbae065a1f214b0b",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 28,
+          "receiptCount": 13,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 28825,
+            "source": 59348,
+            "progress": 5681
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 8,
+          "sessionId": "c9ae814a-edc4-404e-8936-d50339bc99e1",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-29T23:56:09.134Z",
+          "finishedAt": "2026-10-30T01:19:15.680Z",
+          "elapsedMs": 4986481,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "renewable-stream-transfer-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "4e4749f383f116315fbe280c306b044a1fc076821556b5fadbae065a1f214b0b",
+          "sourceAfter": "b0b1d1d330a80f136dcc8209839033991c4c749851bd6330ca7c52d5282d5e4a",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 5,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 126,
+          "receiptCount": 13,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 33638,
+            "source": 59999,
+            "progress": 6708
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 9,
+          "sessionId": "fc95d932-3f36-4590-af0c-7b0c24cb19cf",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T01:19:15.760Z",
+          "finishedAt": "2026-10-30T02:43:22.760Z",
+          "elapsedMs": 5046952,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "attachment-core-transfer-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "b0b1d1d330a80f136dcc8209839033991c4c749851bd6330ca7c52d5282d5e4a",
+          "sourceAfter": "d708826244949aa252150bc926f58396d19b20267d613deaa77ad6d0f288016a",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 44,
+          "receiptCount": 10,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32465,
+            "source": 60702,
+            "progress": 7553
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 10,
+          "sessionId": "fc83c343-b4e4-4b79-9a98-fd918186ed8a",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T02:43:22.852Z",
+          "finishedAt": "2026-10-30T04:07:22.249Z",
+          "elapsedMs": 5039391,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "project-workspace-and-physical-response-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "d708826244949aa252150bc926f58396d19b20267d613deaa77ad6d0f288016a",
+          "sourceAfter": "f958edb22679037363a55804e3bf1245aaa98b577d2098a06baff33b3b368cf9",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 7,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 48,
+          "receiptCount": 8,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32868,
+            "source": 61478,
+            "progress": 7905
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 11,
+          "sessionId": "90393b25-3bd3-4433-bbaf-56f080bc4f5b",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T04:07:22.327Z",
+          "finishedAt": "2026-10-30T05:30:38.735Z",
+          "elapsedMs": 4996397,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "activity-and-project-attachment-response-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "f958edb22679037363a55804e3bf1245aaa98b577d2098a06baff33b3b368cf9",
+          "sourceAfter": "7b0856d3add790c91cd6bd54f56ca49241943616c233c3958bdf12905dbea1c1",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 7,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 46,
+          "receiptCount": 21,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32979,
+            "source": 63072,
+            "progress": 7428
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 12,
+          "sessionId": "bcceafaa-d276-44b8-a809-76886a5718f7",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T05:30:38.798Z",
+          "finishedAt": "2026-10-30T06:52:10.579Z",
+          "elapsedMs": 4891720,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "milestone-response-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "7b0856d3add790c91cd6bd54f56ca49241943616c233c3958bdf12905dbea1c1",
+          "sourceAfter": "abc9ea7907f7f0fd64fe9f69d2b74ff76fd41751a9b35777add4325161937f0f",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 65,
+          "receiptCount": 23,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32772,
+            "source": 63884,
+            "progress": 7644
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        },
+        {
+          "iteration": 13,
+          "sessionId": "dc7829aa-60bc-4915-b0eb-06e8e40cfabf",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T06:52:10.655Z",
+          "finishedAt": "2026-10-30T07:08:56.031Z",
+          "elapsedMs": 1005378,
+          "exitCode": 1,
+          "timedOut": false,
+          "interrupted": true,
+          "operation": "inbox-and-notification-response-custody",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "2fbecd0e6240f56c77fc6a2394e2449f4745af2fdd4801f266b97969e68f4e5f",
+          "sourceBefore": "abc9ea7907f7f0fd64fe9f69d2b74ff76fd41751a9b35777add4325161937f0f",
+          "sourceAfter": "abc9ea7907f7f0fd64fe9f69d2b74ff76fd41751a9b35777add4325161937f0f",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 18,
+          "receiptCount": 5,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32715,
+            "source": 64632,
+            "progress": 8158
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "disabled"
+          }
+        }
+      ],
+      "attention": [
+        {
+          "at": "2026-10-29T18:27:15.828Z",
+          "iteration": 1,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "ba6741f60c6720d3697e403132f5aaa5f14b4469495b44db55beb5c585198640",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "SKIPPED",
+              "task": "API-06.13-V1",
+              "requiresAttention": false
+            }
+          ]
+        },
+        {
+          "at": "2026-10-29T19:21:42.435Z",
+          "iteration": 2,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "9c25bfc7e72f95695bc85c1a799ab5d349182dded3eb854dd279e4fe1e04455d",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-29T19:40:08.215Z",
+          "iteration": 3,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "be13ff4d9575b5ac7faab8922364eebaae28eb41cccd1eca01a617d3f4d5d9cb",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-29T20:55:21.831Z",
+          "iteration": 4,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "4a9fc9c27b070c9bb289c30c3a03fa46ac400050b3a2def2adc6da8c58fba121",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-29T22:15:11.649Z",
+          "iteration": 5,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "1b61d0223e128fba4898412e2c00a87de3757feeede1b2c62563919b91a3ae69",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-29T22:26:48.163Z",
+          "iteration": 6,
+          "type": "runner.capacity_wait",
+          "reasonCode": "capacity_wait",
+          "attention": false,
+          "attentionFingerprint": null,
+          "items": null
+        },
+        {
+          "at": "2026-10-29T23:56:09.075Z",
+          "iteration": 7,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "d4aa807269586bb5c25b07dfad85f161f705d763ebb2c21ee367ba7247e722dc",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T02:43:22.777Z",
+          "iteration": 9,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "8c27f593f0be11c94df86773d1cafe9c4849c4721b896b592aa8f44c150de9f9",
+          "items": [
+            {
+              "status": "PROBLEM",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.7-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-06.13-V1",
+              "requiresAttention": true
+            },
+            {
+              "status": "PROBLEM",
+              "task": "API-02.15-I1",
+              "requiresAttention": true
+            }
+          ]
+        }
+      ],
+      "notificationArtifactExists": false,
+      "queueStates": [
+        {
+          "roadmapNumber": "005",
+          "state": "stopped"
+        },
+        {
+          "roadmapNumber": "006",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "002",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "007",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "008",
+          "state": "pending"
+        }
+      ]
+    },
+    {
+      "runId": "ddb0a93744ed265ff19e4b48",
+      "createdAt": "2026-10-30T11:16:39.003Z",
+      "endedAt": "2026-10-30T18:29:38.102Z",
+      "wallSeconds": 25979.099,
+      "terminalReason": "stopped",
+      "exitCode": 130,
+      "options": {
+        "timeout": "45m",
+        "supervisorEvery": "0",
+        "notify": "off",
+        "notifyOn": [],
+        "blockedPolicy": "resolve",
+        "resolverAttempts": 2,
+        "sessionContinuation": true,
+        "executionPlan": ""
+      },
+      "eventCounts": {
+        "runner.started": 1,
+        "runner.turn_starting": 12,
+        "runner.task_result": 12,
+        "runner.turn_finished": 12,
+        "runner.needs_attention": 8,
+        "runner.stopped": 1
+      },
+      "turns": [
+        {
+          "iteration": 1,
+          "sessionId": "0edc38a5-3776-4dcf-88b9-fcc31a064102",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T11:16:39.163Z",
+          "finishedAt": "2026-10-30T11:54:24.556Z",
+          "elapsedMs": 2265365,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-07.7-I1-canonical-label-and-catalog",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "0216dc1b6c9871021f3b1e5726122945b5afc032b0f8576b1839f1e288db1e5f",
+          "sourceBefore": "8e84b8e348fd36fe5a83120bcc0bce0c6f400ce6a32d7b1761188447115df086",
+          "sourceAfter": "fee7a82c7e951d3d0fcb6b6ce97810dac092cb1b23dc527e274af4fa0806f219",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 6,
+          "claimedRemainingItems": 5,
+          "changedFileCount": 17,
+          "receiptCount": 13,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 20903,
+            "source": 71004,
+            "progress": 2597
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "new_task_session"
+          }
+        },
+        {
+          "iteration": 2,
+          "sessionId": "ce986160-d0d5-48fa-91b7-ba8fbb665f33",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T11:54:24.687Z",
+          "finishedAt": "2026-10-30T12:31:39.460Z",
+          "elapsedMs": 2234796,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-finite-period-accounting-and-discovery",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "00e0c0b7667284740a283a16bec753dfd9e11efe632dcdc9631791d8bf1252f8",
+          "sourceBefore": "fee7a82c7e951d3d0fcb6b6ce97810dac092cb1b23dc527e274af4fa0806f219",
+          "sourceAfter": "ed54efd67986da4439308b675ea871a2e5147a35ddaf8495bf528830606edbc9",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 5,
+          "changedFileCount": 20,
+          "receiptCount": 6,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 28989,
+            "source": 71771,
+            "progress": 8061
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "scope_changed"
+          }
+        },
+        {
+          "iteration": 3,
+          "sessionId": "57967b6c-b2f2-4e10-b9fc-1c6d5532e39e",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T12:31:39.521Z",
+          "finishedAt": "2026-10-30T13:10:20.102Z",
+          "elapsedMs": 2320622,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-stream-data-period-custody",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "ed54efd67986da4439308b675ea871a2e5147a35ddaf8495bf528830606edbc9",
+          "sourceAfter": "abb853c5e7b173671a6008dfcfb90a9673838658fd13698606f76178f3e5667b",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 23,
+          "receiptCount": 8,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 30127,
+            "source": 72606,
+            "progress": 7460
+          },
+          "continuation": {
+            "resumed": false,
+            "reason": "scope_changed"
+          }
+        },
+        {
+          "iteration": 4,
+          "sessionId": "9738a535-68f0-4c2a-bc8b-8a982a22830f",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T13:10:20.170Z",
+          "finishedAt": "2026-10-30T13:47:35.863Z",
+          "elapsedMs": 2235662,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-cumulative-control-claims",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "abb853c5e7b173671a6008dfcfb90a9673838658fd13698606f76178f3e5667b",
+          "sourceAfter": "9eafe99d3be80b21cb476c3d326271c1df34a439cb8cd968d3d9c7cef630125a",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 8,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 17,
+          "receiptCount": 6,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32808,
+            "source": 73624,
+            "progress": 7548
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 5,
+          "sessionId": "2c82809e-8a96-4048-9dfd-18dac6d33c47",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T13:47:35.944Z",
+          "finishedAt": "2026-10-30T14:23:49.068Z",
+          "elapsedMs": 2173110,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-07.7-I1-private-member-continuation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "9eafe99d3be80b21cb476c3d326271c1df34a439cb8cd968d3d9c7cef630125a",
+          "sourceAfter": "cce4d964598019729d75d4f65d328994dbd01083182b1d852c8b1f54aa93c8e9",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 28,
+          "receiptCount": 19,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 33396,
+            "source": 74270,
+            "progress": 7824
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 6,
+          "sessionId": "d318218d-b3e4-4512-856c-58b7000890d1",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T14:23:49.160Z",
+          "finishedAt": "2026-10-30T15:02:35.520Z",
+          "elapsedMs": 2326316,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-07.7-I1-canonical-document-observation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "cce4d964598019729d75d4f65d328994dbd01083182b1d852c8b1f54aa93c8e9",
+          "sourceAfter": "4b4385ce02114f223af161a6deb7de0a9c82c49c42269b1a660b19ebfcba0606",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 21,
+          "receiptCount": 14,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 33972,
+            "source": 76272,
+            "progress": 7806
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 7,
+          "sessionId": "db2bf709-b24f-40d7-8454-8eaa4bb3bf48",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T15:02:35.610Z",
+          "finishedAt": "2026-10-30T15:38:52.054Z",
+          "elapsedMs": 2176445,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-07.7-I1-private-workspace-and-read-continuation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "4b4385ce02114f223af161a6deb7de0a9c82c49c42269b1a660b19ebfcba0606",
+          "sourceAfter": "853ca5e5b71c216a2a3e21eda78b6273c1b31d4427f29847e087ab902a87863c",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 31,
+          "receiptCount": 22,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 34144,
+            "source": 77816,
+            "progress": 7130
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 8,
+          "sessionId": "d6f2f7a3-cd75-4651-8b99-e4881a35bbe3",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T15:38:52.147Z",
+          "finishedAt": "2026-10-30T16:14:24.597Z",
+          "elapsedMs": 2132466,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-07.7-I1-private-inbox-and-agent-routing-continuation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "853ca5e5b71c216a2a3e21eda78b6273c1b31d4427f29847e087ab902a87863c",
+          "sourceAfter": "0909844d5eb7095154991543ceaadf8ef2efa4b8e7e7b00bc1e46466facdbffe",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 20,
+          "receiptCount": 9,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32692,
+            "source": 79177,
+            "progress": 8063
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 9,
+          "sessionId": "3d027f09-d065-428d-b84a-5f0c7027af9e",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T16:14:24.672Z",
+          "finishedAt": "2026-10-30T16:51:48.796Z",
+          "elapsedMs": 2244105,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-Core-transfer-read-period-custody",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "0909844d5eb7095154991543ceaadf8ef2efa4b8e7e7b00bc1e46466facdbffe",
+          "sourceAfter": "5e95fe8228ac9e4c66be1a33157ce8437f76848dd9d146060a6244c4d7e37ef7",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 6,
+          "claimedRemainingItems": 4,
+          "changedFileCount": 18,
+          "receiptCount": 14,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 29423,
+            "source": 79893,
+            "progress": 7532
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 10,
+          "sessionId": "b41b5435-5851-4974-a07c-b8dd50479911",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T16:51:48.881Z",
+          "finishedAt": "2026-10-30T17:31:08.954Z",
+          "elapsedMs": 2360081,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-protected-timesheet-result-custody",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "5e95fe8228ac9e4c66be1a33157ce8437f76848dd9d146060a6244c4d7e37ef7",
+          "sourceAfter": "70d32cf0750819b1510ea84a6d93297d9add4613090e192fcd529ecd8c921cf1",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 4,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 22,
+          "receiptCount": 6,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 27399,
+            "source": 81175,
+            "progress": 7863
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 11,
+          "sessionId": "acad49fa-d600-4341-b76c-5665deb7f68f",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T17:31:09.043Z",
+          "finishedAt": "2026-10-30T18:07:25.366Z",
+          "elapsedMs": 2176306,
+          "exitCode": 0,
+          "timedOut": false,
+          "interrupted": false,
+          "operation": "API-02.20-I1-MCP-useful-outcome-observation",
+          "outcome": "implemented",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "70d32cf0750819b1510ea84a6d93297d9add4613090e192fcd529ecd8c921cf1",
+          "sourceAfter": "697f55bdbb3336d21f566115c500b1d5db8ee2453c4cee674f5889a3104caedc",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 5,
+          "claimedRemainingItems": 3,
+          "changedFileCount": 18,
+          "receiptCount": 16,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 26992,
+            "source": 83336,
+            "progress": 7560
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        },
+        {
+          "iteration": 12,
+          "sessionId": "eb5599c3-5273-4920-a40c-703ed46261f9",
+          "taskId": "roadmap-af7797d480b4",
+          "startedAt": "2026-10-30T18:07:25.489Z",
+          "finishedAt": "2026-10-30T18:29:38.076Z",
+          "elapsedMs": 1332583,
+          "exitCode": 1,
+          "timedOut": false,
+          "interrupted": true,
+          "operation": "API-02.20-I1-HTTP-export-disposition",
+          "outcome": "partial",
+          "scheduling": "continue",
+          "criteriaRevision": "89dff1c38cfacd665113b4f20674f1e8cffc0086e21f0f1bb8a553c2775c8bc2",
+          "sourceBefore": "697f55bdbb3336d21f566115c500b1d5db8ee2453c4cee674f5889a3104caedc",
+          "sourceAfter": "fa768c8f74b59287c7de79782c220b9ce8d09665cc9ce8538e9e9c71ccfb9e94",
+          "originalBefore": {
+            "closed": 10,
+            "total": 17
+          },
+          "originalAfter": {
+            "closed": 10,
+            "total": 17
+          },
+          "closedCriteria": [],
+          "reopenedCriteria": [],
+          "requirementTextChanges": [],
+          "claimedCompletedItems": 3,
+          "claimedRemainingItems": 2,
+          "changedFileCount": 5,
+          "receiptCount": 9,
+          "nextActionPresent": true,
+          "contextBytes": {
+            "prompt": 32855,
+            "source": 84434,
+            "progress": 7279
+          },
+          "continuation": {
+            "resumed": true,
+            "reason": "same_task"
+          }
+        }
+      ],
+      "attention": [
+        {
+          "at": "2026-10-30T11:54:24.585Z",
+          "iteration": 1,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "cd3eccfc3151b057229f88ba27b41c46721250001ff8245369c2e1f1273b8b3e",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T13:10:20.117Z",
+          "iteration": 3,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "43cf73345d2915d2512fbaaaef026f8029a007e726deb688d5a542cf037f9132",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T13:47:35.879Z",
+          "iteration": 4,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "3feb0060e6f3324fecd039487b0cb1a2e356af5bd0b8e0ff741f2e5e19840d94",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T15:02:35.540Z",
+          "iteration": 6,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "d77209dae57b89684b1ee34ddda43d098ba6a37143a65237f8ec4e6cfc63eebe",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T15:38:52.071Z",
+          "iteration": 7,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "de939941fc0a903942a53c67e56e7058392a5a307dcb21166ffba2482ca843bf",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T16:51:48.814Z",
+          "iteration": 9,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "d71dae0771826a598c684447d52dfbdd42d0eef4f4f5e7032027fac1f076b0c8",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T17:31:08.970Z",
+          "iteration": 10,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "9a6d4a73c2b031a85789046023660b31c66736a0e9f15dd8ff0b86b2df974d0d",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        },
+        {
+          "at": "2026-10-30T18:07:25.392Z",
+          "iteration": 11,
+          "type": "runner.needs_attention",
+          "reasonCode": "needs_attention",
+          "attention": true,
+          "attentionFingerprint": "1f1ba50ee2a54e92f88b0ebd90070e49e47971ae7ec189ef053b8fbb0a038c6d",
+          "items": [
+            {
+              "status": "BLOCKED",
+              "task": "API-06.11",
+              "requiresAttention": true
+            },
+            {
+              "status": "BLOCKED",
+              "task": "API-06.12",
+              "requiresAttention": true
+            },
+            {
+              "status": "NEEDS_INFO",
+              "task": "API-02.15",
+              "requiresAttention": true
+            }
+          ]
+        }
+      ],
+      "notificationArtifactExists": false,
+      "queueStates": [
+        {
+          "roadmapNumber": "005",
+          "state": "stopped"
+        },
+        {
+          "roadmapNumber": "006",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "002",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "007",
+          "state": "pending"
+        },
+        {
+          "roadmapNumber": "008",
+          "state": "pending"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Checkbox closure is a source-state observation, not an independent correctness verdict.",
+    "Changed-file and receipt counts are worker claims, not accepted milestones.",
+    "Detailed local usage records are retained privately; resumed-session aggregation and billed cost are not established.",
+    "No raw private source, transcripts, credentials or customer payloads are included."
+  ]
+}

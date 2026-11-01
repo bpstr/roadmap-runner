@@ -20,8 +20,81 @@ Finite execution plans continue using their declared original parents and batche
 
 A partial task with recorded useful progress and an exact next action stays
 selected while its criteria and prerequisites remain valid and useful work remains.
-There is no attempt-count cutoff. Missing/stale structured outcomes retain rotation. An implementation
+Persisted progress-review limits bound continuation without measured reduction.
+Missing/stale structured outcomes retain rotation. An implementation
 outcome can move a normal task to focused verification; it never ticks acceptance.
+
+## Progress review
+
+The controller records `focused`, `broad` or `finite` scheduling and specific fallback
+reasons in events, managed status and `progress-ledger.json`. Broad mode warns before
+dispatch because individual tasks are selected by the worker. Progress limits apply
+in all scheduling modes.
+
+The first monitored source establishes the original checkbox baseline. Checkbox
+identities exclude surrounding prose and checkbox state. Requirement edits/removals
+leave their prior baseline entries unresolved and record additions. Contributions,
+operation names, receipt references and new source hashes do not count as closure.
+Observed source closure does not independently qualify correctness.
+
+Default limits park the run after four worker turns or three hours of active execution
+without measured reduction, or twelve hours of cumulative active execution. They persist
+across client sessions and process restarts in the same progress state. All client roles
+consume active time; idle quota/capacity waits do not. An interrupted controller session
+is conservatively charged up to its recorded timeout. `--timeout` is a per-session
+ceiling, further bounded by remaining active allowances. Existing ledgers retain their
+limits when a new invocation supplies different defaults.
+
+A parked run exits 75 with `review_required`, archives the handoff, and emits a durable
+`runner.progress_review_required` event with its request file. Desktop notifications
+may be disabled or fail. Reading status, reading the journal, and desktop submission
+do not acknowledge the review. No automatic model review runs. `--recover-blocked`
+does not replenish progress allowances.
+
+Inspect the request, current source, remaining criteria and evidence. To grant a bounded
+extension, write a JSON file using the request's `pendingReview.id`, `sourceRevision`
+and unresolved criterion `key` values:
+
+```json
+{
+  "version": 1,
+  "reviewId": "<pendingReview.id>",
+  "sourceRevision": "<sourceRevision>",
+  "decision": "extend",
+  "reason": "Reviewed the remaining acceptance and its finite prerequisites.",
+  "gapKeys": ["<unresolved criterion key>"],
+  "additionalTurns": 3,
+  "additionalActiveTime": "1h"
+}
+```
+
+Restart with `--progress-review review.json` (MCP `progressReview`). Managed review files
+must be inside the authorized workspace. A decision grants 1–100 further worker turns
+and at most twelve additional active hours. It acknowledges the specific request and
+source revision; stale decisions cannot grant a new extension. Cumulative counters,
+closure age and review history remain intact. Original criterion closures and newly
+closed additions explicitly listed in the reviewed `gapKeys` can renew the progress
+window within the cumulative active allowance. Newly invented or reopened subgaps cannot.
+
+External edits to the current handoff supersede historical task continuation and reset
+client conversation reuse. History remains available as evidence. Controller-only status
+changes do not supersede continuation. The first upgrade invocation with explicit fresh
+sessions also gives the current handoff precedence over legacy task memory.
+
+An operator can select `--progress-review-policy continue` (MCP
+`progressReviewPolicy: "continue"`, or `ROADMAP_PROGRESS_REVIEW_POLICY=continue`)
+to keep executing through progress thresholds. Each threshold retains a source-bound
+request and an operator-policy renewal decision, then emits `runner.progress_reviewed`.
+This is an execution authorization, not a model review or acceptance verdict. It
+does not close criteria or approve added subgaps. Cumulative counters and closure age
+remain intact; the policy repeatedly renews the active allowance and can run until
+completion or explicit stop. Per-session timeouts, blocker handling and explicit stop
+still apply. The default `park` policy retains bounded review behavior. The selected
+policy applies to every roadmap in a managed queue and must be selected again on restart.
+
+Start events include a SHA-256 runtime bundle identity and manifest path. Session receipts
+bind that identity, the criteria revision and a snapshot of unresolved criterion keys.
+Identical version strings do not imply identical executable/prompt contents.
 
 ## Worker result
 

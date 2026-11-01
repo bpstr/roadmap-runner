@@ -1,0 +1,96 @@
+✔ explicit continue policy passes repeated plateau reviews and reaches source completion (1234.000917ms)
+Roadmap Runner 0.12.5
+Client:    codex
+Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-adLCRC
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-adLCRC/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-adLCRC/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-adLCRC/.roadmap-runner/roadmap-6153553fef67/history (archived snapshots; not loaded by default)
+Timeout:   3s per session
+Progress:  review after 1 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 10m
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-adLCRC/progress.md.events.jsonl
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"}]. Persisted progress review limits apply.
+===== iteration 1 | 2026-11-01T12:41:28.019Z =====
+Iteration 1 completed.
+
+Progress window renewed (acceptance_plateau_turns) under operator continue policy; acceptance unchanged.
+===== iteration 2 | 2026-11-01T12:41:28.418Z =====
+Iteration 2 completed.
+
+Progress window renewed (acceptance_plateau_turns) under operator continue policy; acceptance unchanged.
+===== iteration 3 | 2026-11-01T12:41:28.461Z =====
+Iteration 3 completed.
+
+Roadmap complete after 3 iteration(s).
+✔ managed workers retain continue policy in options and status (515.999333ms)
+✔ broad workers park after four contributions despite changed hashes; restart cannot reset the review (1232.960375ms)
+✔ reviewed repair handoff supersedes obsolete continuation, with history retained (3234.212084ms)
+✔ cumulative active time caps a long client session and parks without a second worker (443.839583ms)
+✔ fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts (3.177125ms)
+Roadmap Runner 0.12.5
+Client:    codex
+Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6/.roadmap-runner/roadmap-b162622cd737/history (archived snapshots; not loaded by default)
+Timeout:   3s per session
+Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 10m
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6/progress.md.events.jsonl
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"}]. Persisted progress review limits apply.
+===== iteration 1 | 2026-11-01T12:41:33.434Z =====
+Iteration 1 hit the 3s limit; preserve checkpoint and apply bounded recovery.
+
+===== iteration 2 | 2026-11-01T12:41:36.445Z =====
+Roadmap requirements changed; revision a7c0617be30a will be reconciled by the next worker.
+Iteration 2 completed.
+
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"},{"code":"ambiguous_dependencies","task":"GAP-1"},{"code":"missing_acceptance","task":"GAP-1"}]. Persisted progress review limits apply.
+===== iteration 3 | 2026-11-01T12:41:36.500Z =====
+Roadmap requirements changed; revision 2ab260bcd13b will be reconciled by the next worker.
+Iteration 3 completed.
+
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"},{"code":"ambiguous_dependencies","task":"GAP-1"},{"code":"missing_acceptance","task":"GAP-1"},{"code":"ambiguous_dependencies","task":"GAP-2"},{"code":"missing_acceptance","task":"GAP-2"}]. Persisted progress review limits apply.
+===== iteration 4 | 2026-11-01T12:41:36.540Z =====
+Roadmap requirements changed; revision 401dbbfef9ed will be reconciled by the next worker.
+Iteration 4 completed.
+
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"},{"code":"ambiguous_dependencies","task":"GAP-1"},{"code":"missing_acceptance","task":"GAP-1"},{"code":"ambiguous_dependencies","task":"GAP-2"},{"code":"missing_acceptance","task":"GAP-2"},{"code":"ambiguous_dependencies","task":"GAP-3"},{"code":"missing_acceptance","task":"GAP-3"}]. Persisted progress review limits apply.
+Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-wxXJw6/.roadmap-runner/roadmap-b162622cd737/evidence/progress-review-d075b193-fe38-44b6-8408-33426d6f67ab.json
+✔ managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled (3166.695667ms)
+✔ eleven contributions, renamed operations and prose churn do not close or reset the original baseline (14.124291ms)
+✔ finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it (7.198ms)
+✔ review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age (3.2975ms)
+✔ active-time budgets count every role, cap sessions and survive process interruption and restarts (2.719542ms)
+✔ source closures survive more than eight turns and handoff reconciliation preserves the current epoch (11.459125ms)
+✔ invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations (3.851166ms)
+✔ explicit continue policy renews time and turn windows without closing criteria or approving additions (5.058125ms)
+✔ continue policy must be explicit and may acknowledge an existing parked request (3.48075ms)
+✔ progress budgets have finite defaults and CLI values override the environment (0.941583ms)
+✔ sleep prevention is opt-in and CLI flags override the environment (0.10225ms)
+✔ desktop notifications default on and explicit off overrides defaults (0.078917ms)
+✔ Codex adapter preserves accepted unattended invocation (0.119042ms)
+✔ Claude adapter bypasses permission prompts (0.066041ms)
+✔ Gemini adapter uses current noninteractive YOLO mode (0.056583ms)
+✔ Campfire-compatible secondary adapters are stable (0.064708ms)
+✔ Codex model and effort overrides are applied (0.076625ms)
+✔ duration parsing supports runner units (0.317667ms)
+✔ roadmap completion states are exact line based (0.624417ms)
+✔ client can be selected through args or environment (0.121542ms)
+✔ blocked recovery requires explicit opt-in (0.060417ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10085.811417

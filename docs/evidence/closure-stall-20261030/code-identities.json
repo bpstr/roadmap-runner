@@ -1,0 +1,67 @@
+{
+  "repositoryHead": "3e6478644d727404bd4317f1723d6e11e3b0f3aa",
+  "repositoryVersion": "0.12.4",
+  "installedVersion": "0.12.4",
+  "files": [
+    {
+      "file": "src/lifecycle.ts",
+      "repoSha256": "11b2feb44c26ebb11b7c426b275c4b5df4bcec95f1177bf48649e2fc7c93d26f",
+      "installedSha256": "35720b56279f05e2da91dc7534f8bae6358af6a10bf7e5f1d9d20f63676ccfb4",
+      "same": false
+    },
+    {
+      "file": "dist/lifecycle.js",
+      "repoSha256": "af5026cf9cd0bb0073b240728f8b9a455862fb9546cc4d0c8d29ca1d4b92526f",
+      "installedSha256": "991d6c88246b3793bdd00f305f80c568c5fecf4bf2edbd09e76a7cd3fd5e7ce8",
+      "same": false
+    },
+    {
+      "file": "lib/task-index.js",
+      "repoSha256": "5c1e2cb7d1044bac51613b4ec749e312404c9b949612e507a594ff29addd8f19",
+      "installedSha256": "5c1e2cb7d1044bac51613b4ec749e312404c9b949612e507a594ff29addd8f19",
+      "same": true
+    },
+    {
+      "file": "lib/task-memory.js",
+      "repoSha256": "f94ab8ffdf79b2122a904e270ddd639b953bc8b361f46b53f4602ab78e102156",
+      "installedSha256": "f94ab8ffdf79b2122a904e270ddd639b953bc8b361f46b53f4602ab78e102156",
+      "same": true
+    },
+    {
+      "file": "lib/run-evidence.js",
+      "repoSha256": "c8cefedf3fd8892fd846e2aaa1486885d4524583bfadc06b70e44ad1ad11c6ec",
+      "installedSha256": "c8cefedf3fd8892fd846e2aaa1486885d4524583bfadc06b70e44ad1ad11c6ec",
+      "same": true
+    },
+    {
+      "file": "lib/runner.js",
+      "repoSha256": "16c455d380ab8f8a188f8955fb205f8660e527b8eeb93554781f07bdd74b5d6f",
+      "installedSha256": "16c455d380ab8f8a188f8955fb205f8660e527b8eeb93554781f07bdd74b5d6f",
+      "same": true
+    },
+    {
+      "file": "src/notifications.ts",
+      "repoSha256": "00fab72d0ac4bc78e58f7c84a46ed2fba34aa06ac0907394e6927d9b16be4c1d",
+      "installedSha256": "00fab72d0ac4bc78e58f7c84a46ed2fba34aa06ac0907394e6927d9b16be4c1d",
+      "same": true
+    },
+    {
+      "file": "dist/notifications.js",
+      "repoSha256": "984d256739e1be88cadd3e9725ffaf6b1c74255500a67e86eef2f9b729b5c2e4",
+      "installedSha256": "984d256739e1be88cadd3e9725ffaf6b1c74255500a67e86eef2f9b729b5c2e4",
+      "same": true
+    },
+    {
+      "file": "prompt.md",
+      "repoSha256": "a579bdce0ca455b2436a6cef0d79877145737f60e9aa7ddea4e3283db77be4ff",
+      "installedSha256": "e1445beef935589694d67e51f96857f7b53d505a4109e61e94f92b551c214f4f",
+      "same": false
+    },
+    {
+      "file": "src/run-manager.ts",
+      "repoSha256": "8c53d15d4aae0f8c5c8bd6b7f95a09b82330b02d1b1ef4f078652af1a10b345c",
+      "installedSha256": "8c53d15d4aae0f8c5c8bd6b7f95a09b82330b02d1b1ef4f078652af1a10b345c",
+      "same": true
+    }
+  ]
+}

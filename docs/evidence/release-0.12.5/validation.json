@@ -1,0 +1,91 @@
+{
+  "version": "0.12.5",
+  "status": "superseded_by_final_release_validation",
+  "verificationPlan": {
+    "changedInputs": "CLI and managed-run session defaults change from 90m to 6h; CLI help, README and focused default/override assertions change. Include existing uncommitted closure-stall remediation and commits since v0.12.4.",
+    "retainedImplementation": "Reuse compatible prepared closure-stall remediation results (172 distinct cases) and source-complete deferral evidence; changed default assertions are checked separately.",
+    "affectedChecks": [
+      "npm run build",
+      "node --test test/runner.test.js",
+      "node --test --test-name-pattern=\"CLI and managed schema carry\" test/execution-reset.test.js",
+      "npm run check:package",
+      "metadata and git diff --check"
+    ],
+    "completion": "Changed defaults and overrides, managed schema, package metadata/layout and packaged CLI help pass. No repeated local full suite.",
+    "releaseGate": "Existing .github/workflows/ci.yml requires six hosted prepared full-suite/package jobs on pushes to main (Node 20/22/24, Ubuntu/macOS); wait for that explicit gate before publication.",
+    "inference": "Prepared fixtures only, no provider calls, credential loading, fixture recording or paid dogfood."
+  },
+  "results": {
+    "build": {
+      "exitCode": 0,
+      "log": "build.log"
+    },
+    "cliDefaultAndOverrides": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "log": "runner-tests.log"
+    },
+    "managedSchemaDefault": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0,
+      "log": "managed-default-test.log"
+    },
+    "package": {
+      "exitCode": 0,
+      "files": 76,
+      "packedBytes": 194254,
+      "log": "package.log"
+    },
+    "retainedEvidence": {
+      "matchingFiles": [
+        "RECOVERY.md",
+        "docs/investigations/closure-stall-remediation.md",
+        "docs/mcp-events.md",
+        "docs/task-continuity.md",
+        "lib/progress-ledger.js",
+        "lib/recovery.js",
+        "lib/task-memory.js",
+        "lib/task-plan.js",
+        "scripts/check-package.js",
+        "src/events.ts",
+        "src/lifecycle.ts",
+        "src/run-state.ts",
+        "src/worker.ts",
+        "test/agent-integration.test.js",
+        "test/closure-stall-integration.test.js",
+        "test/progress-ledger.test.js",
+        "test/queue.test.js",
+        "test/runtime-continuity-integration.test.js",
+        "test/task-continuity-integration.test.js"
+      ],
+      "changedFiles": [
+        "CHANGELOG.md",
+        "README.md",
+        "bin/roadmap-runner.js",
+        "lib/runner.js",
+        "src/run-manager.ts",
+        "test/runner.test.js"
+      ]
+    },
+    "whitespace": "git diff --check passed"
+  },
+  "hygiene": {
+    "freeBytes": 50165096448,
+    "startedBrowsers": [],
+    "startedServers": [],
+    "stoppedProcesses": [],
+    "removedPaths": [],
+    "reclaimedBytes": 0,
+    "notes": "No browsers or servers were started. Shared Assign processes and connected browser controllers preserved. Session artifacts are small; no large inactive session artifact found. Build output and qualification evidence retained."
+  },
+  "previousStatus": "local_passed_awaiting_limit_locations",
+  "historicalPending": [
+    "Identify the requested 90-second large-check and 10-minute compilation defaults; no definitions were found in repository code, configuration or documentation.",
+    "Finish requested limits, run affected checks, commit/push, wait for hosted release CI, then publish."
+  ],
+  "finalValidation": "final/validation.json"
+}

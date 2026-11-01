@@ -11,6 +11,17 @@ const base = {
   executable: "",
 };
 
+test('progress budgets have finite defaults and CLI values override the environment', () => {
+  const defaults = parseArgs(['roadmap.md'], {});
+  assert.equal(defaults.timeout, '6h');
+  assert.equal(parseArgs(['roadmap.md'], { ROADMAP_TIMEOUT: '2h' }).timeout, '2h');
+  assert.equal(parseArgs(['roadmap.md', '--timeout', '45m'], { ROADMAP_TIMEOUT: '2h' }).timeout, '45m');
+  assert.deepEqual([defaults.reviewTurns, defaults.reviewAfter, defaults.maxActiveTime], ['4', '3h', '12h']);
+  const configured = parseArgs(['roadmap.md', '--review-turns', '6', '--review-after', '2h', '--max-active-time', '8h', '--progress-review', 'review.json'],
+    { ROADMAP_REVIEW_TURNS: '9', ROADMAP_REVIEW_AFTER: '5h', ROADMAP_MAX_ACTIVE_TIME: '24h' });
+  assert.deepEqual([configured.reviewTurns, configured.reviewAfter, configured.maxActiveTime, configured.progressReview], ['6', '2h', '8h', 'review.json']);
+});
+
 test('sleep prevention is opt-in and CLI flags override the environment', () => {
   assert.equal(parseArgs(['roadmap.md'], {}).preventSleep, false);
   assert.equal(parseArgs(['roadmap.md', '--prevent-sleep'], {}).preventSleep, true);

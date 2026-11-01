@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-30T21:03:12.933Z",
+  "preservedRun": {
+    "id": "1f13ece1c31b16b9e862aa7b",
+    "processState": "running",
+    "roadmapState": "in_progress",
+    "pid": 9185,
+    "childGroups": [
+      72541
+    ]
+  },
+  "stoppedProcesses": [],
+  "removedPaths": [],
+  "spaceReclaimedBytes": 0,
+  "notes": [
+    "No browser or temporary web server was started by this session.",
+    "Prepared fixture processes have exited; package/test temporary directories are removed by their teardown.",
+    "Existing Assign processes and the incident containment run were preserved."
+  ],
+  "freeBytes": 5097283584,
+  "sessionDirectoriesKiB": {
+    "dist": 220,
+    "docs/evidence/closure-stall-remediation": 188
+  },
+  "cleanupConclusion": "No large inactive artifacts created by this session. Build output and qualification evidence preserved. No unrelated cleanup authorized or performed."
+}

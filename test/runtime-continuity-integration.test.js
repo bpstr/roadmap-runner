@@ -94,8 +94,9 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   assert.equal(fs.existsSync(path.join(trackingPaths(f.roadmap, f.progress, f.workdir).stateDir, 'continuation.json')), false,
     'completed roadmap must release the saved provider conversation');
 });
-test('a long productive task keeps its conversation beyond eight turns without forced rotation', async t => {
+test('a long productive task keeps its conversation beyond eight turns within its configured review allowance', async t => {
   const f = fixture(t, { mode: 'long-productive' }); f.options.sessionContinuation = true;
+  f.options.reviewTurns = 20; // This fixture exercises conversation reuse, independently of the four-turn default progress policy.
   const events = [];
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
   assert.equal(result.code, 0);

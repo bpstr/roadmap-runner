@@ -65,6 +65,12 @@ Legacy `--supervisor-timeout` and `supervisorTimeout` remain timeout aliases;
 `--supervisor-every` and `supervisorEvery` are accepted without dispatching reviews.
 The zero cadence value does not disable worker loop checks or recovery.
 
+Progress-review parking is independent of blocker recovery. It emits
+`runner.progress_review_required` and exits 75 with `review_required`; it does not
+dispatch a resolver. `--recover-blocked` does not reset its persisted budgets.
+Review the archived handoff and finite remaining scope, then use an explicit
+[source-bound progress review](docs/task-continuity.md#progress-review) to extend.
+
 Recent worker receipts persist in `runs.json` and bounded evidence summaries;
 older `supervision.json` checkpoints migrate on use. Detailed failed evidence and
 archived handoffs remain available. Resolver sessions have their own session IDs,

@@ -50,7 +50,12 @@ Options:
   --client <name>        CLI client: ${CLIENT_NAMES.join(", ")}. Default: codex
   --progress-file <path> Override handoff path; live roadmap checkboxes control completion
   --execution-plan <path> Select at most three finite outcomes from an existing progress authority
-  --timeout <duration>   Per-run timeout. Default: 90m
+  --timeout <duration>   Per-session timeout. Default: 6h
+  --review-turns <n>     Park after n worker turns without measured reduction; default 4
+  --review-after <time>  Park after active time without measured reduction; default 3h
+  --progress-review-policy <park|continue>  Record and renew progress windows without parking when continue is selected
+  --max-active-time <t>  Cumulative active-time budget; default 12h
+  --progress-review <file> Apply an explicit bounded extension to a parked review
   --resolver-timeout <duration> Blocker resolver timeout; default 10m
   --supervisor-every <n> Deprecated; accepted without scheduling supervisors
   --supervisor-timeout <duration> Deprecated alias for --resolver-timeout
@@ -177,7 +182,9 @@ const main = async () => {
   if (!options.roadmap) { help(); process.exitCode = 64; return; }
   if (command === 'start' || command === 'foreground') {
     const manager = new RunManager(workspace);
-    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout, supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, resolverAttempts: Number(options.resolverAttempts), blockedPolicy: options.blockedPolicy, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, sessionContinuation: options.sessionContinuation, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
+    const result = await manager.start({ workspace, roadmap: options.roadmap, progressFile: options.progressFile || undefined, executionPlan: options.executionPlan || undefined, client: options.client, timeout: options.timeout,
+      reviewTurns: Number(options.reviewTurns), reviewAfter: options.reviewAfter, maxActiveTime: options.maxActiveTime, progressReview: options.progressReview || undefined, progressReviewPolicy: options.progressReviewPolicy,
+      supervisorEvery: Number(options.supervisorEvery), resolverTimeout: options.resolverTimeout, resolverAttempts: Number(options.resolverAttempts), blockedPolicy: options.blockedPolicy, model: options.model || undefined, effort: options.effort || undefined, notify: options.notify, notifyOn: options.notifyOn, preventSleep: options.preventSleep, recoverBlocked: options.recoverBlocked, sessionContinuation: options.sessionContinuation, idempotencyKey, queue }, { executable: options.executable }, command === 'foreground');
     if (command === 'start') console.log(JSON.stringify(result, null, json ? 0 : 2));
     else process.exitCode = result.exitCode ?? 1;
     return;

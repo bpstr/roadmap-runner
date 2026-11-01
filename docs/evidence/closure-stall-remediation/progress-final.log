@@ -1,0 +1,103 @@
+TAP version 13
+# Subtest: broad workers park after four contributions despite changed hashes; restart cannot reset the review
+ok 1 - broad workers park after four contributions despite changed hashes; restart cannot reset the review
+  ---
+  duration_ms: 761.13375
+  type: 'test'
+  ...
+# Subtest: reviewed repair handoff supersedes obsolete continuation, with history retained
+ok 2 - reviewed repair handoff supersedes obsolete continuation, with history retained
+  ---
+  duration_ms: 696.229458
+  type: 'test'
+  ...
+# Subtest: cumulative active time caps a long client session and parks without a second worker
+ok 3 - cumulative active time caps a long client session and parks without a second worker
+  ---
+  duration_ms: 465.298209
+  type: 'test'
+  ...
+# Subtest: fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts
+ok 4 - fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts
+  ---
+  duration_ms: 3.8985
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN/.roadmap-runner/roadmap-868854691821/history (archived snapshots; not loaded by default)
+# Timeout:   3s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN/progress.md.events.jsonl
+# Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"}]. Persisted progress review limits apply.
+# ===== iteration 1 | 2026-10-30T21:01:29.344Z =====
+# Roadmap requirements changed; revision 6aabbb3d14b4 will be reconciled by the next worker.
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T21:01:29.636Z =====
+# Roadmap requirements changed; revision d98926dd34e2 will be reconciled by the next worker.
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T21:01:29.674Z =====
+# Roadmap requirements changed; revision ac73910f4a26 will be reconciled by the next worker.
+# Iteration 3 completed.
+# ===== iteration 4 | 2026-10-30T21:01:29.713Z =====
+# Roadmap requirements changed; revision 171e55b6e2bc will be reconciled by the next worker.
+# Iteration 4 completed.
+# Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-5fusxN/.roadmap-runner/roadmap-868854691821/evidence/progress-review-3d138b1f-f487-4612-9a27-98cf4f606ae2.json
+# Subtest: managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled
+ok 5 - managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled
+  ---
+  duration_ms: 448.637375
+  type: 'test'
+  ...
+# Subtest: eleven contributions, renamed operations and prose churn do not close or reset the original baseline
+ok 6 - eleven contributions, renamed operations and prose churn do not close or reset the original baseline
+  ---
+  duration_ms: 13.726166
+  type: 'test'
+  ...
+# Subtest: finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it
+ok 7 - finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it
+  ---
+  duration_ms: 6.510583
+  type: 'test'
+  ...
+# Subtest: review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age
+ok 8 - review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age
+  ---
+  duration_ms: 3.392208
+  type: 'test'
+  ...
+# Subtest: active-time budgets count every role, cap sessions and survive process interruption and restarts
+ok 9 - active-time budgets count every role, cap sessions and survive process interruption and restarts
+  ---
+  duration_ms: 2.732292
+  type: 'test'
+  ...
+# Subtest: source closures survive more than eight turns and handoff reconciliation preserves the current epoch
+ok 10 - source closures survive more than eight turns and handoff reconciliation preserves the current epoch
+  ---
+  duration_ms: 11.041875
+  type: 'test'
+  ...
+# Subtest: invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations
+ok 11 - invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations
+  ---
+  duration_ms: 3.397
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2552.178708

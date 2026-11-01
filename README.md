@@ -126,9 +126,9 @@ Use the configured checkpoint for prerequisite discovery. Reuse compatible evide
 session or status note does not justify repeating unchanged checks. Original
 acceptance remains open wherever required verification is deferred.
 
-The default hard timeout is 90 minutes. Ordinary roadmaps use the configured
+The default hard timeout is 6 hours. Ordinary roadmaps use the configured
 session time, reserving the smaller of five minutes or 15% for checkpointing:
-85 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
+5 hours 55 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
 An explicit finite-plan budget can bring that checkpoint forward. Workers finish
 early when the selected task's current phase or explicit finite batch is complete,
 or no authorized ready work remains.
@@ -290,10 +290,10 @@ Status: COMPLETE
 runner exits
 ```
 
-The default execution limit is **90 minutes per individual client session**:
+The default execution limit is **6 hours per individual client session**:
 
 ```sh
-roadmap-runner roadmap.md --timeout 90m
+roadmap-runner roadmap.md --timeout 6h
 ```
 
 Examples:
@@ -595,6 +595,14 @@ checkpoint acknowledgment, recovery behavior and measurement limits.
 
 ## Fresh contexts and optional continuation
 
+Progress limits persist across sessions and restarts. By default, a run parks for review
+after four worker turns or three active hours without measured source/subgap reduction,
+or twelve cumulative active hours. Status retains the scheduling mode, fallback reasons,
+remaining original criteria, scope additions and pending review, even with notifications
+off. See [progress review](docs/task-continuity.md#progress-review) for bounded extensions
+and current-handoff precedence. Contribution reports and receipt counts do not close
+acceptance.
+
 Sessions are fresh by default.
 
 For Codex, Roadmap Runner uses the accepted invocation from the previous shell implementation:
@@ -629,7 +637,12 @@ roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
 --progress-file <path> override handoff path; live roadmap checkboxes control completion
---timeout <duration>   default: 90m
+--timeout <duration>   per-session ceiling; default: 6h
+--review-turns <n>     progress review after n worker turns without reduction; default 4
+--review-after <time>  progress review after active time without reduction; default 3h
+--max-active-time <t>  cumulative active execution budget; default 12h
+--progress-review <file> explicit source-bound review granting a bounded extension
+--progress-review-policy <park|continue> record and renew progress windows without parking; default park
 --resolver-timeout <duration> blocker recovery limit; default 10m
 --resolver-attempts <n> attempts per blocked episode; default 3, maximum 10
 --blocked-policy <mode> resolve (default), park, or stop before resolver dispatch
@@ -811,7 +824,7 @@ session retains the ordinary blocker/resolver policy. Capacity recovery
 applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.
-The 90-minute per-run execution timeout remains separate from the retry wait.
+The six-hour per-session execution timeout remains separate from the retry wait.
 
 Settings use integer seconds and a consecutive-failure retry count:
 

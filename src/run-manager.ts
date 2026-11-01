@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { parseArgs, parseDuration } from '../lib/runner.js';
 import { trackingPaths } from '../lib/tracking.js';
 import { resolverSettings } from '../lib/recovery-runs.js';
+import { progressSettings, readProgressStatus } from '../lib/progress-ledger.js';
 import { validateControlFile } from '../lib/handoff.js';
 import { readEvents, eventTypes } from './events.js';
 import { registryRoot, privateDir, runDir, readRun, saveRun, publicRun, outputTail, type RunRecord, type QueueItem } from './run-state.js';
@@ -19,7 +20,10 @@ export const startSchema = z.object({
   workspace: z.string().min(1), roadmap: z.string().min(1), progressFile: z.string().optional(),
   executionPlan: z.string().min(1).optional(),
   client: z.enum(['codex', 'claude', 'gemini', 'grok', 'kimi', 'muse']).default('codex'),
-  timeout: z.string().default('90m'), supervisorEvery: z.number().int().min(0).max(20).optional(),
+  timeout: z.string().default('6h').describe('Timeout per client session; cumulative progress limits are separate.'), supervisorEvery: z.number().int().min(0).max(20).optional(),
+  reviewTurns: z.number().int().min(1).max(100).default(4), reviewAfter: z.string().default('3h'), maxActiveTime: z.string().default('12h'),
+  progressReview: z.string().min(1).optional().describe('Path to an explicit, source-bound progress review granting a bounded extension.'),
+  progressReviewPolicy: z.enum(['park', 'continue']).default('park').describe('Continue records source-bound window renewals without parking; cumulative execution can continue until completion or stop.'),
   supervisorTimeout: z.string().optional(), resolverTimeout: z.string().optional(), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
   notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),
@@ -32,6 +36,14 @@ export const startSchema = z.object({
 }).strict();
 const terminal = (r: RunRecord) => ['stopped', 'exited', 'unknown'].includes(r.processState);
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 24);
+const statusRun = (record: RunRecord) => {
+  const value = publicRun(record);
+  if (value.progress?.ledgerFile) {
+    try { value.progress = readProgressStatus(value.progress.ledgerFile); }
+    catch (error) { value.progress = { ...value.progress, accountingError: error.message }; }
+  }
+  return value;
+};
 export const canonicalPath = (input: string): string => {
   const resolved = path.resolve(input);
   if (fs.existsSync(resolved)) return fs.realpathSync(resolved);
@@ -149,7 +161,12 @@ export class RunManager {
         delete options.executionPlan;
       } else options.executionPlan = executionPlan;
     }
-    parseDuration(options.timeout); resolverSettings(options);
+    if (request.progressReview) {
+      const file = canonicalPath(path.resolve(workspace, request.progressReview));
+      if (!within(workspace, file)) throw new Error('Progress review must be inside the authorized workspace');
+      validateControlFile(file); options.progressReview = file;
+    }
+    parseDuration(options.timeout); resolverSettings(options); progressSettings(options);
     const fingerprint = hash(JSON.stringify({ ...request, workspace, roadmap, progressFile, queue, idempotencyKey: undefined }));
     for (const id of fs.readdirSync(path.join(this.root, 'runs')).sort()) {
       const r = readRun(this.root, id);
@@ -228,13 +245,13 @@ export class RunManager {
       const records = fs.readdirSync(path.join(this.root, 'runs')).sort().map(id => readRun(this.root, id)).filter(r => r.workspace === this.workspace);
       const runs = []; let bytes = 0;
       for (const r of records.slice(offset, offset + 20)) {
-        const value = publicRun(await this.reconcile(r)); const size = Buffer.byteLength(JSON.stringify(value));
+        const value = statusRun(await this.reconcile(r)); const size = Buffer.byteLength(JSON.stringify(value));
         if (runs.length && bytes + size > 24000) break;
         runs.push(value); bytes += size;
       }
       return { runs, nextOffset: offset + runs.length < records.length ? offset + runs.length : null };
     }
     const r = await this.reconcile(this.get(id)); const dir = runDir(this.root, id);
-    return { ...publicRun(r), ...outputTail(path.join(dir, 'output.log'), outputBytes), ...readEvents(path.join(dir, 'events.jsonl'), cursor), resources: { state: `roadmap://${id}/state`, events: `roadmap://${id}/events` }, outputTrust: 'untrusted local content' };
+    return { ...statusRun(r), ...outputTail(path.join(dir, 'output.log'), outputBytes), ...readEvents(path.join(dir, 'events.jsonl'), cursor), resources: { state: `roadmap://${id}/state`, events: `roadmap://${id}/events` }, outputTrust: 'untrusted local content' };
   }
 }

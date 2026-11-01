@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+ok 1 - queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+  ---
+  duration_ms: 779.460166
+  type: 'test'
+  ...
+# Subtest: LLM loop detection blocks managed execution and leaves queued work pending
+ok 2 - LLM loop detection blocks managed execution and leaves queued work pending
+  ---
+  duration_ms: 511.769458
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-qqyl9A
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-qqyl9A/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-qqyl9A/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-qqyl9A/.roadmap-runner/roadmap-1c7da49484ee/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 20 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-qqyl9A/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:59:20.254Z =====
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:59:20.538Z =====
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:59:20.576Z =====
+# Iteration 3 completed.
+# ===== iteration 4 | 2026-10-30T20:59:20.613Z =====
+# Iteration 4 completed.
+# ===== iteration 5 | 2026-10-30T20:59:20.649Z =====
+# Iteration 5 completed.
+# ===== iteration 6 | 2026-10-30T20:59:20.687Z =====
+# Iteration 6 completed.
+# ===== iteration 7 | 2026-10-30T20:59:20.725Z =====
+# Iteration 7 completed.
+# ===== iteration 8 | 2026-10-30T20:59:20.761Z =====
+# Iteration 8 completed.
+# ===== iteration 9 | 2026-10-30T20:59:20.798Z =====
+# Iteration 9 completed.
+# ===== iteration 10 | 2026-10-30T20:59:20.835Z =====
+# Iteration 10 completed.
+# ===== iteration 11 | 2026-10-30T20:59:20.871Z =====
+# Iteration 11 completed.
+# ===== iteration 12 | 2026-10-30T20:59:20.908Z =====
+# Iteration 12 completed.
+# ===== iteration 13 | 2026-10-30T20:59:20.945Z =====
+# Iteration 13 completed.
+# ===== iteration 14 | 2026-10-30T20:59:20.983Z =====
+# Iteration 14 completed.
+# ===== iteration 15 | 2026-10-30T20:59:21.019Z =====
+# Iteration 15 completed.
+# ===== iteration 16 | 2026-10-30T20:59:21.055Z =====
+# Iteration 16 completed.
+# ===== iteration 17 | 2026-10-30T20:59:21.094Z =====
+# Iteration 17 completed.
+# Roadmap complete after 17 iteration(s).
+# Subtest: a long productive task keeps its conversation beyond eight turns within its configured review allowance
+ok 3 - a long productive task keeps its conversation beyond eight turns within its configured review allowance
+  ---
+  duration_ms: 896.625958
+  type: 'test'
+  ...
+# Subtest: worker history review identifies a semantic loop despite renamed operations and source churn
+ok 4 - worker history review identifies a semantic loop despite renamed operations and source churn
+  ---
+  duration_ms: 792.433042
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3152.66175

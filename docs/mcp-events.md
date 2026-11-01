@@ -38,6 +38,13 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.usage_resumed` | Reset wait ended; next session may run |
 | `runner.usage_wait_expired` | Incident wait ceiling reached; exit 75 |
 | `runner.supervisor_deferred` | Legacy event retained for replay compatibility |
+| `runner.scheduling` | Focused, broad or finite dispatch; exact fallback reasons |
+| `runner.progress_updated` | Durable original criterion/subgap counts and cumulative active time |
+| `runner.progress_observed` | Source checkbox closure or evidenced finite implementation; not independent correctness qualification |
+| `runner.scope_changed` | Added requirements; attention without budget replenishment |
+| `runner.progress_review_required` | Parked pending explicit source-bound review; exit 75, no automatic model review |
+| `runner.progress_reviewed` | Explicit acknowledged decision granted a bounded extension |
+| `runner.handoff_reconciled` | Current handoff superseded historical continuation; history retained |
 | `runner.failed` | Worker CLI failure; partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |
 | `runner.roadmap_completed` | Current roadmap completed; the managed run has another queued roadmap |

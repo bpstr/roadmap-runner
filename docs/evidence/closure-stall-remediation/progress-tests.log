@@ -1,0 +1,181 @@
+✔ broad workers park after four contributions despite changed hashes; restart cannot reset the review (1321.7345ms)
+✖ reviewed repair handoff supersedes obsolete continuation, with history retained (1003.295209ms)
+✔ cumulative active time caps a long client session and parks without a second worker (458.283958ms)
+✔ fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts (4.360083ms)
+Roadmap Runner 0.12.4
+Client:    codex
+Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA
+Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA/roadmap.md
+Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA/progress.md (bounded handoff/evidence; task states in roadmap)
+Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA/.roadmap-runner/roadmap-4d4245da0210/history (archived snapshots; not loaded by default)
+Timeout:   3s per session
+Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+Recovery: resolver on blockers; timeout 10m
+Press Ctrl-C to stop.
+
+Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA/progress.md.events.jsonl
+Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"}]. Persisted progress review limits apply.
+===== iteration 1 | 2026-10-30T20:54:03.382Z =====
+Roadmap requirements changed; revision 6aabbb3d14b4 will be reconciled by the next worker.
+Iteration 1 completed.
+
+===== iteration 2 | 2026-10-30T20:54:03.603Z =====
+Roadmap requirements changed; revision d98926dd34e2 will be reconciled by the next worker.
+Iteration 2 completed.
+
+===== iteration 3 | 2026-10-30T20:54:03.650Z =====
+Roadmap requirements changed; revision ac73910f4a26 will be reconciled by the next worker.
+Iteration 3 completed.
+
+===== iteration 4 | 2026-10-30T20:54:03.695Z =====
+Roadmap requirements changed; revision 171e55b6e2bc will be reconciled by the next worker.
+Iteration 4 completed.
+
+Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-tBU6qA/.roadmap-runner/roadmap-4d4245da0210/evidence/progress-review-3821da57-3799-43c0-b87c-23f144724abb.json
+✔ managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled (439.136166ms)
+✔ eleven contributions, renamed operations and prose churn do not close or reset the original baseline (16.063958ms)
+✔ finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it (14.394291ms)
+✔ review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age (3.605ms)
+✔ active-time budgets count every role, cap sessions and survive process interruption and restarts (3.323042ms)
+✔ source closures survive more than eight turns and handoff reconciliation preserves the current epoch (11.701541ms)
+✔ invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations (3.411375ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3435.169791
+
+✖ failing tests:
+
+test at test/closure-stall-integration.test.js:68:1
+✖ reviewed repair handoff supersedes obsolete continuation, with history retained (1003.295209ms)
+  AssertionError [ERR_ASSERTION]:     'scope aside for a controller decision. Generator activity, notes and decomposition\n' +
+      'alone are not the promised user-visible outcome.\n' +
+      '\n' +
+      'If a prerequisite is unavailable, retain its gate and exact unblock condition once\n' +
+      'and return so the controller can select another ready outcome. Repeated timeout or\n' +
+      'unchanged-outcome attempts require a recorded task retry condition. Global BLOCKED\n' +
+      'and a resolver apply when the plan has no authorized useful alternative.\n' +
+      '\n' +
+      '3. Apply the current verification phase.\n' +
+      '\n' +
+      'User/repository phase rules take precedence. During development-before-qualification,\n' +
+      'perform only permitted source review, formatting, generation and production\n' +
+      'compilation. Keep test/qualification and mixed acceptance checkboxes open.\n' +
+      'Otherwise choose the smallest affected checks before running them, batch repairs,\n' +
+      'retain failures and rerun only invalidated/failed coverage. Record concrete shared\n' +
+      'impact before widening. A new session or commit does not invalidate passing proof.\n' +
+      'Inspect final executed/passed/failed/skipped counts. Prepared, compiled, verified\n' +
+      'and deployed are distinct states; skipped checks are not passes.\n' +
+      '\n' +
+      'For reusable command evidence, `roadmap-runner check --spec <json-file>` records\n' +
+      'the actual exit status and output. Its spec uses command argv, cwd, criteriaRevision,\n' +
+      'inputs, config, environment variable names and runtime version declarations.\n' +
+      "Set coverageComplete: true only when that declared scope covers the check's relevant\n" +
+      'dependencies. Unknown scope still runs the check; it cannot establish reusable proof.\n' +
+      'Mutable external dependencies need external.freshUntil. Use force: true for an\n' +
+      'intentional rerun. Preserve returned receipt IDs. `record-review --spec <json-file>`\n' +
+      'records a review verdict and inputPaths as a separate agent assertion. Review\n' +
+      'changed behavior and affected findings without repeating unchanged reviewed scope.\n' +
+      '\n' +
+      'For integration implement the actual transport/domain boundary and canonical\n' +
+      'fixtures. A prepared component does not prove missing end-to-end behavior. Source\n' +
+      'delivery does not qualify runtime, endpoint performance, consumers or deployment.\n' +
+      '\n' +
+      '4. Save progress '... 11187 more characters,
+    expected: /Reviewed repair handoff/,
+    operator: 'match',
+    diff: 'simple'
+  }
+  
+  Node.js v24.19.0
+  /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6
+    const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
+                                                                      ^
+  
+  TypeError: Cannot read properties of null (reading '1')
+      at preparedClient (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6:69)
+      at Object.<anonymous> (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:25:3)
+      at Module._compile (node:internal/modules/cjs/loader:1872:14)
+      at Object..js (node:internal/modules/cjs/loader:2003:10)
+      at Module.load (node:internal/modules/cjs/loader:1594:32)
+      at Module._load (node:internal/modules/cjs/loader:1396:12)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47
+  
+  Node.js v24.19.0
+  /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6
+    const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
+                                                                      ^
+  
+  TypeError: Cannot read properties of null (reading '1')
+      at preparedClient (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6:69)
+      at Object.<anonymous> (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:25:3)
+      at Module._compile (node:internal/modules/cjs/loader:1872:14)
+      at Object..js (node:internal/modules/cjs/loader:2003:10)
+      at Module.load (node:internal/modules/cjs/loader:1594:32)
+      at Module._load (node:internal/modules/cjs/loader:1396:12)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47
+  
+  Node.js v24.19.0
+  /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6
+    const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
+                                                                      ^
+  
+  TypeError: Cannot read properties of null (reading '1')
+      at preparedClient (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:6:69)
+      at Object.<anonymous> (/private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/prepared.cjs:25:3)
+      at Module._compile (node:internal/modules/cjs/loader:1872:14)
+      at Object..js (node:internal/modules/cjs/loader:2003:10)
+      at Module.load (node:internal/modules/cjs/loader:1594:32)
+      at Module._load (node:internal/modules/cjs/loader:1396:12)
+      at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+      at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+      at node:internal/main/run_main_module:33:47
+  
+  Node.js v24.19.0
+  Roadmap Runner 0.12.4
+  Client:    codex
+  Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj
+  Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/roadmap.md
+  Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/progress.md (bounded handoff/evidence; task states in roadmap)
+  Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+  History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/.roadmap-runner/roadmap-15f94c3aeaa2/history (archived snapshots; not loaded by default)
+  Timeout:   3s per session
+  Progress:  review after 1 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+  Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+  Recovery: resolver on blockers; timeout 10m
+  Press Ctrl-C to stop.
+  
+  Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-V7elGj/progress.md.events.jsonl
+  ===== iteration 2 | 2026-10-30T20:54:02.490Z =====
+  ===== iteration 2 | 2026-10-30T20:54:02.584Z =====
+  ===== iteration 2 | 2026-10-30T20:54:02.631Z =====
+  ===== iteration 2 | 2026-10-30T20:54:02.743Z =====
+  
+  
+  75 !== 0
+  
+      at assertRun (file:///Users/bpstr/Github/roadmap-runner/test/closure-stall-integration.test.js:52:76)
+      at TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/closure-stall-integration.test.js:74:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 75,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -166,6 +166,7 @@ function fixture(t, mode) {
   Object.assign(env, { ROADMAP_STATE_DIR: path.join(dir, 'registry'), ROADMAP_NOTIFY: 'off', ROADMAP_NOTIFY_BIN: '',
     ROADMAP_USAGE_MAX_WAIT: '8', ROADMAP_CAPACITY_DELAY: '1', ROADMAP_CAPACITY_MAX_DELAY: '1', ROADMAP_CAPACITY_RETRIES: '1' });
   const args = [cli, roadmap, '--progress-file', progress, '--client-bin', client, '--notify', 'off', '--timeout', '8s', '--resolver-timeout', '8s'];
+  if (mode === 'semantic-loop') args.push('--review-turns', '8'); // Preserve worker-declared loop coverage inside an explicit finite controller allowance.
   if (mode.startsWith('finite-')) {
     const authority = { version: 1, denominator: ids.length, operationDenominator: ids.length,
       parents: ids.map((id, index) => ({ id, roadmap: 'roadmap.md', operations: [`operation-${index}`], implementation: 'partial', missing: ['Deliver behavior'], evidence: [] })),

@@ -1,0 +1,1394 @@
+TAP version 13
+# Subtest: managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+ok 1 - managed start is ready, exclusive by canonical workspace, idempotent and survives caller disconnection
+  ---
+  duration_ms: 794.819084
+  type: 'test'
+  ...
+# Subtest: simultaneous requests cannot create competing managed workers
+ok 2 - simultaneous requests cannot create competing managed workers
+  ---
+  duration_ms: 273.726083
+  type: 'test'
+  ...
+# Subtest: progress aliases and symlink escapes cannot bypass managed path boundaries
+ok 3 - progress aliases and symlink escapes cannot bypass managed path boundaries
+  ---
+  duration_ms: 6.492416
+  type: 'test'
+  ...
+# Subtest: stale reused PID becomes unknown without signaling or releasing a live identity reservation
+ok 4 - stale reused PID becomes unknown without signaling or releasing a live identity reservation
+  ---
+  duration_ms: 164.923875
+  type: 'test'
+  ...
+# Subtest: control rejects unauthenticated ownership and nested worker management
+ok 5 - control rejects unauthenticated ownership and nested worker management
+  ---
+  duration_ms: 263.50675
+  type: 'test'
+  ...
+# Subtest: managed quota wait can stop promptly and preserves its recovery checkpoint
+ok 6 - managed quota wait can stop promptly and preserves its recovery checkpoint
+  ---
+  duration_ms: 393.370917
+  type: 'test'
+  ...
+# Subtest: bounded output and journal retention report truncation, expiry and malformed/partial records
+ok 7 - bounded output and journal retention report truncation, expiry and malformed/partial records
+  ---
+  duration_ms: 177.056708
+  type: 'test'
+  ...
+# Subtest: notification filters and persistent deduplication omit model content and macOS click actions
+ok 8 - notification filters and persistent deduplication omit model content and macOS click actions
+  ---
+  duration_ms: 41.351542
+  type: 'test'
+  ...
+# Desktop notifications: delivery_timeout; inspect status/progress for attention.
+# Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+# Desktop notifications: backend_unavailable; inspect status/progress for attention.
+# Subtest: notification timeout, missing backend and headless Linux are best effort and recorded
+ok 9 - notification timeout, missing backend and headless Linux are best effort and recorded
+  ---
+  duration_ms: 50.616333
+  type: 'test'
+  ...
+# Desktop notifications: backend_unavailable; inspect status/progress for attention. Install terminal-notifier with brew install terminal-notifier, then restart the runner.
+# Subtest: desktop attention defaults on and explicit off suppresses selected events
+ok 10 - desktop attention defaults on and explicit off suppresses selected events
+  ---
+  duration_ms: 28.2145
+  type: 'test'
+  ...
+# Subtest: failed notification submission can retry after the backend is repaired
+ok 11 - failed notification submission can retry after the backend is repaired
+  ---
+  duration_ms: 37.703625
+  type: 'test'
+  ...
+# Subtest: desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends
+ok 12 - desktop app PATH discovers Apple Silicon and Intel Homebrew notification backends
+  ---
+  duration_ms: 0.383875
+  type: 'test'
+  ...
+# Subtest: macOS permission denial is actionable and does not suppress a repaired submission
+ok 13 - macOS permission denial is actionable and does not suppress a repaired submission
+  ---
+  duration_ms: 23.576958
+  type: 'test'
+  ...
+# Subtest: legacy failed fingerprints do not suppress notifications after an upgrade
+ok 14 - legacy failed fingerprints do not suppress notifications after an upgrade
+  ---
+  duration_ms: 25.752875
+  type: 'test'
+  ...
+# Subtest: setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation
+ok 15 - setup dry-run, both scopes, TOML comments, idempotency, conflicts and edited skill preservation
+  ---
+  duration_ms: 33.793708
+  type: 'test'
+  ...
+# Subtest: prepared legacy MCP tools, restrictions, resources and subscriptions
+ok 16 - prepared legacy MCP tools, restrictions, resources and subscriptions
+  ---
+  duration_ms: 1218.388208
+  type: 'test'
+  ...
+# Subtest: prepared modern MCP tools, restrictions, resources and subscriptions
+ok 17 - prepared modern MCP tools, restrictions, resources and subscriptions
+  ---
+  duration_ms: 1188.690958
+  type: 'test'
+  ...
+# Subtest: prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off
+ok 18 - prepared legacy MCP event subscriptions, cancellation and replay work with desktop alerts off
+  ---
+  duration_ms: 3000.359417
+  type: 'test'
+  ...
+# Subtest: prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off
+ok 19 - prepared modern MCP event subscriptions, cancellation and replay work with desktop alerts off
+  ---
+  duration_ms: 2964.715625
+  type: 'test'
+  ...
+# Subtest: roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies
+ok 20 - roadmap skill template passes the structure contract and rejects missing fields, cycles and release dependencies
+  ---
+  duration_ms: 4.269333
+  type: 'test'
+  ...
+# Subtest: managed stop finishes only after an ignoring descendant is terminated
+ok 21 - managed stop finishes only after an ignoring descendant is terminated
+  ---
+  duration_ms: 3536.51425
+  type: 'test'
+  ...
+# Subtest: setup connectivity checks only initialize/list MCP and never launch a provider
+ok 22 - setup connectivity checks only initialize/list MCP and never launch a provider
+  ---
+  duration_ms: 174.192291
+  type: 'test'
+  ...
+# Subtest: qualified local skills installer is staged and checked before publishing the skill
+ok 23 - qualified local skills installer is staged and checked before publishing the skill
+  ---
+  duration_ms: 8.043875
+  type: 'test'
+  ...
+# Subtest: benign SKIPPED dependency flags do not trigger desktop attention
+ok 24 - benign SKIPPED dependency flags do not trigger desktop attention
+  ---
+  duration_ms: 3.391583
+  type: 'test'
+  ...
+# Desktop notifications: notification_state_unavailable; inspect status/progress for attention.
+# Subtest: Linux delivery uses notify-send, and off suppresses explicitly selected events
+ok 25 - Linux delivery uses notify-send, and off suppresses explicitly selected events
+  ---
+  duration_ms: 14.728208
+  type: 'test'
+  ...
+# Subtest: damaged notification state and thrown transports cannot interrupt runner work
+ok 26 - damaged notification state and thrown transports cannot interrupt runner work
+  ---
+  duration_ms: 16.346917
+  type: 'test'
+  ...
+# Subtest: managed startup failure reports its run identity without claiming readiness
+ok 27 - managed startup failure reports its run identity without claiming readiness
+  ---
+  duration_ms: 107.110458
+  type: 'test'
+  ...
+# Subtest: broad workers park after four contributions despite changed hashes; restart cannot reset the review
+ok 28 - broad workers park after four contributions despite changed hashes; restart cannot reset the review
+  ---
+  duration_ms: 725.763708
+  type: 'test'
+  ...
+# Subtest: reviewed repair handoff supersedes obsolete continuation, with history retained
+ok 29 - reviewed repair handoff supersedes obsolete continuation, with history retained
+  ---
+  duration_ms: 521.762917
+  type: 'test'
+  ...
+# Subtest: cumulative active time caps a long client session and parks without a second worker
+ok 30 - cumulative active time caps a long client session and parks without a second worker
+  ---
+  duration_ms: 431.436333
+  type: 'test'
+  ...
+# Subtest: fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts
+ok 31 - fallback diagnostics distinguish flat format, orphan checkboxes and oversized focused contracts
+  ---
+  duration_ms: 4.541792
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0/.roadmap-runner/roadmap-0570242994a8/history (archived snapshots; not loaded by default)
+# Timeout:   3s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0/progress.md.events.jsonl
+# Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"ambiguous_dependencies","task":"DEMO-01"},{"code":"missing_acceptance","task":"DEMO-01"}]. Persisted progress review limits apply.
+# ===== iteration 1 | 2026-10-30T20:57:31.334Z =====
+# Roadmap requirements changed; revision 6aabbb3d14b4 will be reconciled by the next worker.
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:57:31.529Z =====
+# Roadmap requirements changed; revision d98926dd34e2 will be reconciled by the next worker.
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:57:31.568Z =====
+# Roadmap requirements changed; revision ac73910f4a26 will be reconciled by the next worker.
+# Iteration 3 completed.
+# ===== iteration 4 | 2026-10-30T20:57:31.606Z =====
+# Roadmap requirements changed; revision 171e55b6e2bc will be reconciled by the next worker.
+# Iteration 4 completed.
+# Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/rr-closure-1vpHI0/.roadmap-runner/roadmap-0570242994a8/evidence/progress-review-8e6f91a7-e953-40e7-a59a-54ac267d2dc4.json
+# Subtest: managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled
+ok 32 - managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled
+  ---
+  duration_ms: 350.980125
+  type: 'test'
+  ...
+# Subtest: continuation defaults on for Codex, supports opt-out, and leaves other adapters fresh
+ok 33 - continuation defaults on for Codex, supports opt-out, and leaves other adapters fresh
+  ---
+  duration_ms: 1.078084
+  type: 'test'
+  ...
+# Subtest: same task resumes only the explicitly recorded provider thread
+ok 34 - same task resumes only the explicitly recorded provider thread
+  ---
+  duration_ms: 0.430458
+  type: 'test'
+  ...
+# Subtest: task, role, scope, workspace, model and effort boundaries always start fresh
+ok 35 - task, role, scope, workspace, model and effort boundaries always start fresh
+  ---
+  duration_ms: 0.129458
+  type: 'test'
+  ...
+# Subtest: large cached-input reports preserve same-task continuity beyond former turn limits
+ok 36 - large cached-input reports preserve same-task continuity beyond former turn limits
+  ---
+  duration_ms: 0.268833
+  type: 'test'
+  ...
+# Subtest: explicit aggregate usage budgets remain enforced separately from context
+ok 37 - explicit aggregate usage budgets remain enforced separately from context
+  ---
+  duration_ms: 0.118167
+  type: 'test'
+  ...
+# Subtest: continuation preserves scope without telemetry and resets on explicit budgets or failed threads
+ok 38 - continuation preserves scope without telemetry and resets on explicit budgets or failed threads
+  ---
+  duration_ms: 0.1505
+  type: 'test'
+  ...
+# Subtest: provider identity comes only from supported JSON events
+ok 39 - provider identity comes only from supported JSON events
+  ---
+  duration_ms: 0.082541
+  type: 'test'
+  ...
+# Subtest: missing-continuation diagnostics must name the exact requested provider thread
+ok 40 - missing-continuation diagnostics must name the exact requested provider thread
+  ---
+  duration_ms: 0.149458
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-7txkec
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-7txkec/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-7txkec/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-7txkec/.roadmap-runner/roadmap-13a0c4dd1a86/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-7txkec/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:57:31.755Z =====
+# Iteration 1 completed.
+# Roadmap complete after 1 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-H7vFZJ
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-H7vFZJ/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-H7vFZJ/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-H7vFZJ/.roadmap-runner/roadmap-bf4266331d0e/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-H7vFZJ/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:57:32.125Z =====
+# Subtest: unavailable optional task-memory initialization preserves legacy execution
+ok 41 - unavailable optional task-memory initialization preserves legacy execution
+  ---
+  duration_ms: 375.260208
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# Roadmap complete after 1 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-h2yCPx
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-h2yCPx/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-h2yCPx/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-h2yCPx/.roadmap-runner/roadmap-b55ff3cbe1db/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-optional-memory-h2yCPx/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:57:32.334Z =====
+# Subtest: optional task-packet write failure after initialization preserves legacy execution
+ok 42 - optional task-packet write failure after initialization preserves legacy execution
+  ---
+  duration_ms: 209.320708
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:57:32.697Z =====
+# Iteration 2 completed.
+# Roadmap complete after 2 iteration(s).
+# Subtest: optional conversation state write failure switches subsequent task work to fresh sessions
+ok 43 - optional conversation state write failure switches subsequent task work to fresh sessions
+  ---
+  duration_ms: 410.100917
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-25sXTo
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-25sXTo/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-25sXTo/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-25sXTo/.roadmap-runner/roadmap-a020027dffce/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-25sXTo/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:57:32.810Z =====
+# Subtest: ownership deferral persists without receipts and can be reconsidered after acknowledged repair
+ok 44 - ownership deferral persists without receipts and can be reconsidered after acknowledged repair
+  ---
+  duration_ms: 5.495
+  type: 'test'
+  ...
+# Subtest: unknown scheduling values are rejected and interrupted deferrals do not suppress work
+ok 45 - unknown scheduling values are rejected and interrupted deferrals do not suppress work
+  ---
+  duration_ms: 3.290791
+  type: 'test'
+  ...
+# Subtest: resolver retry acknowledgments require a bounded unique list of exact task IDs
+ok 46 - resolver retry acknowledgments require a bounded unique list of exact task IDs
+  ---
+  duration_ms: 2.483167
+  type: 'test'
+  ...
+# Subtest: reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts
+ok 47 - reused outcomes without explicit deferral stay compatible and do not manufacture loop verdicts
+  ---
+  duration_ms: 2.841792
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:57:33.180Z =====
+# Iteration 2 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-zVjAUl
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-zVjAUl/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-zVjAUl/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-zVjAUl/.roadmap-runner/roadmap-cdf052769b15/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-zVjAUl/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:57:33.231Z =====
+# Subtest: reused ownership return rotates to independent work before deferring the roadmap
+ok 48 - reused ownership return rotates to independent work before deferring the roadmap
+  ---
+  duration_ms: 425.767458
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:57:33.586Z =====
+# Iteration 2 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-vPP7LR
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-vPP7LR/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-vPP7LR/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-vPP7LR/.roadmap-runner/roadmap-9178f599522b/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 5s
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-ownership-return-vPP7LR/progress.md.events.jsonl
+# Warning: broad roadmap scheduling has no per-task controller selection: [{"code":"flat_format"},{"code":"no_task_headings"},{"code":"orphan_checkboxes","count":1}]. Persisted progress review limits apply.
+# ===== iteration 1 | 2026-10-30T20:57:33.633Z =====
+# Subtest: partial ownership return rotates to independent work before deferring the roadmap
+ok 49 - partial ownership return rotates to independent work before deferring the roadmap
+  ---
+  duration_ms: 403.815583
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.
+# Subtest: broad roadmap ownership return defers the scope instead of repeating the synthetic task
+ok 50 - broad roadmap ownership return defers the scope instead of repeating the synthetic task
+  ---
+  duration_ms: 338.268792
+  type: 'test'
+  ...
+# Subtest: only a worker-declared complete prerequisite scope can permit a deferred retry
+ok 51 - only a worker-declared complete prerequisite scope can permit a deferred retry
+  ---
+  duration_ms: 4.789375
+  type: 'test'
+  ...
+# Subtest: eleven contributions, renamed operations and prose churn do not close or reset the original baseline
+ok 52 - eleven contributions, renamed operations and prose churn do not close or reset the original baseline
+  ---
+  duration_ms: 12.796292
+  type: 'test'
+  ...
+# Subtest: finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it
+ok 53 - finite reviewed subgaps can reduce the window; additions, removals and toggling cannot replenish it
+  ---
+  duration_ms: 6.025166
+  type: 'test'
+  ...
+# Subtest: review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age
+ok 54 - review is source-bound, acknowledged explicitly, and does not erase cumulative time or closure age
+  ---
+  duration_ms: 3.032375
+  type: 'test'
+  ...
+# Subtest: active-time budgets count every role, cap sessions and survive process interruption and restarts
+ok 55 - active-time budgets count every role, cap sessions and survive process interruption and restarts
+  ---
+  duration_ms: 2.636917
+  type: 'test'
+  ...
+# Subtest: source closures survive more than eight turns and handoff reconciliation preserves the current epoch
+ok 56 - source closures survive more than eight turns and handoff reconciliation preserves the current epoch
+  ---
+  duration_ms: 10.909625
+  type: 'test'
+  ...
+# Subtest: invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations
+ok 57 - invalid state fails closed; criterion extraction ignores fenced examples; runtime contents distinguish installations
+  ---
+  duration_ms: 3.006709
+  type: 'test'
+  ...
+# Subtest: a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes
+ok 58 - a deferred roadmap advances the queue and revisits its dependents only after the declared owner input changes
+  ---
+  duration_ms: 652.815959
+  type: 'test'
+  ...
+# Subtest: a source-complete broad deferral advances once and stays parked across restarts
+ok 59 - a source-complete broad deferral advances once and stays parked across restarts
+  ---
+  duration_ms: 613.307792
+  type: 'test'
+  ...
+# Subtest: completion after deferral permits one reassessment, while a legacy completed source stays parked
+ok 60 - completion after deferral permits one reassessment, while a legacy completed source stays parked
+  ---
+  duration_ms: 478.237708
+  type: 'test'
+  ...
+# Subtest: task completion already captured by a deferral does not authorize another pass
+ok 61 - task completion already captured by a deferral does not authorize another pass
+  ---
+  duration_ms: 504.585875
+  type: 'test'
+  ...
+# Subtest: a structured explicit deferral with a BLOCKED handoff advances under park policy
+ok 62 - a structured explicit deferral with a BLOCKED handoff advances under park policy
+  ---
+  duration_ms: 617.382125
+  type: 'test'
+  ...
+# Subtest: a broad explicit deferral with a BLOCKED handoff advances under park policy
+ok 63 - a broad explicit deferral with a BLOCKED handoff advances under park policy
+  ---
+  duration_ms: 516.246666
+  type: 'test'
+  ...
+# Subtest: an explicit source BLOCKED gate still parks an otherwise deferred queue
+ok 64 - an explicit source BLOCKED gate still parks an otherwise deferred queue
+  ---
+  duration_ms: 404.101167
+  type: 'test'
+  ...
+# Subtest: a genuine blocker alongside an ownership deferral still parks the queue
+ok 65 - a genuine blocker alongside an ownership deferral still parks the queue
+  ---
+  duration_ms: 474.544375
+  type: 'test'
+  ...
+# Subtest: an explicit STOPPED handoff still stops an otherwise deferred queue
+ok 66 - an explicit STOPPED handoff still stops an otherwise deferred queue
+  ---
+  duration_ms: 474.31675
+  type: 'test'
+  ...
+# Subtest: unchanged deferred acceptance exits once with a deferred summary and survives a new managed run
+ok 67 - unchanged deferred acceptance exits once with a deferred summary and survives a new managed run
+  ---
+  duration_ms: 678.240333
+  type: 'test'
+  ...
+# Subtest: an entirely deferred queue makes one pass without resolver churn or repeated dispatch
+ok 68 - an entirely deferred queue makes one pass without resolver churn or repeated dispatch
+  ---
+  duration_ms: 534.262541
+  type: 'test'
+  ...
+# Subtest: broad roadmap deferral advances and reopens only after declared prerequisite changes
+ok 69 - broad roadmap deferral advances and reopens only after declared prerequisite changes
+  ---
+  duration_ms: 523.022333
+  type: 'test'
+  ...
+# Subtest: changed criteria permit a new deferred pass without manufacturing acceptance
+ok 70 - changed criteria permit a new deferred pass without manufacturing acceptance
+  ---
+  duration_ms: 630.984292
+  type: 'test'
+  ...
+# Subtest: unrelated source edits and undeclared owner changes leave deferred task criteria parked
+ok 71 - unrelated source edits and undeclared owner changes leave deferred task criteria parked
+  ---
+  duration_ms: 547.236708
+  type: 'test'
+  ...
+# Subtest: an unrelated resolver repair retains an unchanged ownership deferral
+ok 72 - an unrelated resolver repair retains an unchanged ownership deferral
+  ---
+  duration_ms: 683.29175
+  type: 'test'
+  ...
+# Subtest: a resolver can explicitly acknowledge only the named deferred task for reassessment
+ok 73 - a resolver can explicitly acknowledge only the named deferred task for reassessment
+  ---
+  duration_ms: 642.125958
+  type: 'test'
+  ...
+# Subtest: queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+not ok 74 - queued roadmaps advance in FIFO order, preserve separate progress, and keep global event cursors
+  ---
+  duration_ms: 611.789291
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/queue.test.js:68:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:86:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: live source completion survives restart, unlocks a dependent once and advances the preserved queue
+ok 75 - live source completion survives restart, unlocks a dependent once and advances the preserved queue
+  ---
+  duration_ms: 703.902041
+  type: 'test'
+  ...
+# Subtest: default Codex continuation resumes within each roadmap and clears before the next queue entry
+ok 76 - default Codex continuation resumes within each roadmap and clears before the next queue entry
+  ---
+  duration_ms: 823.746542
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention spans queue handoff and releases at completion
+ok 77 - macOS sleep prevention spans queue handoff and releases at completion
+  ---
+  duration_ms: 560.751416
+  type: 'test'
+  ...
+# Subtest: macOS sleep prevention releases when a queued run is stopped
+ok 78 - macOS sleep prevention releases when a queued run is stopped
+  ---
+  duration_ms: 355.680375
+  type: 'test'
+  ...
+# Subtest: CLI queue appends to an active run and rejects duplicates and terminal runs
+ok 79 - CLI queue appends to an active run and rejects duplicates and terminal runs
+  ---
+  duration_ms: 410.413542
+  type: 'test'
+  ...
+# Subtest: a blocked or failed roadmap never starts the next queued roadmap
+ok 80 - a blocked or failed roadmap never starts the next queued roadmap
+  ---
+  duration_ms: 896.715167
+  type: 'test'
+  ...
+# Subtest: all queue entries are validated before launch, including path and progress aliases
+ok 81 - all queue entries are validated before launch, including path and progress aliases
+  ---
+  duration_ms: 7.204042
+  type: 'test'
+  ...
+# Subtest: foreground CLI accepts repeated --queue flags and completes every roadmap
+ok 82 - foreground CLI accepts repeated --queue flags and completes every roadmap
+  ---
+  duration_ms: 550.589625
+  type: 'test'
+  ...
+# Subtest: CLI queue specification preserves FIFO order and every custom progress path
+ok 83 - CLI queue specification preserves FIFO order and every custom progress path
+  ---
+  duration_ms: 556.607917
+  type: 'test'
+  ...
+# Subtest: authorized recovery preserves the blocked source/progress FIFO and retained receipts
+ok 84 - authorized recovery preserves the blocked source/progress FIFO and retained receipts
+  ---
+  duration_ms: 640.322708
+  type: 'test'
+  ...
+# Subtest: a queued source removed before handoff fails the run and preserves later entries
+ok 85 - a queued source removed before handoff fails the run and preserves later entries
+  ---
+  duration_ms: 445.76375
+  type: 'test'
+  ...
+# Subtest: LLM loop detection blocks managed execution and leaves queued work pending
+not ok 86 - LLM loop detection blocks managed execution and leaves queued work pending
+  ---
+  duration_ms: 505.628792
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/queue.test.js:301:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(final.events.some(e => e.type === 'runner.blocked' && !e.terminal))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/queue.test.js:317:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: fully blocked managed runs stop once, retain stopped status, and leave the queue pending
+ok 87 - fully blocked managed runs stop once, retain stopped status, and leave the queue pending
+  ---
+  duration_ms: 618.995167
+  type: 'test'
+  ...
+# Subtest: header status: fenced completion example
+ok 88 - header status: fenced completion example
+  ---
+  duration_ms: 0.736625
+  type: 'test'
+  ...
+# Subtest: header status: historical blocker
+ok 89 - header status: historical blocker
+  ---
+  duration_ms: 0.102458
+  type: 'test'
+  ...
+# Subtest: header status: historical completion
+ok 90 - header status: historical completion
+  ---
+  duration_ms: 0.053625
+  type: 'test'
+  ...
+# Subtest: header status: long backtick fence
+ok 91 - header status: long backtick fence
+  ---
+  duration_ms: 0.088375
+  type: 'test'
+  ...
+# Subtest: header status: tilde fence
+ok 92 - header status: tilde fence
+  ---
+  duration_ms: 0.086917
+  type: 'test'
+  ...
+# Subtest: header status: BOM and CRLF
+ok 93 - header status: BOM and CRLF
+  ---
+  duration_ms: 0.151916
+  type: 'test'
+  ...
+# Subtest: header status: indented example
+ok 94 - header status: indented example
+  ---
+  duration_ms: 0.034416
+  type: 'test'
+  ...
+# Subtest: header status: status only in a section
+ok 95 - header status: status only in a section
+  ---
+  duration_ms: 0.032292
+  type: 'test'
+  ...
+# Subtest: header status: uninitialized roadmap
+ok 96 - header status: uninitialized roadmap
+  ---
+  duration_ms: 0.049542
+  type: 'test'
+  ...
+# Subtest: reject duplicate header: Status: IN_PROGRESS / Status: COMPLETE
+ok 97 - reject duplicate header: Status: IN_PROGRESS / Status: COMPLETE
+  ---
+  duration_ms: 0.232709
+  type: 'test'
+  ...
+# Subtest: reject duplicate header: Status: COMPLETE / Status: COMPLETE
+ok 98 - reject duplicate header: Status: COMPLETE / Status: COMPLETE
+  ---
+  duration_ms: 0.057458
+  type: 'test'
+  ...
+# Subtest: reject invalid header: Status: DONE
+ok 99 - reject invalid header: Status: DONE
+  ---
+  duration_ms: 0.057417
+  type: 'test'
+  ...
+# Subtest: reject invalid header: Status: / COMPLETE
+ok 100 - reject invalid header: Status: / COMPLETE
+  ---
+  duration_ms: 0.042375
+  type: 'test'
+  ...
+# Subtest: a documentation example cannot skip the three real worker iterations
+ok 101 - a documentation example cannot skip the three real worker iterations
+  ---
+  duration_ms: 268.209875
+  type: 'test'
+  ...
+# Subtest: conflicting progress header statuses fail before starting a worker
+ok 102 - conflicting progress header statuses fail before starting a worker
+  ---
+  duration_ms: 94.93625
+  type: 'test'
+  ...
+# Subtest: timeout with ignored descendant stdio
+ok 103 - timeout with ignored descendant stdio
+  ---
+  duration_ms: 2805.146625
+  type: 'test'
+  ...
+# Subtest: timeout with inherited descendant pipes
+ok 104 - timeout with inherited descendant pipes
+  ---
+  duration_ms: 2769.972292
+  type: 'test'
+  ...
+# Subtest: SIGINT after the leader closes
+ok 105 - SIGINT after the leader closes
+  ---
+  duration_ms: 770.314375
+  type: 'test'
+  ...
+# Subtest: SIGTERM with inherited pipes
+ok 106 - SIGTERM with inherited pipes
+  ---
+  duration_ms: 791.328416
+  type: 'test'
+  ...
+# Subtest: repeated SIGINT
+ok 107 - repeated SIGINT
+  ---
+  duration_ms: 610.506708
+  type: 'test'
+  ...
+# Subtest: text adapter cancellation
+ok 108 - text adapter cancellation
+  ---
+  duration_ms: 790.087208
+  type: 'test'
+  ...
+# Subtest: spawn failure removes its signal listeners
+ok 109 - spawn failure removes its signal listeners
+  ---
+  duration_ms: 3.994
+  type: 'test'
+  ...
+# Codex error: Selected model is at capacity
+# Subtest: final capacity JSON without a newline is drained before resolving
+ok 110 - final capacity JSON without a newline is drained before resolving
+  ---
+  duration_ms: 344.199958
+  type: 'test'
+  ...
+# Subtest: progress budgets have finite defaults and CLI values override the environment
+ok 111 - progress budgets have finite defaults and CLI values override the environment
+  ---
+  duration_ms: 0.844834
+  type: 'test'
+  ...
+# Subtest: sleep prevention is opt-in and CLI flags override the environment
+ok 112 - sleep prevention is opt-in and CLI flags override the environment
+  ---
+  duration_ms: 0.109709
+  type: 'test'
+  ...
+# Subtest: desktop notifications default on and explicit off overrides defaults
+ok 113 - desktop notifications default on and explicit off overrides defaults
+  ---
+  duration_ms: 0.07225
+  type: 'test'
+  ...
+# Subtest: Codex adapter preserves accepted unattended invocation
+ok 114 - Codex adapter preserves accepted unattended invocation
+  ---
+  duration_ms: 0.113333
+  type: 'test'
+  ...
+# Subtest: Claude adapter bypasses permission prompts
+ok 115 - Claude adapter bypasses permission prompts
+  ---
+  duration_ms: 0.064708
+  type: 'test'
+  ...
+# Subtest: Gemini adapter uses current noninteractive YOLO mode
+ok 116 - Gemini adapter uses current noninteractive YOLO mode
+  ---
+  duration_ms: 0.0535
+  type: 'test'
+  ...
+# Subtest: Campfire-compatible secondary adapters are stable
+ok 117 - Campfire-compatible secondary adapters are stable
+  ---
+  duration_ms: 0.057625
+  type: 'test'
+  ...
+# Subtest: Codex model and effort overrides are applied
+ok 118 - Codex model and effort overrides are applied
+  ---
+  duration_ms: 0.073625
+  type: 'test'
+  ...
+# Subtest: duration parsing supports runner units
+ok 119 - duration parsing supports runner units
+  ---
+  duration_ms: 0.2385
+  type: 'test'
+  ...
+# Subtest: roadmap completion states are exact line based
+ok 120 - roadmap completion states are exact line based
+  ---
+  duration_ms: 0.560833
+  type: 'test'
+  ...
+# Subtest: client can be selected through args or environment
+ok 121 - client can be selected through args or environment
+  ---
+  duration_ms: 0.0795
+  type: 'test'
+  ...
+# Subtest: blocked recovery requires explicit opt-in
+ok 122 - blocked recovery requires explicit opt-in
+  ---
+  duration_ms: 0.041833
+  type: 'test'
+  ...
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-56MtXY
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-56MtXY/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-56MtXY/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-56MtXY/.roadmap-runner/roadmap-df38a74db296/history (archived snapshots; not loaded by default)
+# Timeout:   90m per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-56MtXY/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:00.256Z =====
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:58:00.697Z =====
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:58:00.737Z =====
+# Iteration 3 completed.
+# Roadmap complete after 3 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq/.roadmap-runner/roadmap-d674758cd87e/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:00.782Z =====
+# Subtest: lifecycle resumes productive same-task work by provider ID and starts fresh at the next task
+ok 123 - lifecycle resumes productive same-task work by provider ID and starts fresh at the next task
+  ---
+  duration_ms: 532.5025
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:58:01.214Z =====
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:58:01.254Z =====
+# Iteration 3 completed.
+# ===== iteration 4 | 2026-10-30T20:58:01.290Z =====
+# Iteration 4 completed.
+# Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-epkTDq/.roadmap-runner/roadmap-d674758cd87e/evidence/progress-review-cbd97e91-7f1d-43b4-a5a2-717f8967c34f.json
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-33jSkm
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-33jSkm/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-33jSkm/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-33jSkm/.roadmap-runner/roadmap-f9d355404d33/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-33jSkm/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:01.336Z =====
+# Subtest: a long productive task keeps its conversation beyond eight turns without forced rotation
+not ok 124 - a long productive task keeps its conversation beyond eight turns without forced rotation
+  ---
+  duration_ms: 554.419375
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/runtime-continuity-integration.test.js:97:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    75 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 75
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/runtime-continuity-integration.test.js:101:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:58:01.588Z =====
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:58:01.628Z =====
+# Iteration 3 completed.
+# Roadmap complete after 3 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-8eX7Cs
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-8eX7Cs/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-8eX7Cs/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-8eX7Cs/.roadmap-runner/roadmap-e08b8cdd2e6c/history (archived snapshots; not loaded by default)
+# Timeout:   5s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-8eX7Cs/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:01.675Z =====
+# Subtest: opting out discards saved conversation state and keeps every task invocation fresh
+ok 125 - opting out discards saved conversation state and keeps every task invocation fresh
+  ---
+  duration_ms: 338.09275
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# ===== iteration 2 | 2026-10-30T20:58:02.070Z =====
+# Error: no rollout found for thread id 0199a213-81c0-7800-8aa1-bbab2a035a53
+# Iteration 2 completed.
+# ===== iteration 3 | 2026-10-30T20:58:02.142Z =====
+# Iteration 3 completed.
+# Roadmap complete after 3 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-fF8gjU
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-fF8gjU/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-fF8gjU/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-fF8gjU/.roadmap-runner/roadmap-4d371f325f8b/history (archived snapshots; not loaded by default)
+# Timeout:   2s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-fF8gjU/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:02.187Z =====
+# Subtest: a missing provider continuation falls back once to fresh execution of the same task
+ok 126 - a missing provider continuation falls back once to fresh execution of the same task
+  ---
+  duration_ms: 512.666792
+  type: 'test'
+  ...
+# Iteration 1 completed.
+# Roadmap complete after 1 iteration(s).
+# Roadmap Runner 0.12.4
+# Client:    codex
+# Workspace: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-mWEM3O
+# Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-mWEM3O/roadmap.md
+# Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-mWEM3O/progress.md (bounded handoff/evidence; task states in roadmap)
+# Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+# History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-mWEM3O/.roadmap-runner/roadmap-fd2dac8578ca/history (archived snapshots; not loaded by default)
+# Timeout:   2s per session
+# Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+# Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+# Recovery: resolver on blockers; timeout 10m
+# Press Ctrl-C to stop.
+# Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-continuity-integration-mWEM3O/progress.md.events.jsonl
+# ===== iteration 1 | 2026-10-30T20:58:03.925Z =====
+# Subtest: lifecycle checkpoint emits acknowledgment for a fresh bound worker result
+ok 127 - lifecycle checkpoint emits acknowledgment for a fresh bound worker result
+  ---
+  duration_ms: 1736.836625
+  type: 'test'
+  ...
+# Structured worker result unavailable: Invalid operation. Continue using the preserved legacy handoff.
+# Iteration 1 completed.
+# Roadmap complete after 1 iteration(s).
+# Subtest: lifecycle checkpoint rejects malformed result despite current IDs
+ok 128 - lifecycle checkpoint rejects malformed result despite current IDs
+  ---
+  duration_ms: 1739.401334
+  type: 'test'
+  ...
+# Error: no rollout found for thread id 0199a213-81c0-7800-8aa1-bbab2a035a53
+# Error: no rollout found for thread id 0199a213-81c0-7800-8aa1-bbab2a035a53
+# Subtest: resume-unavailable is limited to a missing explicit thread before any provider work
+ok 129 - resume-unavailable is limited to a missing explicit thread before any provider work
+  ---
+  duration_ms: 755.08975
+  type: 'test'
+  ...
+# Subtest: structured default task continuation dispatches A to A to B and carries reusable check evidence
+ok 130 - structured default task continuation dispatches A to A to B and carries reusable check evidence
+  ---
+  duration_ms: 1004.167958
+  type: 'test'
+  ...
+# Subtest: malformed optional result retains legacy handoff without introducing a resolver
+ok 131 - malformed optional result retains legacy handoff without introducing a resolver
+  ---
+  duration_ms: 534.291916
+  type: 'test'
+  ...
+# Subtest: stale optional result retains legacy handoff without introducing a resolver
+ok 132 - stale optional result retains legacy handoff without introducing a resolver
+  ---
+  duration_ms: 618.706625
+  type: 'test'
+  ...
+# Subtest: worker-assessed blocker defers A while B finishes and only then invokes one repairing resolver
+ok 133 - worker-assessed blocker defers A while B finishes and only then invokes one repairing resolver
+  ---
+  duration_ms: 657.51075
+  type: 'test'
+  ...
+# Subtest: worker history review identifies a semantic loop despite renamed operations and source churn
+not ok 134 - worker history review identifies a semantic loop despite renamed operations and source churn
+  ---
+  duration_ms: 657.646917
+  type: 'test'
+  location: '/Users/bpstr/Github/roadmap-runner/test/task-continuity-integration.test.js:213:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Progress review required (acceptance_plateau_turns). Parked with acceptance unchanged. Review request: /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa/.roadmap-runner/roadmap-703532581277/evidence/progress-review-0f39390f-15d5-47e8-b11b-55814b8a07e3.json
+    Roadmap Runner 0.12.4
+    Client:    codex
+    Workspace: /private/var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa
+    Roadmap:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa/roadmap.md
+    Progress:  /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa/handoff.md (bounded handoff/evidence; task states in roadmap)
+    Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.
+    History:   /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa/.roadmap-runner/roadmap-703532581277/history (archived snapshots; not loaded by default)
+    Timeout:   8s per session
+    Progress:  review after 4 worker turns without measured reduction or 10800000ms active; total active budget 43200000ms (persisted)
+    Prompt:    a579bdce0ca4 (work through meaningful checkpoints)
+    Recovery: resolver on blockers; timeout 8s
+    Press Ctrl-C to stop.
+    
+    Events:    /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/runner-task-continuity-HtOgwa/handoff.md.events.jsonl
+    ===== iteration 1 | 2026-10-30T20:58:09.382Z =====
+    Iteration 1 completed.
+    
+    ===== iteration 2 | 2026-10-30T20:58:09.746Z =====
+    Iteration 2 completed.
+    
+    ===== iteration 3 | 2026-10-30T20:58:09.792Z =====
+    Iteration 3 completed.
+    
+    ===== iteration 4 | 2026-10-30T20:58:09.851Z =====
+    Iteration 4 completed.
+    
+    
+    
+    75 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 75
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/bpstr/Github/roadmap-runner/test/task-continuity-integration.test.js:215:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: finite productive exhaustion reports needs_next_batch with open acceptance and no resolver
+ok 135 - finite productive exhaustion reports needs_next_batch with open acceptance and no resolver
+  ---
+  duration_ms: 499.037
+  type: 'test'
+  ...
+# Subtest: finite productive exhaustion reports awaiting_verification with open acceptance and no resolver
+ok 136 - finite productive exhaustion reports awaiting_verification with open acceptance and no resolver
+  ---
+  duration_ms: 508.414
+  type: 'test'
+  ...
+# Subtest: finite-quota after implementation resumes a worker without a resolver
+ok 137 - finite-quota after implementation resumes a worker without a resolver
+  ---
+  duration_ms: 773.704208
+  type: 'test'
+  ...
+# Subtest: finite-capacity after implementation resumes a worker without a resolver
+ok 138 - finite-capacity after implementation resumes a worker without a resolver
+  ---
+  duration_ms: 1598.985541
+  type: 'test'
+  ...
+# Subtest: typed continuation survives restart and preserves all existing handoff obligations
+ok 139 - typed continuation survives restart and preserves all existing handoff obligations
+  ---
+  duration_ms: 5.955416
+  type: 'test'
+  ...
+# Subtest: missing, oversized, stale-session and symlinked result files fall back without creating delivery state
+ok 140 - missing, oversized, stale-session and symlinked result files fall back without creating delivery state
+  ---
+  duration_ms: 2.349459
+  type: 'test'
+  ...
+# Subtest: findings are shared observations and invalidate when their named source changes
+ok 141 - findings are shared observations and invalidate when their named source changes
+  ---
+  duration_ms: 5.513958
+  type: 'test'
+  ...
+# Subtest: failure counts do not block tasks; a recorded worker assessment defers them until reassessment
+ok 142 - failure counts do not block tasks; a recorded worker assessment defers them until reassessment
+  ---
+  duration_ms: 17.691042
+  type: 'test'
+  ...
+# Subtest: unknown dependency coverage and quota interruptions do not manufacture failure loops
+ok 143 - unknown dependency coverage and quota interruptions do not manufacture failure loops
+  ---
+  duration_ms: 4.061792
+  type: 'test'
+  ...
+# Subtest: large continuation packets keep exact overflow evidence and stay within 8 KiB
+ok 144 - large continuation packets keep exact overflow evidence and stay within 8 KiB
+  ---
+  duration_ms: 2.454458
+  type: 'test'
+  ...
+# Subtest: escaping source paths and receipt IDs are never accepted as reusable evidence
+ok 145 - escaping source paths and receipt IDs are never accepted as reusable evidence
+  ---
+  duration_ms: 2.6795
+  type: 'test'
+  ...
+# Subtest: scoped review verdicts survive handoff with explicit trust and invalidation reasons
+ok 146 - scoped review verdicts survive handoff with explicit trust and invalidation reasons
+  ---
+  duration_ms: 4.904875
+  type: 'test'
+  ...
+# Ignoring optional task continuation cache (Expected property name or '}' in JSON at position 1 (line 1 column 2)); previous data preserved at /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-task-selection-COfWMn/task-plan.json.invalid-3f4a7919-e703-4a3c-8ea6-4db70fc6c564.
+# Ignoring optional task continuation cache (task cache exceeds 1 MiB); previous data preserved at /var/folders/6z/mkvyjszn7hq7x9r0df5zfyw80000gn/T/roadmap-task-selection-COfWMn/task-plan.json.invalid-c21041aa-450a-42b1-bbeb-93d6f25dd210.
+# Subtest: selected general task IDs end at the next section and retain shared constraints
+ok 147 - selected general task IDs end at the next section and retain shared constraints
+  ---
+  duration_ms: 2.504667
+  type: 'test'
+  ...
+# Subtest: fenced task examples, substeps and checkboxes cannot alter real task boundaries
+ok 148 - fenced task examples, substeps and checkboxes cannot alter real task boundaries
+  ---
+  duration_ms: 0.311166
+  type: 'test'
+  ...
+# Subtest: formatted acceptance checkboxes remain open even when their parent is checked
+ok 149 - formatted acceptance checkboxes remain open even when their parent is checked
+  ---
+  duration_ms: 5.734542
+  type: 'test'
+  ...
+# Subtest: formatted orphan acceptance checkboxes require the legacy full-roadmap path
+ok 150 - formatted orphan acceptance checkboxes require the legacy full-roadmap path
+  ---
+  duration_ms: 0.105458
+  type: 'test'
+  ...
+# Subtest: flat finite task IDs are separated without mistaking substeps for parents
+ok 151 - flat finite task IDs are separated without mistaking substeps for parents
+  ---
+  duration_ms: 0.390125
+  type: 'test'
+  ...
+# Subtest: criteria revisions ignore checkmarks and delivery prose but track acceptance and global rules
+ok 152 - criteria revisions ignore checkmarks and delivery prose but track acceptance and global rules
+  ---
+  duration_ms: 0.599375
+  type: 'test'
+  ...
+# Subtest: unknown dependencies, cycles, orphan checklists and ambiguous prose gracefully fall back
+ok 153 - unknown dependencies, cycles, orphan checklists and ambiguous prose gracefully fall back
+  ---
+  duration_ms: 3.904417
+  type: 'test'
+  ...
+# Subtest: alternative and conditional dependency prose falls back instead of inventing an AND graph
+ok 154 - alternative and conditional dependency prose falls back instead of inventing an AND graph
+  ---
+  duration_ms: 0.803875
+  type: 'test'
+  ...
+# Subtest: default scheduling honors acceptance dependencies and carries scoped immutable context
+ok 155 - default scheduling honors acceptance dependencies and carries scoped immutable context
+  ---
+  duration_ms: 1.933542
+  type: 'test'
+  ...
+# Subtest: progress completion and stale or incomplete outcomes cannot unlock source dependencies
+ok 156 - progress completion and stale or incomplete outcomes cannot unlock source dependencies
+  ---
+  duration_ms: 2.971875
+  type: 'test'
+  ...
+# Subtest: useful exact partial continuation keeps task affinity beyond old attempt limits and restarts
+ok 157 - useful exact partial continuation keeps task affinity beyond old attempt limits and restarts
+  ---
+  duration_ms: 11.9485
+  type: 'test'
+  ...
+# Subtest: missing progress, changed acceptance and task skip remove affinity without blocking independent tasks
+ok 158 - missing progress, changed acceptance and task skip remove affinity without blocking independent tasks
+  ---
+  duration_ms: 2.036625
+  type: 'test'
+  ...
+# Subtest: implementation outcome schedules scoped verification and cannot check acceptance itself
+ok 159 - implementation outcome schedules scoped verification and cannot check acceptance itself
+  ---
+  duration_ms: 1.58425
+  type: 'test'
+  ...
+# Subtest: finite snapshots use the shared task index for general IDs and scoped criteria revisions
+ok 160 - finite snapshots use the shared task index for general IDs and scoped criteria revisions
+  ---
+  duration_ms: 2.61575
+  type: 'test'
+  ...
+# Subtest: finite continuation is bounded while legacy outcomes retain rotation
+ok 161 - finite continuation is bounded while legacy outcomes retain rotation
+  ---
+  duration_ms: 5.522584
+  type: 'test'
+  ...
+# Subtest: finite scheduler distinguishes missing batches, open verification, blocked work and acceptance completion
+ok 162 - finite scheduler distinguishes missing batches, open verification, blocked work and acceptance completion
+  ---
+  duration_ms: 2.48925
+  type: 'test'
+  ...
+# Subtest: missing or changed finite prerequisite evidence rotates instead of throwing
+ok 163 - missing or changed finite prerequisite evidence rotates instead of throwing
+  ---
+  duration_ms: 1.705334
+  type: 'test'
+  ...
+# Subtest: source edits between selection and context retain the selected immutable acceptance in both adapters
+ok 164 - source edits between selection and context retain the selected immutable acceptance in both adapters
+  ---
+  duration_ms: 2.146666
+  type: 'test'
+  ...
+# Subtest: repeated restored outcomes do not rewrite sidecars or duplicate full outcome payloads
+ok 165 - repeated restored outcomes do not rewrite sidecars or duplicate full outcome payloads
+  ---
+  duration_ms: 1.897042
+  type: 'test'
+  ...
+# Subtest: invalid and oversized optional default cache is preserved and ignored without blocking dispatch
+ok 166 - invalid and oversized optional default cache is preserved and ignored without blocking dispatch
+  ---
+  duration_ms: 3.61325
+  type: 'test'
+  ...
+# Subtest: a later legacy handoff cannot reuse an older partial outcome as new productive affinity
+ok 167 - a later legacy handoff cannot reuse an older partial outcome as new productive affinity
+  ---
+  duration_ms: 2.896167
+  type: 'test'
+  ...
+# Subtest: quota after useful finite work preserves unaccepted implemented batch without counting a failed attempt
+ok 168 - quota after useful finite work preserves unaccepted implemented batch without counting a failed attempt
+  ---
+  duration_ms: 3.334791
+  type: 'test'
+  ...
+# Subtest: quota with a matching default partial result preserves the last useful task
+ok 169 - quota with a matching default partial result preserves the last useful task
+  ---
+  duration_ms: 1.9245
+  type: 'test'
+  ...
+# Subtest: capacity after useful finite work preserves unaccepted implemented batch without counting a failed attempt
+ok 170 - capacity after useful finite work preserves unaccepted implemented batch without counting a failed attempt
+  ---
+  duration_ms: 2.819458
+  type: 'test'
+  ...
+# Subtest: capacity with a matching default partial result preserves the last useful task
+ok 171 - capacity with a matching default partial result preserves the last useful task
+  ---
+  duration_ms: 2.009708
+  type: 'test'
+  ...
+# Subtest: a quota partial with old criteria cannot recover an implemented finite batch after scope changes
+ok 172 - a quota partial with old criteria cannot recover an implemented finite batch after scope changes
+  ---
+  duration_ms: 2.507083
+  type: 'test'
+  ...
+1..172
+# tests 172
+# suites 0
+# pass 168
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58861.228292

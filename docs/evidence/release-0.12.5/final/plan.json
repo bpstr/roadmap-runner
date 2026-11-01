@@ -1,0 +1,18 @@
+{
+  "preparedOnly": true,
+  "paidCalls": 0,
+  "changedInputs": "Progress continue policy, ledger, lifecycle, managed schema and tests changed since retained closure-stall checks.",
+  "affectedChecks": [
+    "build",
+    "progress-ledger.test.js",
+    "closure-stall-integration.test.js",
+    "runner.test.js",
+    "execution-reset.test.js: CLI and managed schema carry",
+    "check:package",
+    "git diff --check"
+  ],
+  "retainedEvidence": "Reuse unchanged closure-stall remediation and source-complete deferral results where source hashes match.",
+  "completion": "Affected checks pass, then push and require existing six-job hosted CI matrix before release.",
+  "fullSuite": "No local full-suite run. Hosted full suite is required by existing .github/workflows/ci.yml on main.",
+  "publication": "Follow previous release with built tarball, SHA256SUMS and GitHub release; inspect existing npm publication convention."
+}

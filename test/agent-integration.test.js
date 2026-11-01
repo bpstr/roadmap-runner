@@ -42,7 +42,7 @@ test('managed start is ready, exclusive by canonical workspace, idempotent and s
   await assert.rejects(new RunManager(alias, f.registry).start({ ...f.request, workspace: alias }, { executable: f.worker }), /reserved/);
   const reconnect = new RunManager(f.workspace, f.registry); const status = await wait(async () => { const s = await reconnect.status(r.id); return s.output.includes('fixture output') && s; });
   assert.ok(!status.output.includes('sk-')); assert.ok(!JSON.stringify(status).includes(readRun(f.registry, r.id).token));
-  assert.deepEqual(status.events.slice(0, 2).map(e => e.type), ['runner.started', 'runner.turn_starting']);
+  assert.deepEqual(status.events.slice(0, 3).map(e => e.type), ['runner.started', 'runner.scheduling', 'runner.turn_starting']);
   const stopped = await reconnect.stop(r.id); assert.equal(stopped.changed, true); assert.equal(stopped.processState, 'stopping');
   const final = await wait(async () => { const s = await reconnect.status(r.id); return s.processState === 'stopped' && s; });
   assert.equal(final.events.at(-1).type, 'runner.stopped'); assert.equal((await reconnect.stop(r.id)).changed, false);
