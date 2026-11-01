@@ -147,7 +147,15 @@ if(named){
   assert.equal(final.reason,'complete',final.output);
   assert.equal(Number(fs.readFileSync(path.join(f.dir,'prepared-count'))),4);
   assert.deepEqual(final.queue.map(entry=>entry.state),['complete','complete']);
-  assert.equal(final.events.filter(event => event.type === 'runner.progress_observed' && event.kind === 'implementation').length, 2);
+  const events = [...final.events];
+  let page = final;
+  while (page.eventsTruncated) {
+    const next = await manager.status(run.id, { cursor: page.cursor, outputBytes: 0 });
+    assert.ok(next.cursor > page.cursor, 'truncated event pages must advance');
+    events.push(...next.events);
+    page = next;
+  }
+  assert.equal(events.filter(event => event.type === 'runner.progress_observed' && event.kind === 'implementation').length, 2);
 });
 
 test('selected batch context accepts 32 KiB and rejects excess UTF-8 bytes', t => {

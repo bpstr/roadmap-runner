@@ -1,0 +1,11 @@
+✔ queued implementation delivery is observed without closing original acceptance (1324.776875ms)
+✔ workers continue useful work without periodic supervisors even with the legacy cadence (776.953291ms)
+✔ legacy count-based recovery flags request worker review without forcing resolver dispatch (726.265125ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3006.761459

@@ -97,7 +97,7 @@ if (role === 'RESOLVER') {
 }
 
 test('workers continue useful work without periodic supervisors even with the legacy cadence', t => {
-  const f = fixture(t, 'normal'); const result = f.run(['--supervisor-every', '1']);
+  const f = fixture(t, 'normal'); const result = f.run(['--supervisor-every', '1', '--review-turns', '8']);
   assert.equal(result.status, 0, result.stderr); assert.deepEqual(f.calls(), Array(7).fill('WORKER'));
 });
 for (const mode of ['repair', 'worker-failure', 'quota', 'capacity']) test(`${mode}: blocked worker dispatches resolver then resumes`, t => {
@@ -209,7 +209,7 @@ test('legacy count-based recovery flags request worker review without forcing re
   const f = fixture(t, 'normal');
   fs.writeFileSync(f.progress + '.recovery.json', JSON.stringify({ version: 1, roadmap: f.roadmap,
     quota: null, reviewRequested: true, loopBlockedRevision: 'historical-counter' }));
-  const result = f.run(); assert.equal(result.status, 0, result.stderr);
+  const result = f.run(['--review-turns', '8']); assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(f.calls(), Array(7).fill('WORKER'));
   assert.match(fs.readFileSync(path.join(f.dir, 'prompt-1'), 'utf8'), /Legacy recovery flags request a review/);
   assert.equal(f.events().some(event => event.type === 'runner.blocked'), false);

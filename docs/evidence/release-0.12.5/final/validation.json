@@ -29,7 +29,17 @@
       "packedBytes": 195394,
       "log": "package.log"
     },
-    "whitespace": "Tracked implementation diff and staged files pass after preserving captured diff whitespace through narrow .gitattributes entries, matching existing terminal-log policy. Initial failure retained in initial-whitespace.log."
+    "whitespace": "Tracked implementation diff and staged files pass after preserving captured diff whitespace through narrow .gitattributes entries, matching existing terminal-log policy. Initial failure retained in initial-whitespace.log.",
+    "repairedHostedSelectors": {
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0,
+      "log": "ci-repaired-selectors.log"
+    },
+    "tarballSourceMatch": {
+      "files": 76,
+      "result": "Exact tarball contents still match current packaged source; only excluded tests and evidence changed."
+    }
   },
   "retainedMatchingFiles": [
     "RECOVERY.md",
@@ -136,7 +146,7 @@
     },
     {
       "path": "test/execution-reset.test.js",
-      "sha256": "ac383cf92597bd3d9122e5087dbbb1a727abd94e58edada266966c48e0c2324f"
+      "sha256": "b537199e582b47e3927053a3d4681a6dab21c412ab798a3efaca8c98ae3ded00"
     },
     {
       "path": "test/progress-ledger.test.js",
@@ -161,6 +171,10 @@
     {
       "path": ".gitattributes",
       "sha256": "fe9a52c060713aeaa2298bcd1a0e34a5b2d71911168304b98103034dc72ed228"
+    },
+    {
+      "path": "test/recovery-runs.test.js",
+      "sha256": "514645c0ce14a9ec8f76363af248f223807e83bc0f5692b697aad28d7f3337e5"
     }
   ],
   "hygiene": {
@@ -170,5 +184,7 @@
     "removedPaths": [],
     "reclaimedBytes": 0,
     "notes": "Only small reproducible build output (220 KiB) and evidence produced. Existing 39 MiB dependencies untouched. No large inactive session artifact to remove; unrelated caches and services preserved."
-  }
+  },
+  "hostedFailure": "initial-ci-failures.json; three fixture assumptions repaired, runtime unchanged.",
+  "localPassingSelectors": 31
 }
