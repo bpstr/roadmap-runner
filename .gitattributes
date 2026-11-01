@@ -1,2 +1,4 @@
 # Retained terminal output includes original whitespace and failed assertions.
 docs/evidence/**/*.log -whitespace
+docs/evidence/closure-stall-remediation/controller-diff.txt -whitespace
+docs/evidence/closure-stall-remediation/controller-diff-final.txt -whitespace
