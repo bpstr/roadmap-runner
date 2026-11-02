@@ -597,9 +597,12 @@ checkpoint acknowledgment, recovery behavior and measurement limits.
 
 ## Fresh contexts and optional continuation
 
-Progress limits persist across sessions and restarts. By default, a run parks for review
-after four worker turns or three active hours without measured source/subgap reduction,
-or twelve cumulative active hours. Status retains the scheduling mode, fallback reasons,
+Progress accounting persists across sessions and restarts. By default, a run records and
+automatically renews its progress window after four worker turns or three active hours
+without measured source/subgap reduction,
+or twelve cumulative active hours, then continues working. Select
+`--progress-review-policy park` to wait for an explicit review instead. Status retains
+the scheduling mode, fallback reasons,
 remaining original criteria, scope additions and pending review, even with notifications
 off. See [progress review](docs/task-continuity.md#progress-review) for bounded extensions
 and current-handoff precedence. Contribution reports and receipt counts do not close
@@ -644,7 +647,7 @@ roadmap-runner <roadmap-file> [options]
 --review-after <time>  progress review after active time without reduction; default 3h
 --max-active-time <t>  cumulative active execution budget; default 12h
 --progress-review <file> explicit source-bound review granting a bounded extension
---progress-review-policy <park|continue> record and renew progress windows without parking; default park
+--progress-review-policy <park|continue> record and renew progress windows without parking; default continue
 --resolver-timeout <duration> blocker recovery limit; default 10m
 --resolver-attempts <n> attempts per blocked episode; default 3, maximum 10
 --blocked-policy <mode> resolve (default), park, or stop before resolver dispatch

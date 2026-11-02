@@ -53,7 +53,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   let sleep;
   let activeProgress;
   try {
-    options = { ...options, capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
+    options = { ...options, progressReviewPolicy: options.progressReviewPolicy ?? 'continue',
+      capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
     const { timeoutMs: resolverTimeoutMs, attempts: resolverAttempts, blockedPolicy } = resolverSettings(options);
     progressSettings(options);
 

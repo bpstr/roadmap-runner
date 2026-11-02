@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { trackingPaths } from '../lib/tracking.js';
 import { RoadmapPlan } from '../lib/task-plan.js';
 import { RunManager } from '../dist/run-manager.js';
+import { runLifecycle } from '../dist/lifecycle.js';
+import { parseArgs } from '../lib/runner.js';
 
 const cli = fileURLToPath(new URL('../bin/roadmap-runner.js', import.meta.url));
 // Serialized executable: only prepared file operations, never a provider client.
@@ -52,9 +54,9 @@ function fixture(t, mode = 'churn') {
 }
 const assertRun = (result, code) => { assert.ifError(result.error); assert.equal(result.status, code, result.stderr + result.stdout); };
 
-test('explicit continue policy passes repeated plateau reviews and reaches source completion', t => {
+test('default CLI policy passes repeated plateau reviews and reaches source completion', t => {
   const f = fixture(t, 'continue');
-  assertRun(f.run(['--review-turns', '1', '--progress-review-policy', 'continue']), 0);
+  assertRun(f.run(['--review-turns', '1']), 0);
   assert.equal(f.ledger().workerTurns, 3);
   assert.equal(f.ledger().reviews.length, 2);
   assert.equal(f.ledger().criteria[0].checked, true);
@@ -63,11 +65,23 @@ test('explicit continue policy passes repeated plateau reviews and reaches sourc
   assert.equal(f.events().some(e => e.type === 'runner.progress_review_required'), false);
 });
 
-test('managed workers retain continue policy in options and status', async t => {
+test('direct lifecycle calls default to continuing through plateau reviews', async t => {
+  const f = fixture(t, 'continue');
+  const options = parseArgs([f.roadmap, '--progress-file', f.progress, '--client-bin', f.client,
+    '--no-session-continuation', '--notify', 'off', '--timeout', '3s', '--review-turns', '1'], {});
+  delete options.progressReviewPolicy;
+  const result = await runLifecycle(options, { workdir: f.dir });
+  assert.equal(result.code, 0);
+  assert.equal(f.ledger().reviewPolicy, 'continue');
+  assert.equal(f.ledger().reviews.length, 2);
+  assert.equal(f.ledger().criteria[0].checked, true);
+});
+
+test('managed workers default to continue in options and status', async t => {
   const f = fixture(t, 'continue');
   const manager = new RunManager(f.dir, path.join(f.dir, 'managed-registry'));
   const run = await manager.start({ workspace: f.dir, roadmap: f.roadmap, progressFile: f.progress,
-    notify: 'off', sessionContinuation: false, timeout: '3s', reviewTurns: 1, progressReviewPolicy: 'continue' },
+    notify: 'off', sessionContinuation: false, timeout: '3s', reviewTurns: 1 },
     { executable: f.client }, true);
   const status = await manager.status(run.id);
   assert.equal(status.reason, 'complete');
@@ -78,7 +92,7 @@ test('managed workers retain continue policy in options and status', async t => 
 });
 
 test('broad workers park after four contributions despite changed hashes; restart cannot reset the review', t => {
-  const f = fixture(t); assertRun(f.run(), 75);
+  const f = fixture(t); assertRun(f.run(['--progress-review-policy', 'park']), 75);
   assert.equal(JSON.parse(fs.readFileSync(path.join(f.dir, 'calls.json'))).length, 4);
   const event = f.events().find(e => e.type === 'runner.progress_review_required');
   assert.equal(event.reason, 'acceptance_plateau_turns'); assert.equal(event.attention, true); assert.equal(event.notificationMode, 'off');
@@ -91,19 +105,19 @@ test('broad workers park after four contributions despite changed hashes; restar
   assert.equal(event.progress.pendingReview.acknowledged, false); assert.ok(fs.existsSync(event.requestFile));
   assert.match(f.events().find(e => e.type === 'runner.started').runtime.bundleHash, /^[a-f0-9]{64}$/);
   assert.ok(f.events().filter(e => e.type === 'runner.turn_finished').every(e => e.progressScopeFile && e.criteriaRevision && e.runtimeBundleHash));
-  assertRun(f.run(['--review-turns', '100', '--review-after', '12h', '--recover-blocked']), 75);
+  assertRun(f.run(['--progress-review-policy', 'park', '--review-turns', '100', '--review-after', '12h', '--recover-blocked']), 75);
   assert.equal(new Set(f.events().filter(e => e.type === 'runner.scheduling' && e.mode === 'broad').map(e => e.runId)).size, 2);
   assert.equal(JSON.parse(fs.readFileSync(path.join(f.dir, 'calls.json'))).length, 4);
   assert.match(fs.readFileSync(f.roadmap, 'utf8'), /\[ \] DEMO/);
 });
 
 test('reviewed repair handoff supersedes obsolete continuation, with history retained', t => {
-  const f = fixture(t, 'handoff'); assertRun(f.run(['--review-turns', '1']), 75);
+  const f = fixture(t, 'handoff'); assertRun(f.run(['--progress-review-policy', 'park', '--review-turns', '1']), 75);
   const ledger = f.ledger(), review = path.join(f.dir, 'review.json');
   fs.writeFileSync(f.progress, 'Status: IN_PROGRESS\nReviewed repair handoff. Close DEMO-01.\n');
   fs.writeFileSync(review, JSON.stringify({ version: 1, reviewId: ledger.pending.id, sourceRevision: ledger.sourceRevision,
     decision: 'extend', reason: 'Reviewed repair supersedes export checkpoint.', gapKeys: [ledger.criteria[0].key], additionalTurns: 2, additionalActiveTime: '1h' }));
-  assertRun(f.run(['--progress-review', review]), 0);
+  assertRun(f.run(['--progress-review-policy', 'park', '--progress-review', review]), 0);
   assert.equal(f.ledger().reviews.length, 1); assert.equal(f.ledger().workerTurns, 2);
   assert.equal(f.ledger().criteria[0].checked, true);
   assert.ok(f.events().some(e => e.type === 'runner.handoff_reconciled'));
@@ -112,7 +126,7 @@ test('reviewed repair handoff supersedes obsolete continuation, with history ret
 });
 
 test('cumulative active time caps a long client session and parks without a second worker', t => {
-  const f = fixture(t, 'slow'); assertRun(f.run(['--max-active-time', '300ms', '--review-after', '5s']), 75);
+  const f = fixture(t, 'slow'); assertRun(f.run(['--progress-review-policy', 'park', '--max-active-time', '300ms', '--review-after', '5s']), 75);
   assert.equal(f.ledger().workerTurns, 1); assert.ok(f.ledger().activeMs >= 300);
   assert.equal(f.ledger().pending.reason, 'active_time_budget');
 });
@@ -132,7 +146,7 @@ test('fallback diagnostics distinguish flat format, orphan checkboxes and oversi
 test('managed status retains parked review, scheduling and runtime identity when desktop delivery is disabled', async t => {
   const f = fixture(t), registry = path.join(f.dir, 'managed-registry');
   const manager = new RunManager(f.dir, registry);
-  const run = await manager.start({ workspace: f.dir, roadmap: f.roadmap, progressFile: f.progress, notify: 'off', sessionContinuation: false, timeout: '3s' }, { executable: f.client }, true);
+  const run = await manager.start({ workspace: f.dir, roadmap: f.roadmap, progressFile: f.progress, notify: 'off', sessionContinuation: false, timeout: '3s', progressReviewPolicy: 'park' }, { executable: f.client }, true);
   const status = await manager.status(run.id);
   assert.equal(status.reason, 'review_required'); assert.equal(status.roadmapState, 'review_required');
   assert.equal(status.waitReason, 'progress_review'); assert.equal(status.queue[0].state, 'review_required');

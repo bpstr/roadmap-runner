@@ -51,9 +51,9 @@ Options:
   --progress-file <path> Override handoff path; live roadmap checkboxes control completion
   --execution-plan <path> Select at most three finite outcomes from an existing progress authority
   --timeout <duration>   Per-session timeout. Default: 6h
-  --review-turns <n>     Park after n worker turns without measured reduction; default 4
-  --review-after <time>  Park after active time without measured reduction; default 3h
-  --progress-review-policy <park|continue>  Record and renew progress windows without parking when continue is selected
+  --review-turns <n>     Review after n worker turns without measured reduction; default 4
+  --review-after <time>  Review after active time without measured reduction; default 3h
+  --progress-review-policy <park|continue>  Default: continue; select park to wait for review
   --max-active-time <t>  Cumulative active-time budget; default 12h
   --progress-review <file> Apply an explicit bounded extension to a parked review
   --resolver-timeout <duration> Blocker resolver timeout; default 10m

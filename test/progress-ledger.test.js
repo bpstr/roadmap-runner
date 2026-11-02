@@ -104,8 +104,9 @@ test('invalid state fails closed; criterion extraction ignores fenced examples; 
   assert.notEqual(first.bundleHash, runtimeIdentity(f.dir).bundleHash);
 });
 
-test('explicit continue policy renews time and turn windows without closing criteria or approving additions', t => {
-  const f = fixture(t, undefined, { progressReviewPolicy: 'continue', reviewTurns: 1, reviewAfter: '1s', maxActiveTime: '1s' });
+test('default continue policy renews time and turn windows without closing criteria or approving additions', t => {
+  const f = fixture(t, undefined, { reviewTurns: 1, reviewAfter: '1s', maxActiveTime: '1s' });
+  assert.equal(f.ledger.summary().reviewPolicy, 'continue');
   fs.appendFileSync(f.roadmap, '- [ ] GAP-01 Unreviewed supporting work.\n');
   f.turn('partial', 1000);
   assert.equal(f.ledger.reason(), 'active_time_budget');
@@ -128,12 +129,12 @@ test('explicit continue policy renews time and turn windows without closing crit
   assert.equal(new ProgressLedger(f.config).summary().reviewPolicy, 'continue');
 });
 
-test('continue policy must be explicit and may acknowledge an existing parked request', t => {
-  const f = fixture(t, undefined, { reviewTurns: 1 }); f.turn();
+test('explicit park policy rejects automatic renewal and a default restart can acknowledge its request', t => {
+  const f = fixture(t, undefined, { progressReviewPolicy: 'park', reviewTurns: 1 }); f.turn();
   const pending = f.ledger.requestReview(f.ledger.reason());
-  assert.throws(() => f.ledger.continueReview(), /explicit continue policy/);
+  assert.throws(() => f.ledger.continueReview(), /requires the continue policy/);
   assert.throws(() => progressSettings({ progressReviewPolicy: 'ignore' }), /progressReviewPolicy/);
-  const restart = new ProgressLedger({ ...f.config, options: { ...f.config.options, progressReviewPolicy: 'continue' } });
+  const restart = new ProgressLedger({ ...f.config, options: { reviewTurns: 1 } });
   assert.equal(restart.continueReview().request.id, pending.id);
   assert.equal(restart.reason(), null);
   assert.equal(restart.state.reviews.length, 1);

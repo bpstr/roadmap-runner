@@ -23,7 +23,7 @@ export const startSchema = z.object({
   timeout: z.string().default('6h').describe('Timeout per client session; cumulative progress limits are separate.'), supervisorEvery: z.number().int().min(0).max(20).optional(),
   reviewTurns: z.number().int().min(1).max(100).default(4), reviewAfter: z.string().default('3h'), maxActiveTime: z.string().default('12h'),
   progressReview: z.string().min(1).optional().describe('Path to an explicit, source-bound progress review granting a bounded extension.'),
-  progressReviewPolicy: z.enum(['park', 'continue']).default('park').describe('Continue records source-bound window renewals without parking; cumulative execution can continue until completion or stop.'),
+  progressReviewPolicy: z.enum(['park', 'continue']).default('continue').describe('Defaults to continue: record source-bound window renewals without parking until completion or stop. Select park to wait for explicit progress review.'),
   supervisorTimeout: z.string().optional(), resolverTimeout: z.string().optional(), model: z.string().max(200).optional(), effort: z.string().max(50).optional(),
   notify: z.enum(['attention', 'off']).default(() => process.env.ROADMAP_NOTIFY === 'off' ? 'off' : 'attention'), notifyOn: z.array(z.enum(eventTypes as [string, ...string[]])).max(20).default([]),
   preventSleep: z.boolean().default(false),

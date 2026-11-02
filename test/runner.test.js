@@ -22,6 +22,13 @@ test('progress budgets have finite defaults and CLI values override the environm
   assert.deepEqual([configured.reviewTurns, configured.reviewAfter, configured.maxActiveTime, configured.progressReview], ['6', '2h', '8h', 'review.json']);
 });
 
+test('progress reviews continue by default and CLI flags override the environment', () => {
+  assert.equal(parseArgs(['roadmap.md'], {}).progressReviewPolicy, 'continue');
+  assert.equal(parseArgs(['roadmap.md'], { ROADMAP_PROGRESS_REVIEW_POLICY: 'park' }).progressReviewPolicy, 'park');
+  assert.equal(parseArgs(['roadmap.md', '--progress-review-policy', 'continue'], { ROADMAP_PROGRESS_REVIEW_POLICY: 'park' }).progressReviewPolicy, 'continue');
+  assert.equal(parseArgs(['roadmap.md', '--progress-review-policy', 'park'], { ROADMAP_PROGRESS_REVIEW_POLICY: 'continue' }).progressReviewPolicy, 'park');
+});
+
 test('sleep prevention is opt-in and CLI flags override the environment', () => {
   assert.equal(parseArgs(['roadmap.md'], {}).preventSleep, false);
   assert.equal(parseArgs(['roadmap.md', '--prevent-sleep'], {}).preventSleep, true);

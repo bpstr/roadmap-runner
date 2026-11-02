@@ -37,9 +37,10 @@ leave their prior baseline entries unresolved and record additions. Contribution
 operation names, receipt references and new source hashes do not count as closure.
 Observed source closure does not independently qualify correctness.
 
-Default limits park the run after four worker turns or three hours of active execution
-without measured reduction, or twelve hours of cumulative active execution. They persist
-across client sessions and process restarts in the same progress state. All client roles
+Progress review thresholds are four worker turns or three hours of active execution
+without measured reduction, or twelve hours of cumulative active execution. The default
+`continue` policy records and renews these windows; explicit `park` waits for review.
+Thresholds persist across client sessions and process restarts in the same progress state. All client roles
 consume active time; idle quota/capacity waits do not. An interrupted controller session
 is conservatively charged up to its recorded timeout. `--timeout` is a per-session
 ceiling, further bounded by remaining active allowances. Existing ledgers retain their
@@ -81,16 +82,17 @@ client conversation reuse. History remains available as evidence. Controller-onl
 changes do not supersede continuation. The first upgrade invocation with explicit fresh
 sessions also gives the current handoff precedence over legacy task memory.
 
-An operator can select `--progress-review-policy continue` (MCP
-`progressReviewPolicy: "continue"`, or `ROADMAP_PROGRESS_REVIEW_POLICY=continue`)
-to keep executing through progress thresholds. Each threshold retains a source-bound
-request and an operator-policy renewal decision, then emits `runner.progress_reviewed`.
+Progress reviews default to `continue` in CLI, MCP and direct lifecycle calls.
+Each threshold retains a source-bound request and a configured-policy renewal decision,
+then emits `runner.progress_reviewed`.
 This is an execution authorization, not a model review or acceptance verdict. It
 does not close criteria or approve added subgaps. Cumulative counters and closure age
 remain intact; the policy repeatedly renews the active allowance and can run until
 completion or explicit stop. Per-session timeouts, blocker handling and explicit stop
-still apply. The default `park` policy retains bounded review behavior. The selected
-policy applies to every roadmap in a managed queue and must be selected again on restart.
+still apply. Select `--progress-review-policy park` (MCP `progressReviewPolicy: "park"`,
+or `ROADMAP_PROGRESS_REVIEW_POLICY=park` for CLI runs) to wait for explicit review at
+these thresholds. The policy applies to every roadmap in a managed queue; existing
+managed runs that explicitly saved `park` keep that setting.
 
 Start events include a SHA-256 runtime bundle identity and manifest path. Session receipts
 bind that identity, the criteria revision and a snapshot of unresolved criterion keys.
