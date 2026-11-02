@@ -85,12 +85,22 @@ export async function probe(
       new Error(`Monitor rejected probe (${response.status})`),
       { status: response.status },
     );
-  const body = await response.json();
+  let body: any;
+  try {
+    body = await response.json();
+  } catch {
+    throw Object.assign(new Error("Monitor protocol is incompatible"), {
+      status: 400,
+    });
+  }
   if (
+    !body ||
+    typeof body.installation_id !== "string" ||
     !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
       body.installation_id,
     ) ||
-    !body.protocol_versions?.includes(1)
+    !Array.isArray(body.protocol_versions) ||
+    !body.protocol_versions.includes(1)
   )
     throw Object.assign(new Error("Monitor protocol is incompatible"), {
       status: 400,

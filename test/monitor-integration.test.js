@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import http from "node:http";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { RunManager } from "../dist/run-manager.js";
 import { monitorCommand } from "../dist/monitor-cli.js";
 import { monitorConfig, monitorRoot } from "../dist/monitor-config.js";
@@ -215,4 +217,31 @@ test("foreground, detached and queues register automatically with unchanged prep
       .size,
     before.size,
   );
+  const configured = await new Promise((resolve, reject) => {
+    const cli = spawn(process.execPath, [
+      fileURLToPath(new URL("../bin/roadmap-runner.js", import.meta.url)),
+      "monitor", "configure", "--url", process.env.ROADMAP_MONITOR_URL,
+      "--api-key-stdin", "--label", "Prepared laptop", "--json",
+    ], { env: process.env, stdio: ["pipe", "pipe", "pipe"] });
+    let stdout = "", stderr = "";
+    cli.stdout.on("data", chunk => { stdout += chunk; });
+    cli.stderr.on("data", chunk => { stderr += chunk; });
+    cli.on("error", reject);
+    cli.on("close", code => {
+      if (code !== 0) reject(new Error(`configure exited ${code}: ${stderr}`));
+      else resolve(stdout);
+    });
+    cli.stdin.end(process.env.ROADMAP_MONITOR_API_KEY + "\n");
+  });
+  const status = JSON.parse(configured);
+  assert.equal(status.enabled, true);
+  assert.equal(status.verified, true);
+  assert.equal(status.installation_id, "00000000-0000-4000-8000-000000000001");
+  assert.ok(!configured.includes(process.env.ROADMAP_MONITOR_API_KEY));
+  assert.equal(monitorConfig().label, "Prepared laptop");
+  if (process.platform !== "win32") {
+    assert.equal(fs.statSync(path.join(monitorRoot(), "config.json")).mode & 0o777, 0o600);
+    assert.equal(fs.statSync(monitorRoot()).mode & 0o777, 0o700);
+  }
+  assert.equal(new Set(reports.filter(r => r.source_run_id).map(r => r.source_run_id)).size, before.size);
 });

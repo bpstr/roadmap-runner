@@ -26,8 +26,8 @@ Usage:
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
   roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
   roadmap-runner notifications request-permission [--json]
-  roadmap-runner monitor configure --url <ingestion-url> [--api-key-stdin]
-  roadmap-runner monitor test|status|flush|disable [--json]
+  roadmap-runner monitor configure --url <ingestion-url> [--api-key-stdin] [--label <name>] [--json]
+  roadmap-runner monitor test|status|flush|enable|disable [--json]
   roadmap-runner check --spec <json-file> [--workspace <path>]
   roadmap-runner record-review --spec <json-file> [--workspace <path>]
 
@@ -84,6 +84,9 @@ Environment:
   ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
   ROADMAP_CAPACITY_DELAY      Initial delay in seconds; default 300
   ROADMAP_CAPACITY_MAX_DELAY  Maximum delay in seconds; default 300
+  ROADMAP_MONITOR            Set to off to disable remote reporting
+  ROADMAP_MONITOR_URL        Override the saved monitor ingestion URL
+  ROADMAP_MONITOR_API_KEY    Override the saved installation write key
 
 The current directory is always the workspace.
 `);

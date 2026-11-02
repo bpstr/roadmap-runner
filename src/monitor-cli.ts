@@ -85,10 +85,12 @@ export async function monitorCommand(argv: string[]) {
   } else {
     if (args.length) throw new Error("Unexpected monitor arguments");
     if (command === "status") result = diagnostics();
-    else if (command === "disable") {
+    else if (command === "enable" || command === "disable") {
       const config = readMonitorConfig();
-      if (config) saveMonitorConfig({ ...config, enabled: false });
-      result = { enabled: false };
+      if (command === "enable" && !config)
+        throw new Error("Monitoring is not configured; use monitor configure first");
+      if (config) saveMonitorConfig({ ...config, enabled: command === "enable" });
+      result = diagnostics();
     } else if (command === "test") {
       const config = monitorConfig();
       if (!config)
@@ -103,7 +105,7 @@ export async function monitorCommand(argv: string[]) {
     } else if (command === "flush") result = await flushMonitor();
     else
       throw new Error(
-        "monitor requires configure, test, status, flush, or disable",
+        "monitor requires configure, test, status, flush, enable, or disable",
       );
   }
   console.log(JSON.stringify(result, null, json ? 0 : 2));

@@ -264,6 +264,25 @@ test("configuration masks keys, survives replacement failures, and saves offline
   assert.notEqual(readMonitorConfig().connectionId, old.connectionId);
 });
 
+test("malformed and incompatible probes preserve the saved connection", async (t) => {
+  fixture(t);
+  await configureMonitor(config.endpoint, key, undefined, async () => response());
+  const previous = readMonitorConfig();
+  for (const body of [
+    "not JSON", "null", "{}",
+    JSON.stringify({ installation_id: installation, protocol_versions: "1" }),
+    JSON.stringify({ installation_id: installation, protocol_versions: [2] }),
+    JSON.stringify({ installation_id: "invalid", protocol_versions: [1] }),
+  ]) {
+    await assert.rejects(
+      () => configureMonitor("https://replacement.example/ingest", key, undefined,
+        async () => new Response(body, { status: 200 })),
+      /Monitor protocol is incompatible/,
+    );
+    assert.deepEqual(readMonitorConfig(), previous);
+  }
+});
+
 test('automatic historical retry is limited to one verified destination and never claims liveness', async t => {
   const record = fixture(t);
   await configureMonitor(config.endpoint, key, undefined, async () => response());
