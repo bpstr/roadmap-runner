@@ -51,6 +51,11 @@ test('missing results retain legacy handoff; oversized, stale and symlinked resu
   fs.unlinkSync(prepared.resultFile);
   fs.symlinkSync(f.tracking.file, prepared.resultFile);
   assert.equal(f.memory.consume({ ...expected, resultFile: prepared.resultFile }).outcome, null);
+  fs.unlinkSync(prepared.resultFile);
+  fs.symlinkSync(path.join(f.workdir, 'missing-target'), prepared.resultFile);
+  const dangling = f.memory.consume({ ...expected, resultFile: prepared.resultFile });
+  assert.equal(dangling.rejection.diagnostic.code, 'unsafe_evidence_file');
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'));
   assert.equal(f.memory.latest('API-32'), null);
 });
 

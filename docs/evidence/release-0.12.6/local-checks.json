@@ -90,6 +90,20 @@
       "file": "version.log",
       "bytes": 8,
       "sha256": "25080823e833793169be2b611bd4050944e77107298158cfad510c17ee28ed9b"
+    },
+    {
+      "file": "dangling-result.log",
+      "bytes": 239,
+      "sha256": "5e970aa3e2a116ac6e7e84001a181d218f3524db8094218f36f78418d5e8f332",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "package-dangling-final.log",
+      "bytes": 406,
+      "sha256": "fa8d1a60ca070ddd5fc72eb39dfb22a620980f942670ffa36c90c41a666e1a87"
     }
   ]
 }
