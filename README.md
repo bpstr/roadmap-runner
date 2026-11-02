@@ -113,6 +113,32 @@ Supported adapters currently mirror the unattended invocation patterns already u
 
 Kimi is exposed because Campfire already has a working adapter, but its current adapter does not provide an explicit permission-bypass flag. The runner warns about that at startup.
 
+## Private mobile monitoring
+
+Version 0.13.0 adds optional run and queue reporting to the separate [Roadmap Monitor](https://github.com/bpstr/roadmap-monitor) app using protocol v1. It uses existing runner data without another model call. Create a connection in the monitor, then configure the runner with its ingestion URL and installation write key. Configure once; foreground, detached and queued executions register automatically.
+
+```sh
+roadmap-runner monitor configure --url https://PROJECT.supabase.co/functions/v1/monitor-ingest
+# Enter the installation write key at the masked prompt.
+roadmap-runner monitor test
+roadmap-runner monitor status --json
+roadmap-runner monitor flush
+roadmap-runner monitor disable
+roadmap-runner monitor enable
+```
+
+`configure` accepts `--label <name>` for a local connection label and `--json` for structured output. The masked prompt reads the write key; automation can pipe it to `--api-key-stdin` or supply `ROADMAP_MONITOR_API_KEY`. Never put the key in a command argument. Use the ingestion URL supplied by the monitor; remote endpoints require HTTPS, with HTTP allowed for localhost development only.
+
+| Environment variable | Behavior |
+| --- | --- |
+| `ROADMAP_MONITOR=off` | Disable reporting for this process, including when saved settings are enabled. |
+| `ROADMAP_MONITOR_URL` | Override the saved ingestion URL; also supplies the URL for `monitor configure`. |
+| `ROADMAP_MONITOR_API_KEY` | Override the saved installation write key; also supplies the key for `monitor configure`. |
+
+No configured URL/key means no reporting. A saved disabled connection stays disabled until `monitor enable` or `monitor configure`; environment URL/key overrides do not re-enable it. `enable` reuses the saved identity and credentials. `test` probes protocol compatibility without creating a run. `flush` retries retained historical/terminal deliveries for the selected connection without claiming that old processes are live.
+
+Configuration and outboxes live under the private user state directory (`~/Library/Application Support/roadmap-runner/monitor` on macOS), outside the package, and survive updates. Online configuration validates the key before replacement; rejected or incompatible responses preserve the previous settings, while unavailable networks save an unverified connection. Credentials are excluded from provider, hook and verification subprocess environments. Monitoring failures preserve execution and exit codes. Existing processes load new code/settings on their next launch.
+
 ## Batch size
 
 Each worker works toward a meaningful checkpoint in the selected original task:

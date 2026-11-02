@@ -172,3 +172,7 @@ timed-out or invalid resolver emits `runner.stopped`, ends with exit 75/reason
 Quota and capacity retries retain the pending session role and bounded waits.
 Regular supervisor dispatches are removed; historical supervisor events remain
 readable. See [recovery runs](../RECOVERY.md) for the resolver decision contract.
+
+### Optional monitoring metadata (unreleased)
+
+`runner.turn_starting` can include `activityTitle` and an explicit `activityPhase`, taken from the exact parsed context captured for task selection. Broad scheduling supplies no invented task title. `runner.task_result` can include validated `operation`, original `resultObservedAt` and a bounded instruction-only `nextRecordedStep`; it never forwards the complete result or command/file arguments. Results are prior reported actions, not proof of a currently executing tool. These optional fields may be omitted from the managed journal when necessary to preserve its existing 8 KiB event budget. The asynchronous monitor receives the safe source fields separately.

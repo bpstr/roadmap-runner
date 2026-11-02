@@ -354,3 +354,16 @@ test('a quota partial with old criteria cannot recover an implemented finite bat
   assert.equal(f.execution.finish(first, { code: 1, usageLimit: { kind: 'session' } }).attempts, 0);
   assert.equal(f.execution.select(), null, 'old receipt cannot recover changed acceptance');
 });
+
+test('monitor title retains the selected source revision when the live heading changes', t => {
+  const f = fixture(t);
+  const before = fs.readFileSync(f.file, 'utf8');
+  const selected = f.plan.select();
+  assert.equal(selected.activityTitle, 'Deliver result');
+  assert.equal(selected.activitySourceRevision, createHash('sha256').update(before).digest('hex'));
+  fs.writeFileSync(f.file, before.replace('Task AUTH-01 — Deliver result', 'Task AUTH-01 — Changed title'));
+  const changed = f.plan.select();
+  assert.equal(selected.activityTitle, 'Deliver result');
+  assert.equal(changed.activityTitle, 'Changed title');
+  assert.notEqual(selected.activitySourceRevision, changed.activitySourceRevision);
+});

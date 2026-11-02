@@ -26,6 +26,8 @@ Usage:
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
   roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
   roadmap-runner notifications request-permission [--json]
+  roadmap-runner monitor configure --url <ingestion-url> [--api-key-stdin] [--label <name>] [--json]
+  roadmap-runner monitor test|status|flush|enable|disable [--json]
   roadmap-runner check --spec <json-file> [--workspace <path>]
   roadmap-runner record-review --spec <json-file> [--workspace <path>]
 
@@ -82,6 +84,9 @@ Environment:
   ROADMAP_CAPACITY_RETRIES    Consecutive capacity retries; default 10
   ROADMAP_CAPACITY_DELAY      Initial delay in seconds; default 300
   ROADMAP_CAPACITY_MAX_DELAY  Maximum delay in seconds; default 300
+  ROADMAP_MONITOR            Set to off to disable remote reporting
+  ROADMAP_MONITOR_URL        Override the saved monitor ingestion URL
+  ROADMAP_MONITOR_API_KEY    Override the saved installation write key
 
 The current directory is always the workspace.
 `);
@@ -123,7 +128,8 @@ const main = async () => {
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   if (['check', 'record-review', 'update-handoff'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
   assertController();
-  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications'];
+  if (argv[0] === 'monitor') { const { monitorCommand } = await import('../dist/monitor-cli.js'); await monitorCommand(argv.slice(1)); return; }
+  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications', 'monitor'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
   const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
   const workspaceArg = take('--workspace', undefined);

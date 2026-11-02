@@ -1,3 +1,4 @@
+import { prepareMonitor,failedMonitorLaunch,flushMonitor } from './monitor.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -204,6 +205,8 @@ export class RunManager {
         }
         acquired.push(lock);
       }
+      prepareMonitor(record);
+      void flushMonitor(1).catch(() => {});
       if (foreground) {
         const { runWorker } = await import('./worker.js');
         spawned = true;
@@ -216,6 +219,7 @@ export class RunManager {
     } catch (error) {
       // Once spawned, a readiness failure must retain ownership until reconciliation.
       if (!spawned) {
+        await failedMonitorLaunch(record);
         for (const lock of acquired) fs.rmSync(lock, { force: true });
         fs.rmSync(runDir(this.root, id), { recursive: true, force: true });
       }

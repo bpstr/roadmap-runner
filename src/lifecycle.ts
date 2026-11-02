@@ -442,6 +442,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     atomicJson(progressScopeFile, { ledgerId: progress.state.id, sourceRevision, criteriaRevision, task: taskId,
       runtimeBundleHash: RUNTIME_IDENTITY.bundleHash, criteria: progress.state.criteria.filter(item => !item.checked && !item.missing).map(item => item.key) });
     await recovery.event("runner.turn_starting", { role, iteration, sessionId, sourceRevision, task: taskId, batch: batch?.id, contextBytes: before,
+      ...(role === 'worker' && batch?.activitySourceRevision === sourceRevision ? { activityTitle: batch.activityTitle || undefined, activityPhase: batch.phase || undefined } : {}),
       scheduling, progress: progress.summary(), progressScopeFile,
       continuation: { resumed: Boolean(conversation.resumeSessionId), reason: conversation.reason } });
     const clientOptions = {
@@ -510,6 +511,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       plan?.setContinuation(taskId, workerOutcome.outcome);
       await recovery.event('runner.task_result', { role, iteration, sessionId, task: taskId, outcome: workerOutcome.outcome.outcome,
         ...(workerOutcome.outcome.scheduling ? { scheduling: workerOutcome.outcome.scheduling } : {}),
+        operation: workerOutcome.outcome.operation, resultObservedAt: workerOutcome.record.recordedAt,
+        nextRecordedStep: (typeof workerOutcome.outcome.nextAction === 'string' ? workerOutcome.outcome.nextAction : workerOutcome.outcome.nextAction?.instruction)?.replace(/[\x00-\x1f\x7f-\x9f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 256),
         resultFile: taskContext.resultFile, receiptCount: workerOutcome.outcome.receiptIds.length });
     } else if (taskContext && fs.existsSync(taskContext.resultFile)) {
       console.warn(workerOutcome.warning);
