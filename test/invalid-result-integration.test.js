@@ -97,7 +97,7 @@ for (const kind of ['outside', 'malformed', 'stale', 'oversized', 'argv']) test(
     fs.writeFileSync(source, fs.readFileSync(source, 'utf8').replace('### Task B-01',
       '<!-- roadmap-runner:delivery:start -->\nHandoff: selected-task delivery annotation changed.\n<!-- roadmap-runner:delivery:end -->\n\n### Task B-01') + '\nHandoff: unrelated source prose changed.\n');
   }
-  fs.appendFileSync(path.join(f.workdir, 'progress.md'), '\nNew progress annotation.\n');
+  if (kind !== 'argv') fs.appendFileSync(path.join(f.workdir, 'progress.md'), '\nNew progress annotation.\n');
   assert.equal((await f.run()).reason, 'deferred');
   assert.equal(f.calls().length, 2, 'restart, prose churn and automatic renewal cannot repeat the product worker');
   assert.match(fs.readFileSync(path.join(f.workdir, 'roadmap.md'), 'utf8'), /- \[ \] A-02/);

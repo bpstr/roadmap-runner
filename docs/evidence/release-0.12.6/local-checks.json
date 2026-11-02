@@ -104,6 +104,24 @@
       "file": "package-dangling-final.log",
       "bytes": 406,
       "sha256": "fa8d1a60ca070ddd5fc72eb39dfb22a620980f942670ffa36c90c41a666e1a87"
+    },
+    {
+      "file": "ci-node20-linux-failed.log",
+      "bytes": 253085,
+      "sha256": "b40f19f3c56e26830f6f8928455426aea0ba0921dd2efae79c92087d7a31d22f",
+      "tests": 439,
+      "pass": 435,
+      "fail": 1,
+      "skipped": 3
+    },
+    {
+      "file": "argv-fixture-final.log",
+      "bytes": 2735,
+      "sha256": "cabf4c425ebdacff5aec1291fa2337b0e56ddc69674aafa4e468441930e53c3a",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
     }
   ]
 }
