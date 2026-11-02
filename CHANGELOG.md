@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional private Roadmap Monitor reporting with one shared-worker publisher, installation configuration, safe deterministic activity/result fields and bounded terminal/history replay. Add masked/stdin key setup and probe/status/flush/disable commands. Monitoring makes no extra model calls and preserves execution/exit behavior; credentials are excluded from provider, hook and verification environments.
+
 - Default progress reviews to `continue` for CLI, MCP and direct lifecycle runs. Retain source-bound renewal records and acceptance accounting; explicit `park` still waits for review.
 
 ## 0.12.6 — 2026-11-02

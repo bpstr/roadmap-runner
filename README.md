@@ -113,6 +113,19 @@ Supported adapters currently mirror the unattended invocation patterns already u
 
 Kimi is exposed because Campfire already has a working adapter, but its current adapter does not provide an explicit permission-bypass flag. The runner warns about that at startup.
 
+## Private mobile monitoring (unreleased)
+
+A reporter-enabled build can send safe run and queue status to the separate [Roadmap Monitor](https://github.com/bpstr/roadmap-monitor) app. It uses existing runner data without another model call. Configure once; each execution registers automatically.
+
+```sh
+roadmap-runner monitor configure --url https://PROJECT.supabase.co/functions/v1/monitor-ingest
+# Enter the installation write key at the masked prompt.
+roadmap-runner monitor test
+roadmap-runner monitor status --json
+```
+
+For automation, use `--api-key-stdin` or `ROADMAP_MONITOR_API_KEY`; never put the key in a command argument. `ROADMAP_MONITOR=off` disables reporting. `monitor flush` retries retained historical/terminal deliveries; `monitor disable` saves the disabled setting. Probe/test creates no run. Configuration and outboxes live in the private user state directory outside the package and survive updates. Monitoring failures preserve execution and exit codes. Existing processes load new code/settings on their next launch. These commands are not in the published 0.12.6 baseline.
+
 ## Batch size
 
 Each worker works toward a meaningful checkpoint in the selected original task:

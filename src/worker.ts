@@ -1,3 +1,4 @@
+import { attachMonitor } from './monitor.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
@@ -42,6 +43,7 @@ for (const stream of [process.stdout, process.stderr]) {
     const callback = args.find(arg => typeof arg === 'function'); callback?.(); return true;
   }) as any;
 }
+const monitor = attachMonitor(record);
 const notifier = new Notifications(record.options, path.join(dir, 'notifications.json'));
 const persist = () => { record.heartbeat = new Date().toISOString(); saveRun(root, record); };
 const sleep = new SleepInhibitor(record.options.preventSleep, status => { record.sleepInhibition = status; persist(); });
@@ -60,7 +62,7 @@ const server = net.createServer(socket => {
           if (!acceptingQueue) throw new Error('Run is no longer accepting queued roadmaps');
           manager.appendQueue(record, request.input);
           const event = { version: 1, id: randomUUID(), runId: id, sequence: ++record.sequence, at: new Date().toISOString(), type: 'runner.queued', roadmap: record.queue.at(-1).roadmap, progressFile: record.queue.at(-1).progressFile };
-          appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
+          appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event); monitor?.event(event);
         } catch (error) { socket.end(JSON.stringify({ id, token: record.token, error: error.message }) + '\n'); return; }
       }
       const changed = request.operation === 'stop' ? stop() : false;
@@ -85,7 +87,7 @@ try {
     record.roadmapState = 'in_progress'; record.waitReason = null; record.role = undefined; record.iteration = undefined;
     record.task = undefined; record.batch = undefined;
     record.sourceRevision = undefined; record.attentionTasks = []; record.resetAt = undefined; record.deadline = undefined;
-    persist();
+    persist(); monitor?.changed();
     result = await runLifecycle({ ...record.options,
       roadmap: record.queueIndex === 0 ? record.options.roadmap : item.roadmap,
       recoverBlocked: firstDispatch && record.queueIndex === 0 && record.options.recoverBlocked,
@@ -119,7 +121,7 @@ try {
         if (['runner.turn_starting', 'runner.usage_resumed'].includes(event.type)) record.waitReason = null;
         if (event.items) record.attentionTasks = event.items.filter(item => item.requiresAttention).map(item => item.task);
         if (event.type === 'runner.unblocked') record.attentionTasks = [];
-        appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
+        appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event); monitor?.event(event);
       },
     });
     item.state = ['complete', 'deferred', 'stopped', 'blocked', 'needs_next_batch', 'awaiting_verification', 'review_required'].includes(result.reason) ? result.reason : 'failed';
@@ -145,7 +147,7 @@ try {
         const event = { version: 1, id: randomUUID(), runId: id, sequence: ++record.sequence, at: new Date().toISOString(),
           type: 'runner.queue_deferred', reason: 'deferred', reasonCode: 'deferred', severity: 'warning', attention: true,
           terminal: true, code: 0, deferredCount, roadmap: record.roadmap, progressFile: record.progressFile };
-        appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event);
+        appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event); monitor?.event(event);
       }
       break;
     }
@@ -164,6 +166,7 @@ try {
   record.processState = 'unknown'; record.reason = error.message; persist();
 } finally {
   for (const [stream, pending] of pendingOutput) if (pending && !oversizedLines.has(stream)) appendOutput(outputFile, pending);
+  try { await monitor?.finish(); } catch {}
   clearInterval(heartbeat); await sleep.close(); await notifier.close(); for (const socket of sockets) socket.destroy();
   await new Promise<void>(resolve => server.close(() => resolve()));
   if (process.platform !== 'win32') fs.rmSync(record.socket, { force: true });

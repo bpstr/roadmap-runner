@@ -3,7 +3,11 @@ export const attentionTypes = new Set(['runner.progress_review_required', 'runne
 export const eventTypes = ['runner.roadmap_deferred', 'runner.queue_deferred', 'runner.queued', 'runner.roadmap_completed', 'runner.started', 'runner.stopped', 'runner.turn_starting', 'runner.checkpoint_requested', 'runner.checkpoint_acknowledged', 'runner.task_result', 'runner.task_result_invalid', 'runner.plan_exhausted', 'runner.continuation_fallback', 'runner.turn_finished', 'runner.blocked', 'runner.needs_attention', 'runner.unblocked', 'runner.stuck', 'runner.progress_resumed', 'runner.usage_paused', 'runner.usage_resumed', 'runner.usage_wait_expired', 'runner.turn_limit_reached', 'runner.capacity_wait', 'runner.capacity_exhausted', 'runner.failed', 'runner.completed', 'runner.recovery_wait', 'runner.recovery_retry', 'runner.supervisor_deferred'];
 eventTypes.push('runner.scheduling', 'runner.progress_updated', 'runner.progress_observed', 'runner.scope_changed', 'runner.progress_review_required', 'runner.progress_reviewed', 'runner.handoff_reconciled', 'runner.task_result_repaired');
 export const appendEvent = (file: string, event: any) => {
-  const line = JSON.stringify(event) + '\n';
+  let line = JSON.stringify(event) + '\n';
+  if (Buffer.byteLength(line) > 8192 && ['activityTitle', 'activityPhase', 'operation', 'resultObservedAt', 'nextRecordedStep'].some(key => event[key] !== undefined)) {
+    const { activityTitle, activityPhase, operation, resultObservedAt, nextRecordedStep, ...native } = event;
+    line = JSON.stringify(native) + '\n';
+  }
   if (Buffer.byteLength(line) > 8192) throw new Error('Event exceeds journal record budget');
   fs.appendFileSync(file, line, { mode: 0o600 });
   if (fs.statSync(file).size > 1024 * 1024) {

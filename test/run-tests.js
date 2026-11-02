@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 const registry = fs.mkdtempSync(path.join(os.tmpdir(), 'roadmap-test-registry-'));
 const files = fs.readdirSync('test').filter(file => file.endsWith('.test.js')).map(file => path.join('test', file));
 const child = spawn(process.execPath, ['--test', '--test-concurrency=1', ...files], {
-  stdio: 'inherit', env: { ...process.env, ROADMAP_NOTIFY: 'off', ROADMAP_NOTIFY_BIN: '', ROADMAP_STATE_DIR: registry },
+  stdio: 'inherit', env: { ...process.env, ROADMAP_MONITOR: 'off', ROADMAP_NOTIFY: 'off', ROADMAP_NOTIFY_BIN: '', ROADMAP_STATE_DIR: registry },
 });
 const stop = () => child.kill('SIGTERM'); process.on('SIGINT', stop); process.on('SIGTERM', stop);
 child.once('exit', code => {

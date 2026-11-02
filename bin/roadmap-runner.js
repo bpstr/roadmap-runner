@@ -26,6 +26,8 @@ Usage:
   roadmap-runner setup --app codex|claude|grok [--scope project|user] [--dry-run]
   roadmap-runner doctor [--app codex|claude|grok] [--scope project|user] [--json]
   roadmap-runner notifications request-permission [--json]
+  roadmap-runner monitor configure --url <ingestion-url> [--api-key-stdin]
+  roadmap-runner monitor test|status|flush|disable [--json]
   roadmap-runner check --spec <json-file> [--workspace <path>]
   roadmap-runner record-review --spec <json-file> [--workspace <path>]
 
@@ -123,7 +125,8 @@ const main = async () => {
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   if (['check', 'record-review', 'update-handoff'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
   assertController();
-  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications'];
+  if (argv[0] === 'monitor') { const { monitorCommand } = await import('../dist/monitor-cli.js'); await monitorCommand(argv.slice(1)); return; }
+  const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications', 'monitor'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
   const take = (flag, fallback) => { const index = argv.indexOf(flag); if (index < 0) return fallback; if (!argv[index + 1] || argv[index + 1].startsWith('--')) throw new Error(flag + ' requires a value'); const value = argv[index + 1]; argv.splice(index, 2); return value; };
   const workspaceArg = take('--workspace', undefined);
