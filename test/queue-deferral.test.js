@@ -40,6 +40,7 @@ function preparedClient(config) {
     changedFiles: [], receiptIds: [], findings: [], ...(deferred ? { scheduling: 'defer',
       ...(config.noInputs ? {} : { failure: { signature: 'owner-adoption', inputPaths: ['owner.txt'],
         coverageComplete: true, retryCondition: 'Reassess after owner.txt changes.' } }) } : {}) };
+  if (deferred && config.invalidReference) result.failure.inputPaths = [require('node:os').tmpdir()];
   fs.writeFileSync(JSON.parse(prompt.match(/^Optional structured result file: (.+)$/m)[1]), JSON.stringify(result));
   if (!deferred && !blocked) {
     const text = fs.readFileSync(source, 'utf8');
@@ -248,4 +249,13 @@ test('a resolver can explicitly acknowledge only the named deferred task for rea
   assert.equal(result.reason, 'deferred');
   assert.equal(f.calls().filter(call => call.task === 'A-01').length, 2);
   assert.equal(f.calls().filter(call => call.role === 'RESOLVER').length, 1);
+});
+
+test('invalid external-input metadata defers its roadmap while independent work and later queue entries finish', async t => {
+  const f = fixture(t, { invalidReference: true });
+  const result = await f.start();
+  assert.deepEqual(f.calls().map(call => call.task), ['A-01', 'B-01', 'C-01']);
+  assert.ok(result.events.some(event => event.type === 'runner.task_result_invalid' && event.reason === 'waiting_external_input'));
+  assert.ok(result.events.some(event => event.type === 'runner.roadmap_deferred'));
+  assert.match(fs.readFileSync(f.first, 'utf8'), /- \[ \] A-02/);
 });

@@ -1,0 +1,95 @@
+{
+  "preparedOnly": true,
+  "providerCalls": 0,
+  "localLogDirectory": "/tmp/roadmap-runner-release-0.12.6-evidence",
+  "records": [
+    {
+      "file": "affected-tests.log",
+      "bytes": 63708,
+      "sha256": "32166cf5f2d369f0b610eed7d1861d40fe130fa670bbca41195451457fbd7ecf",
+      "tests": 100,
+      "pass": 100,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "build-final.log",
+      "bytes": 45,
+      "sha256": "bb561bc2fd105149cbf0b08273e29801aee441de5990e2ef614b40348a41a585"
+    },
+    {
+      "file": "build.log",
+      "bytes": 45,
+      "sha256": "82ffce9eac53bb0297338bf688057403ccb98ea260fc25b8f9548a3d92e22218"
+    },
+    {
+      "file": "crash-boundary.log",
+      "bytes": 6123,
+      "sha256": "90a28636deeac408f8e016a03de595f8fa24025665430ac89ff2c4ab2c25c9b4",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "delivery-churn.log",
+      "bytes": 13995,
+      "sha256": "d29527bda36bd1f80e3cdc6000ba7d870df545432470c3622d286673eaf9418f",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "final-boundaries-fixture-failure.log",
+      "bytes": 10381,
+      "sha256": "87c0d09cae5dcaca3e91fa34b3765332cf04325563a863008408ee2985dbd6a3",
+      "tests": 8,
+      "pass": 7,
+      "fail": 1,
+      "skipped": 0
+    },
+    {
+      "file": "invalid-results-initial-failure.log",
+      "bytes": 44762,
+      "sha256": "921941c4bb94d986de5baa7c897e2542d2168c275ddd747065274bf3bf4eca59",
+      "tests": 29,
+      "pass": 24,
+      "fail": 5,
+      "skipped": 0
+    },
+    {
+      "file": "invalid-results-restart.log",
+      "bytes": 28711,
+      "sha256": "6aa8da6a9df10d9b3f0d60625e522aefbd62673fbf740ce9dda8ee4506647180",
+      "tests": 14,
+      "pass": 14,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "package-check.log",
+      "bytes": 406,
+      "sha256": "aa0928ca6dde55b7d988d91003c67a038af9f1fa26de506c3e4bd8e06049402c"
+    },
+    {
+      "file": "package-final.log",
+      "bytes": 406,
+      "sha256": "c8533324c61c876d6750114bdf4c0b871159a8068ed4c13b9e419260267aea0a"
+    },
+    {
+      "file": "safety-storage.log",
+      "bytes": 1347,
+      "sha256": "703b7f572e8dbdc15edc23b38fa8cfbbb2248ff3b00e56c693ffcd06be1541bd",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "file": "version.log",
+      "bytes": 8,
+      "sha256": "25080823e833793169be2b611bd4050944e77107298158cfad510c17ee28ed9b"
+    }
+  ]
+}

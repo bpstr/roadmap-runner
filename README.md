@@ -579,9 +579,11 @@ an implementation worker to rewrite its own goal.
 
 Workers receive a deterministic task packet of at most 8 KiB with the latest
 outcome, exact continuation, relevant source-bound findings, and check validity.
-Structured results are optional for compatibility: invalid or missing records
-retain the Markdown handoff and do not create a new recovery gate. Acceptance
-checkboxes remain in the original roadmap.
+Structured results are optional for compatibility: missing records retain the
+Markdown handoff. Rejected records preserve their bytes and fence the task;
+safe metadata errors receive bounded output-only resolver repair before another
+worker. Unsafe or misbound results stay parked while independent work continues.
+Acceptance checkboxes remain in the original roadmap.
 
 `roadmap-runner check --spec check.json` runs a command as argv and captures its
 exit status, complete output artifacts, declared dependency/configuration/environment

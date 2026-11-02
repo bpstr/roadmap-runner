@@ -1,0 +1,21 @@
+# Release 0.12.6 validation
+
+Scope: GitHub issues #18, #16 and #17. Rejecting a worker result must preserve evidence and prevent unchanged product-worker redispatch. Safe metadata errors receive bounded output-only repair; invalid bindings and unsafe references stay fenced. Command suggestions accept bounded argv. Existing productive partials, independent work, prerequisite gating and queue deferrals remain supported.
+
+Validation plan: build TypeScript, then run task-memory unit tests and prepared invalid-result lifecycle regressions. Run the affected task-continuity, ownership-deferral, queue-deferral, recovery-runs, optional-memory and closure-stall integration selectors together after the implementation batch. Completion requires no failing affected checks and a passing packaged CLI/tarball check. All clients are deterministic local scripts; no inference, provider calls, credential loading or fixture recording.
+
+The CI workflow explicitly requires the prepared full suite and package check on each main push across Node 20/22/24 and Linux/macOS. That hosted gate provides release-wide evidence; a duplicate local full-suite run is unnecessary.
+
+Results pending.
+
+Initial prepared results: 15 task-memory tests passed. The first 14-case lifecycle run had 9 passes and 5 failures on restart after source annotation: generic source reconciliation dispatched a resolver despite unchanged fenced criteria. The full failed log is retained locally as invalid-results-initial-failure.log. The focused repair passed all 14 cases (0 failures/skips), recorded in invalid-results-restart.log.
+
+Next affected check batch: the changed lifecycle scenarios (now including explicit acknowledgment and completed-source metadata), task continuity, ownership deferral, queue deferral, resolver recovery, optional-memory fallback, progress continuation, runtime/checkpoint continuity and telemetry. Runtime checkpoint expectations now require a stop for an invalid source-completing result. This is an affected selector batch, not the full suite. The passing task-memory evidence remains compatible: later changes add only explicit acknowledgment and lifecycle handling. CI retains its separate required full-suite gate.
+
+Affected batch result: 100 passed, 0 failed, 0 skipped (71.6 seconds). Later changes tighten two boundaries only: reject a worker that checks off its selected task while returning invalid output, and disallow optional-memory fallback when saved rejection safety state exists. Reuse the other passing affected evidence; rerun completed-source/checked-task lifecycle cases, optional-memory selectors and the added 128-input/corrupt-ledger unit case. No other production inputs changed.
+
+Boundary follow-up: 7 passed, 1 fixture failure. The saved-ledger obstruction fixture initially used macOS /var paths while the lifecycle canonicalizes /private/var; the fixture therefore obstructed a different state directory. Corrected the fixture to use canonical paths. Its exact failed selector then passed (1/1); no production change was needed. Full failed output remains retained locally. Strengthened restart scenarios to churn delivery-marked prose inside the selected task as well as unrelated source prose.
+
+Delivery-churn selectors passed 5/5 (no failures/skips). Final crash boundary: inspect saved rejection fences even for tasks already checked off, so interruption between rejection persistence and STOPPED persistence cannot authorize completion on restart. Rerun the three completed-source/checked-task selectors for this changed startup branch, then rebuild/recheck the package because the lifecycle source changed. Other passing selectors remain compatible.
+
+Final boundary result: 3/3 passed, 0 failures/skips, including interrupted completion-state persistence. Final TypeScript build, packaged CLI/tarball check (76 files, 201,440 packed bytes), and whitespace check passed. Original full logs, including both failed runs, are preserved under `/tmp/roadmap-runner-release-0.12.6-evidence`; `local-checks.json` records their sizes, hashes and test summaries. No paid/provider calls occurred.

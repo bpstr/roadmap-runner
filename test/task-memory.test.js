@@ -39,13 +39,13 @@ test('typed continuation survives restart and preserves all existing handoff obl
   assert.equal(resumed.contextFor('API-32', 'criteria-v2').packet.criteriaChanged, true);
 });
 
-test('missing, oversized, stale-session and symlinked result files fall back without creating delivery state', t => {
+test('missing results retain legacy handoff; oversized, stale and symlinked results fence without delivery state', t => {
   const f = fixture(t);
   const expected = { sessionId: 'missing', taskId: 'API-32', criteriaRevision: 'criteria-v1' };
   const prepared = f.memory.prepare(expected);
   assert.match(f.memory.consume({ ...expected, resultFile: prepared.resultFile }).warning, /legacy handoff/);
   const stale = f.save({ sessionId: 'old-session' });
-  assert.equal(stale.outcome, null); assert.match(stale.warning, /stale/);
+  assert.equal(stale.outcome, null); assert.equal(stale.rejection.diagnostic.code, 'invalid_binding');
   fs.writeFileSync(prepared.resultFile, 'x'.repeat(WORKER_RESULT_BYTES + 1));
   assert.equal(f.memory.consume({ ...expected, resultFile: prepared.resultFile }).outcome, null);
   fs.unlinkSync(prepared.resultFile);
@@ -129,4 +129,116 @@ test('scoped review verdicts survive handoff with explicit trust and invalidatio
   const changed = f.memory.contextFor('API-32', 'criteria-v2').packet;
   assert.equal(changed.receipts[0].reason, 'Review criteria changed');
   assert.match(changed.notes, /before resuming/);
+});
+
+test('command suggestions accept bounded argv without executing it', t => {
+  const f = fixture(t);
+  const valid = f.save({ scheduling: 'defer', nextAction: { command: ['node', '--test', 'fixture.test.mjs'] } });
+  assert.deepEqual(valid.outcome.nextAction.command, ['node', '--test', 'fixture.test.mjs']);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1').reason, 'worker_requested_deferral');
+  for (const command of [[], [''], [['node']], [12], Array(129).fill('node'), Array(3).fill('x'.repeat(3000))]) {
+    const rejected = f.save({ nextAction: { command } });
+    assert.equal(rejected.outcome, null);
+    assert.equal(rejected.rejection.diagnostic.field, 'nextAction.command');
+    assert.equal(rejected.rejection.repairable, true);
+  }
+});
+
+test('rejected metadata keeps immutable bytes and a fence across epochs, acknowledgments and restart', t => {
+  const f = fixture(t);
+  const saved = f.save({ scheduling: 'defer', failure: { signature: 'gate', inputPaths: Array(129).fill('source.js'),
+    coverageComplete: true, retryCondition: 'Owner repairs the prerequisite' } });
+  assert.equal(saved.outcome, null);
+  assert.deepEqual(saved.rejection.diagnostic, { code: 'invalid_list', field: 'failure.inputPaths', actual: 129, limit: 128 });
+  assert.equal(fs.readFileSync(saved.rejection.evidenceFile, 'utf8'), JSON.stringify(saved.raw));
+  fs.writeFileSync(saved.prepared.resultFile, '{}');
+  const resumed = new TaskMemory({ workdir: f.workdir, tracking: f.tracking, roadmap: path.join(f.workdir, 'roadmap.md') });
+  resumed.handoffEpoch = 25;
+  resumed.acknowledgeResolution('API-32', 'criteria-v1', 'ordinary-ack');
+  assert.equal(resumed.assessedBlocker('API-32', 'criteria-v1').state, 'invalid_result_repair');
+  assert.equal(resumed.assessedBlocker('API-32', 'criteria-v2'), false);
+  assert.equal(resumed.latest('API-32'), null);
+  assert.equal(fs.readFileSync(saved.rejection.evidenceFile, 'utf8'), JSON.stringify(saved.raw));
+});
+
+test('metadata-only repair validates the copy and cannot change binding, outcome or failed evidence', t => {
+  const f = fixture(t);
+  const saved = f.save({ scheduling: 'defer', nextAction: { command: [] } });
+  const repair = f.memory.beginInvalidRepair('API-32', 'criteria-v1', saved.rejection.fingerprint, 2);
+  const corrected = { ...saved.raw, nextAction: { command: ['node', '--test'] } };
+  for (const change of [{ taskId: 'foreign' }, { outcome: 'verified' }, { receiptIds: ['check-forged'] }, { scheduling: 'continue' }]) {
+    fs.writeFileSync(repair.repairFile, JSON.stringify({ ...corrected, ...change }));
+    assert.equal(f.memory.repairInvalid(repair), null);
+    assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'));
+  }
+  fs.writeFileSync(repair.repairFile, JSON.stringify(corrected));
+  assert.equal(f.memory.repairInvalid(repair).outcome.scheduling, 'defer');
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1').provenance, 'agent-assessment');
+  assert.equal(fs.readFileSync(saved.rejection.evidenceFile, 'utf8'), JSON.stringify(saved.raw));
+});
+
+test('oversized prerequisite repair must mark its reduced scope incomplete', t => {
+  const f = fixture(t);
+  const saved = f.save({ scheduling: 'defer', failure: { signature: 'gate', inputPaths: Array(129).fill('source.js'),
+    coverageComplete: true, retryCondition: 'Owner repairs the prerequisite' } });
+  const repair = f.memory.beginInvalidRepair('API-32', 'criteria-v1', saved.rejection.fingerprint, 1);
+  const corrected = { ...saved.raw, failure: { ...saved.raw.failure, inputPaths: ['source.js'] } };
+  fs.writeFileSync(repair.repairFile, JSON.stringify(corrected));
+  assert.equal(f.memory.repairInvalid(repair), null);
+  corrected.failure.coverageComplete = false;
+  fs.writeFileSync(repair.repairFile, JSON.stringify(corrected));
+  assert.ok(f.memory.repairInvalid(repair));
+  fs.writeFileSync(path.join(f.workdir, 'source.js'), 'changed');
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'), 'truncated input coverage cannot prove readiness');
+});
+
+test('repair budgets survive successful repairs, changed error categories and handoff epochs', t => {
+  const f = fixture(t);
+  const first = f.save({ nextAction: { command: [] } });
+  const repair = f.memory.beginInvalidRepair('API-32', 'criteria-v1', first.rejection.fingerprint, 1);
+  fs.writeFileSync(repair.repairFile, JSON.stringify({ ...first.raw, nextAction: { command: ['node'] } }));
+  assert.ok(f.memory.repairInvalid(repair));
+  f.save({ nextAction: { command: 12 } }); // Different validation category cannot erase the first budget.
+  f.memory.handoffEpoch = 8;
+  const repeated = f.save({ nextAction: { command: [] } });
+  assert.equal(repeated.rejection.repeatedDispatchCount, 2);
+  assert.equal(f.memory.beginInvalidRepair('API-32', 'criteria-v1', repeated.rejection.fingerprint, 1), null);
+});
+
+test('outside-workspace references park without traversal, while changed complete workspace inputs permit reassessment', t => {
+  const f = fixture(t);
+  const outside = f.save({ scheduling: 'defer', failure: { signature: 'host tool', inputPaths: [os.tmpdir()],
+    coverageComplete: true, retryCondition: 'Host owner repairs the tool' } });
+  assert.equal(outside.rejection.diagnostic.code, 'unsafe_reference');
+  assert.equal(outside.rejection.repairable, false);
+  assert.deepEqual(outside.rejection.inputPaths, []);
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1').state, 'waiting_external_input');
+  const saved = f.save({ nextAction: { command: [] }, failure: { signature: 'workspace gate', inputPaths: ['source.js'],
+    coverageComplete: true, retryCondition: 'source.js changes' } });
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'));
+  fs.writeFileSync(path.join(f.workdir, 'source.js'), 'changed prerequisite');
+  assert.equal(f.memory.assessedBlocker('API-32', 'criteria-v1'), false);
+  const valid = f.save({ scheduling: 'defer', nextAction: 'Wait for the remaining owner' });
+  assert.ok(valid.outcome);
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'), 'a valid later deferral still applies');
+  assert.ok(fs.existsSync(saved.rejection.evidenceFile));
+});
+
+test('external prerequisite observations are bounded and never grant readiness authority', t => {
+  const f = fixture(t);
+  const saved = f.save({ scheduling: 'defer', externalPrerequisites: [{ description: 'Input helper unavailable', owner: 'Host operator',
+    retryCondition: 'Operator confirms a repaired installation', authority: true }] });
+  assert.equal(saved.outcome.externalPrerequisites[0].authority, false);
+  assert.ok(f.memory.assessedBlocker('API-32', 'criteria-v1'));
+  assert.equal(f.save({ externalPrerequisites: Array(17).fill({}) }).outcome, null);
+});
+
+test('128 declared inputs remain valid and unreadable safety state fails closed', t => {
+  const f = fixture(t);
+  const valid = f.save({ scheduling: 'defer', failure: { signature: 'gate', inputPaths: Array(128).fill('source.js'),
+    coverageComplete: true, retryCondition: 'source.js changes' } });
+  assert.ok(valid.outcome);
+  f.save({ nextAction: { command: [] } });
+  fs.writeFileSync(f.memory.rejectionFile('API-32'), '{}');
+  assert.throws(() => f.memory.assessedBlocker('API-32', 'criteria-v1'), /safety fence is unreadable/);
 });

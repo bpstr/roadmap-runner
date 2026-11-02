@@ -194,12 +194,12 @@ test('structured default task continuation dispatches A to A to B and carries re
   assert.equal(f.events().at(-1).type, 'runner.completed');
 });
 
-for (const mode of ['malformed', 'stale']) test(`${mode} optional result retains legacy handoff without introducing a resolver`, t => {
+for (const mode of ['malformed', 'stale']) test(`${mode} result parks the task without redispatch or resolver authority`, t => {
   const f = fixture(t, mode); const result = f.run();
   assert.equal(result.status, 0, result.stderr + '\n' + result.stdout);
-  assert.deepEqual(f.calls().map(call => [call.role, call.task]), [['WORKER', 'A-01'], ['WORKER', 'A-01']]);
+  assert.deepEqual(f.calls().map(call => [call.role, call.task]), [['WORKER', 'A-01']]);
   assert.equal(f.events().filter(event => event.type === 'runner.task_result_invalid').length, 1);
-  assert.equal(f.events().at(-1).type, 'runner.completed');
+  assert.equal(f.events().at(-1).type, 'runner.roadmap_deferred');
 });
 
 test('worker-assessed blocker defers A while B finishes and only then invokes one repairing resolver', t => {

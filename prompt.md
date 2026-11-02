@@ -157,6 +157,12 @@ Include operation (a stable operation name), outcome (partial, implemented, veri
 reused or blocked), completed and remaining (string arrays), nextAction (an exact
 instruction or an object with instruction/file/symbol/command), changedFiles
 (workspace paths), receiptIds, and findings (arrays, empty when none).
+nextAction.command is a nonexecuted suggestion: use a string or 1–128 nonempty
+string arguments, within 8,192 serialized characters. failure.inputPaths has at
+most 128 workspace paths. Describe host/tool gates in externalPrerequisites
+(at most 16 objects with description, owner and retryCondition); do not include
+external installation paths in workspace input lists. Rejected results fence
+dispatch and preserve the original bytes; metadata repair does not repeat product work.
 Optional scheduling is "continue" or "defer"; use "defer" to return an ownership
 gate to scheduling, even when the delivery outcome is reused/partial. When no ready
 work remains, the controller parks this roadmap and tries later queued work;

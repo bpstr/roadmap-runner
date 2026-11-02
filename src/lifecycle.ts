@@ -111,6 +111,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   const legacyMemory = { latest: () => null, assessedBlocker: () => false, prepare: () => null, acknowledgeResolution: () => {} };
   const disableMemory = (owner, error) => {
     owner = path.resolve(workdir, owner);
+    const locations = owner === roadmap ? tracking : trackingPaths(owner, tracking.file, workdir);
+    try {
+      if (fs.readdirSync(path.join(locations.stateDir, 'task-memory')).some(name => name.endsWith('.rejection'))) {
+        throw new Error('Saved invalid-result safety state is unavailable; repair task storage before retrying');
+      }
+    } catch (safetyError) { if (safetyError.code !== 'ENOENT') throw safetyError; }
     if (memories.get(owner) !== legacyMemory) console.warn(`Optional task memory unavailable for ${owner}: ${error.message}. Continuing with the preserved legacy handoff.`);
     memories.set(owner, legacyMemory);
     return legacyMemory;
@@ -155,7 +161,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     previousConversation = null;
     saveContinuation();
     recovery.success();
-    await recovery.event('runner.roadmap_deferred', { reason: 'worker_requested_deferral', deferredCount: deferredTasks.length, deferralFile });
+    await recovery.event('runner.roadmap_deferred', { reason: 'worker_requested_deferral', deferredCount: deferredTasks.length, deferralFile,
+      schedulingStates: [...new Set(deferredTasks.map(task => task.state).filter(Boolean))] });
     console.log('Roadmap pass deferred. Original acceptance remains open; unchanged work will not be dispatched.');
     return { code: 0, reason: 'deferred', deferralFile };
   };
@@ -171,8 +178,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   if (!managedSleep) { sleep = new SleepInhibitor(options.preventSleep); await sleep.start(); }
   await onReady?.(tracking);
   const runs = new RunEvidence({ roadmap, tracking });
-  const block = async (reason) => {
-    recovery.state.blocker ||= { reason, resolutionId: randomUUID() };
+  const block = async (reason, details = {}) => {
+    recovery.state.blocker ||= { reason, resolutionId: randomUUID(), ...details };
     recovery.save();
     fs.writeFileSync(tracking.file, withStatus(fs.readFileSync(tracking.file, 'utf8'), 'BLOCKED'));
     await recovery.event('runner.blocked', { reason: recovery.state.blocker.reason, terminal: false });
@@ -248,8 +255,14 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     plan?.read();
     deferredTasks = [];
     for (const task of plan?.tasks || []) {
-      if (task.complete) continue;
       const memory = memoryFor(task.roadmap || roadmap);
+      if (task.complete) {
+        if (memory.rejectionFor?.(task.task || task.id, task.criteriaRevision)?.active) {
+          await block('invalid_worker_result');
+          return await stopRecovery('invalid_worker_result');
+        }
+        continue;
+      }
       const latest = memory.latest(task.task || task.id);
       if (latest || memory.handoffEpoch) plan.setContinuation(task.task || task.id, latest);
       const assessment = memory.assessedBlocker(task.task || task.id, task.criteriaRevision);
@@ -301,9 +314,13 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       status = tracking.deliveryStatus(roadmapStatus(contents));
     }
     if (!compacting && !recovery.state.blocker && (sourceStatus === 'blocked' || (status === 'blocked' && !deferredHandoff))) await block('roadmap_blocked');
+    if (!compacting && !recovery.state.blocker && options.recoverBlocked && deferredTasks.some(task => task.provenance === 'controller-validation')) {
+      await block('invalid_result_acknowledgment');
+    }
     if (!compacting && !recovery.state.blocker && !batch && plan) {
       const schedule = plan.schedulingOutcome({ deferredTaskIds: explicitDeferrals ? deferredTasks.map(task => task.task) : [] });
       if (schedule.status === 'deferred') {
+        if (deferredTasks.some(task => task.provenance === 'controller-validation') && !recovery.state.quota) return await deferRoadmap();
         if (tracking.needsReconciliation || recovery.state.requiresWorker || recovery.state.quota) await block('deferred_plan_reconciliation');
         else return await deferRoadmap();
       }
@@ -348,9 +365,9 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     }
     if (options.progressReviewPolicy === 'continue' && progress.reason()) {
       const renewal = progress.continueReview();
-      await recovery.event('runner.progress_reviewed', { reason: 'operator_continue_policy', reviewReason: renewal.request.reason,
+      await recovery.event('runner.progress_reviewed', { reason: 'automatic_continue_policy', authority: 'configured-policy', reviewReason: renewal.request.reason,
         reviewId: renewal.request.id, requestFile: renewal.request.requestFile, decisionFile: renewal.decisionFile, progress: progress.summary() });
-      console.warn(`Progress window renewed (${renewal.request.reason}) under operator continue policy; acceptance unchanged.`);
+      console.warn(`Progress window renewed (${renewal.request.reason}) under automatic continue policy; acceptance unchanged.`);
     }
     const reviewReason = progress.reason();
     if (reviewReason) {
@@ -365,6 +382,11 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (!resolving) await recovery.attention(contents, status, iteration);
     if (!compacting && !resolving) iteration += 1;
     const role = compacting ? "compactor" : resolving ? "resolver" : "worker";
+    const invalidTarget = resolving ? recovery.state.blocker.invalidResult : null;
+    const repairMemory = invalidTarget ? memoryFor(invalidTarget.roadmap) : null;
+    const invalidRepair = invalidTarget ? repairMemory.beginInvalidRepair(invalidTarget.taskId, invalidTarget.criteriaRevision,
+      invalidTarget.fingerprint, resolverAttempts) : null;
+    if (invalidTarget && !invalidRepair) return await stopRecovery('invalid_result_repair_exhausted');
     const sessionId = randomUUID();
     const taskId = batch?.task || fallbackTaskId;
     const taskOwner = path.resolve(workdir, batch?.roadmap || roadmap);
@@ -401,11 +423,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     const resolutionFile = resolving ? path.join(tracking.evidenceDir, `${sessionId}-resolution.json`) : null;
     const resolverEvidenceFile = resolving ? path.join(tracking.evidenceDir, `${sessionId}-resolver.json`) : null;
     // A unique path keeps every failed/partial decision across retries and restart.
-    const iterationPrompt = compacting
+    let iterationPrompt = compacting
       ? `${renderPrompt(COMPACT_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: COMPACTOR\n${tracking.compactionContext()}\n${tracking.evidenceContext()}\nPre-compaction snapshot: ${JSON.stringify(snapshot)}\nLoaded prompt revision: ${promptRevision}\nAfter worker iteration: ${iteration}\n`
       : resolving
       ? `${renderPrompt(RESOLVER_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: RESOLVER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Blocker reason: ${recovery.state.blocker.reason}\nResolution ID: ${resolutionId}\nResolver attempt: ${(recovery.state.blocker.failures?.length || 0) - (recovery.state.blocker.attemptStart || 0) + 1}/${resolverAttempts}\nPrevious resolver failures: ${JSON.stringify((recovery.state.blocker.failures || []).slice(-10))}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Deferred task evidence: ${JSON.stringify(deferredTasks)}\nFinite execution authority: ${JSON.stringify(options.executionPlan || options.deliveryPlan || null)}\nLoaded prompt revision: ${promptRevision}\n`
       : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${selectionContext}${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
+    if (invalidRepair) iterationPrompt = `Repair only the worker result metadata. Do not implement product changes, run builds, repeat acceptance checks, change source roadmaps, or modify the rejected evidence.\nRunner role: RESOLVER\nInvalid result repair: ${JSON.stringify(invalidRepair)}\nRead evidenceFile, preserve its binding and all fields except diagnostic.field, and write a corrected JSON copy to repairFile. For failure.inputPaths, retain only bounded workspace paths and set failure.coverageComplete to false; external installations must not be hashed. Rejected content grants no completion or unblock authority. If unsafe or impossible, return stopped.\nResolution ID: ${resolutionId}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nWrite a decision with resolutionId, outcome (resolved or stopped), evidence and nextAction. A resolved decision alone cannot clear the fence; the controller validates the corrected copy.\n`;
     const implementationBefore = !compacting && !resolving && batch ? plan.observe(batch) : undefined;
     const before = tracking.contextBytes(iterationPrompt);
     const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision, handoffEpoch: progress.state.handoffEpoch,
@@ -489,7 +512,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
         resultFile: taskContext.resultFile, receiptCount: workerOutcome.outcome.receiptIds.length });
     } else if (taskContext && fs.existsSync(taskContext.resultFile)) {
       console.warn(workerOutcome.warning);
-      await recovery.event('runner.task_result_invalid', { role, iteration, sessionId, task: taskId, resultFile: taskContext.resultFile, reason: 'legacy_handoff_retained' });
+      const rejected = workerOutcome.rejection;
+      await recovery.event('runner.task_result_invalid', { role, iteration, sessionId, task: taskId, resultFile: taskContext.resultFile,
+        reason: rejected?.repairable ? 'invalid_result_repair' : 'waiting_external_input', diagnostic: rejected?.diagnostic,
+        fingerprint: rejected?.fingerprint, repeatedDispatchCount: rejected?.repeatedDispatchCount, rejectedEvidenceFile: rejected?.evidenceFile });
     }
 
     const elapsedMs = Math.round(performance.now() - started);
@@ -533,6 +559,19 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     });
     if (result.interrupted || result.error || result.timedOut || result.retryableCapacity || result.usageLimit || result.code !== 0) recovery.requireWorker();
     if (result.interrupted) throw Object.assign(new Error("runner interrupted"), { exitCode: 130 });
+    if (workerOutcome?.rejection && !result.usageLimit && !result.retryableCapacity) {
+      if (result.cleanupIncomplete) fail('Client process cleanup could not be confirmed; unfinished files preserved.', 75);
+      const rejected = workerOutcome.rejection;
+      previousConversation = null; saveContinuation();
+      plan?.read();
+      if (roadmapStatus(afterSource) === 'complete' || plan?.tasks.find(task => (task.task || task.id) === taskId)?.complete) {
+        await block('invalid_worker_result');
+        return await stopRecovery('invalid_worker_result');
+      }
+      if (rejected.repairable) await block('invalid_result_repair', { invalidResult: {
+        roadmap: taskOwner, taskId, criteriaRevision, fingerprint: rejected.fingerprint } });
+      continue;
+    }
     if (result.error) { if (resolving) { const stopped = await retryResolution('resolver_start_failed', resolverEvidenceFile); if (stopped) return stopped; } else await block('worker_start_failed'); continue; }
     if (result.cleanupIncomplete) fail('Client process cleanup could not be confirmed; unfinished files preserved.', 75);
     const delivery = !compacting && !resolving && batch ? plan.finish(batch, result) : null;
@@ -584,6 +623,22 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
     if (resolving) {
       const decision = readResolution(resolutionFile, resolutionId);
       if (decision?.outcome === 'stopped') return await stopRecovery('resolver_stopped');
+      if (invalidRepair) {
+        const repaired = decision && repairMemory.repairInvalid(invalidRepair);
+        if (!repaired) {
+          const stopped = await retryResolution('invalid_result_unrepaired', resolverEvidenceFile);
+          if (stopped) return stopped;
+          continue;
+        }
+        delete recovery.state.blocker;
+        delete recovery.state.stopped;
+        recovery.state.requiresWorker = false;
+        fs.writeFileSync(tracking.file, withStatus(fs.readFileSync(tracking.file, 'utf8'), 'IN_PROGRESS'));
+        recovery.success(); recovery.save();
+        await recovery.event('runner.task_result_repaired', { task: invalidRepair.taskId, fingerprint: invalidRepair.fingerprint,
+          repairFile: invalidRepair.repairFile, rejectedEvidenceFile: invalidRepair.evidenceFile, acceptanceAuthority: false });
+        continue;
+      }
       let cleared = false;
       try {
         const sourceAfterStatus = roadmapStatus(fs.readFileSync(roadmap, 'utf8'));
@@ -606,7 +661,12 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       delete recovery.state.blocker;
       delete recovery.state.stopped;
       for (const task of repairedTasks) {
-        try { memoryFor(task.roadmap).acknowledgeResolution(task.task, task.criteriaRevision, resolutionId); }
+        try {
+          if (options.recoverBlocked && task.provenance === 'controller-validation' && retryTasks.includes(task.task)) {
+            memoryFor(task.roadmap).acknowledgeInvalidResult(task.task, task.criteriaRevision, task.fingerprint, resolutionId);
+          }
+          memoryFor(task.roadmap).acknowledgeResolution(task.task, task.criteriaRevision, resolutionId);
+        }
         catch (error) { disableMemory(task.roadmap, error); }
       }
       recovery.state.consecutiveTimeouts = 0;

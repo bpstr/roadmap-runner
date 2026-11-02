@@ -59,7 +59,7 @@ test('explicit continue policy passes repeated plateau reviews and reaches sourc
   assert.equal(f.ledger().reviews.length, 2);
   assert.equal(f.ledger().criteria[0].checked, true);
   assert.equal(f.ledger().pending, undefined);
-  assert.equal(f.events().filter(e => e.type === 'runner.progress_reviewed' && e.reason === 'operator_continue_policy').length, 2);
+  assert.equal(f.events().filter(e => e.type === 'runner.progress_reviewed' && e.reason === 'automatic_continue_policy' && e.authority === 'configured-policy').length, 2);
   assert.equal(f.events().some(e => e.type === 'runner.progress_review_required'), false);
 });
 

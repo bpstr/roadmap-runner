@@ -24,7 +24,8 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.checkpoint_requested` | Soft deadline archived the handoff and saved a controller request; worker acknowledgment is still pending |
 | `runner.checkpoint_acknowledged` | A fresh acknowledgment matches the current request and a valid bound worker result; includes result and acknowledgment file pointers |
 | `runner.task_result` | A valid structured worker result was recorded for the current task and criteria; includes outcome, result-file pointer and receipt count |
-| `runner.task_result_invalid` | An available structured result could not be accepted; the preserved legacy handoff remains usable |
+| `runner.task_result_invalid` | A rejected result fences dispatch; includes bounded diagnostic code/field, count/limit when applicable, fingerprint, repeated-dispatch count and evidence pointer. Reason distinguishes `invalid_result_repair` from `waiting_external_input` |
+| `runner.task_result_repaired` | A separate metadata-only copy passed validation; original rejection and acceptance remain unchanged |
 | `runner.continuation_fallback` | The requested provider thread was unavailable before work began; its failed receipt was retained and the same task is retried once with a fresh session |
 | `runner.progress_observed` | Source-verified finite implementation delivered; acceptance checkboxes may remain open |
 | `runner.turn_finished` | Session result, elapsed time, observed activity timing, provider thread ID when reported, usage and before/after context-file sizes |
@@ -43,7 +44,7 @@ This is a local executable interface; remote delivery is the hook's responsibili
 | `runner.progress_observed` | Source checkbox closure or evidenced finite implementation; not independent correctness qualification |
 | `runner.scope_changed` | Added requirements; attention without budget replenishment |
 | `runner.progress_review_required` | Parked pending explicit source-bound review; exit 75, no automatic model review |
-| `runner.progress_reviewed` | Explicit acknowledged decision granted a bounded extension |
+| `runner.progress_reviewed` | A bounded extension was recorded; `automatic_continue_policy` with `authority: configured-policy` distinguishes automatic renewal from operator acknowledgment |
 | `runner.handoff_reconciled` | Current handoff superseded historical continuation; history retained |
 | `runner.failed` | Worker CLI failure; partial work preserved |
 | `runner.queued` | A roadmap was appended to an active managed run |

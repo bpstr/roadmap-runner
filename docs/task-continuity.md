@@ -159,16 +159,46 @@ prerequisite changes; the retained task memory suppresses unchanged work.
 Global blockers, failed clients and explicit stops keep resolver/stop behavior.
 `scheduling: "continue"`
 and omission preserve ordinary scheduling; there is no count-based cutoff.
-`nextAction` can also be a string. `completed`, `remaining`, `changedFiles`,
+`nextAction` can also be a string. Its optional `command` is a nonexecuted suggestion:
+use a string of at most 8,192 characters, or 1–128 nonempty string arguments whose
+JSON representation is at most 8,192 characters. Nested arrays and nonstring
+arguments are rejected. `completed`, `remaining`, `changedFiles`,
 `receiptIds` and `findings` are required arrays, empty when appropriate. Receipt IDs
 come from the check/review helpers below. Outcomes are agent statements about work;
 acceptance remains in the original roadmap. An unsuccessful process cannot promote
 an `implemented`, `verified` or `reused` claim into successful delivery.
 
-Missing, invalid, oversized, stale or misbound results retain the existing Markdown
-handoff. They do not dispatch a resolver or create a new completion requirement.
+Missing results retain the existing Markdown handoff. Available invalid, oversized,
+stale or misbound results preserve an immutable evidence copy and persist a task
+dispatch fence. They grant no completion or unblock authority. Independent tasks
+and later queue entries remain usable; tasks depending on unfinished work stay blocked.
+Malformed JSON, unsafe paths and foreign/stale bindings park without automatic repair.
+A rejected result from a source-completing worker stops for recovery.
+
+Same-binding partial/blocked results with invalid `nextAction.command` or bounded-list
+metadata in `failure.inputPaths` receive output-only resolver repair. The resolver
+writes a separate copy and can change only the rejected metadata field. Reducing
+an oversized input list also requires `coverageComplete: false`. Original bindings,
+outcomes, scheduling, receipts and failed evidence cannot change. Both the configured
+`--blocked-policy` and `--resolver-attempts` apply. Missing startup, invalid repair or
+exhausted attempts stop recovery. Per-fingerprint budgets survive restarts, successful
+repairs, handoff epochs and automatic progress-window renewals.
+
+Changed complete workspace prerequisite snapshots or semantic criteria permit fresh
+assessment; handoff prose and progress annotations do not. An operator can explicitly
+request `--recover-blocked`; a valid resolver decision must name the exact fenced task
+in `retryTasks` to acknowledge one reassessment. An ordinary resolver acknowledgment
+does not clear rejected output. This acknowledgment retains the rejection and its budget.
+
+Keep `failure.inputPaths` inside the workspace (at most 128 entries). For host/tool
+availability, use `externalPrerequisites`: at most 16 descriptive observations with
+`description` (1,024 characters), `owner` (256) and `retryCondition` (1,024).
+These observations have `authority: false`; they can describe a gate but cannot prove
+readiness. External installations are never recursively hashed.
+
 If optional task storage cannot be initialized or written, the runner warns once
-and continues with that legacy handoff. An unavailable optional conversation cache
+and continues with that legacy handoff, unless saved rejection safety state would
+be bypassed; unavailable safety state fails closed. An unavailable optional conversation cache
 also falls back to fresh sessions.
 The optional result limit is 64 KiB. The task packet is capped at 8 KiB and keeps
 references to complete result evidence when details exceed that budget. Existing
@@ -417,7 +447,7 @@ Bounded command and explicit file-read request fingerprints are retained in cold
 detail evidence; event payloads contain compact counts. Repeated request text is
 an observation and does not prove unchanged inputs or wasted work.
 
-New events include `runner.task_result`, `runner.task_result_invalid`,
+New events include `runner.task_result`, `runner.task_result_invalid`, `runner.task_result_repaired`,
 `runner.checkpoint_acknowledged`, `runner.continuation_fallback` and `runner.plan_exhausted`. Task packet receipt
 classifications show reuse/invalidation reasons. Detailed outputs and failed
 evidence remain available by reference.

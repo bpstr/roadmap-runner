@@ -108,3 +108,18 @@ console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 32, 
   assert.equal(warnings.filter(message => /conversation state unavailable/i.test(message)).length, 1);
   assert.equal(fs.statSync(state).isDirectory(), true, 'optional state failure must preserve the obstructing directory');
 });
+
+test('unavailable task storage cannot bypass a saved rejection safety ledger', async t => {
+  const f = fixture(t);
+  const locations = trackingPaths(fs.realpathSync(f.options.roadmap), f.options.progressFile, fs.realpathSync(f.workdir));
+  const memoryDir = path.join(locations.stateDir, 'task-memory');
+  fs.mkdirSync(memoryDir, { recursive: true });
+  fs.writeFileSync(path.join(memoryDir, 'prepared.rejection'), '{}');
+  const findings = path.join(f.workdir, '.roadmap-runner', 'findings');
+  fs.writeFileSync(findings, 'Prepared storage obstruction');
+  const events = [];
+  const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
+  assert.equal(result.reason, 'failed');
+  assert.equal(events.some(event => event.type === 'runner.turn_starting'), false);
+  assert.equal(fs.existsSync(path.join(f.workdir, 'invocation.json')), false);
+});

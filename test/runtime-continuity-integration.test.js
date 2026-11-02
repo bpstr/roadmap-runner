@@ -141,7 +141,7 @@ test('a missing provider continuation falls back once to fresh execution of the 
 for (const malformed of [false, true]) test(`lifecycle checkpoint ${malformed ? 'rejects malformed result despite current IDs' : 'emits acknowledgment for a fresh bound worker result'}`, async t => {
   const f = fixture(t, { mode: 'checkpoint', malformed }); const events = [];
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
-  assert.equal(result.code, 0); assert.equal(result.reason, 'complete');
+  assert.equal(result.code, malformed ? 75 : 0); assert.equal(result.reason, malformed ? 'stopped' : 'complete');
   assert.equal(events.filter(event => event.type === 'runner.checkpoint_requested').length, 1);
   const acknowledgments = events.filter(event => event.type === 'runner.checkpoint_acknowledged');
   assert.equal(acknowledgments.length, malformed ? 0 : 1);

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.12.6 — 2026-11-02
+
+- Fence tasks after rejected structured results instead of redispatching unchanged product work. Preserve immutable rejected evidence, bounded validation diagnostics and per-fingerprint recovery budgets across restarts, handoff changes and automatic progress renewals. Unsafe references and stale bindings stay parked while independent tasks and later queued roadmaps remain usable.
+- Repair safe same-binding command/input-list metadata through an output-only resolver before another worker. Honor blocked policies and resolver limits; validate a separate copy without changing outcomes, bindings, scheduling, receipts or failed evidence. Stop on exhausted recovery or rejected source-completion claims. Explicit recovery can acknowledge one named task for reassessment.
+- Accept nonexecuted command suggestions as bounded strings or argv arrays. Describe host/tool prerequisites as bounded owner/retry observations without traversing external installations or granting readiness authority.
+- Distinguish automatic progress-policy renewals from operator acknowledgments in events. Report invalid-result repair and external-input waiting separately, with original evidence references.
+
+Validation uses prepared local clients and mocked inputs only; no paid inference or live provider calls.
+
 ## 0.12.5 — 2026-11-01
 
 - Extend the default per-client runner session timeout from 90 minutes to six hours in CLI and managed runs; preserve explicit overrides and separate cumulative progress limits.
