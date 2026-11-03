@@ -40,6 +40,14 @@ const RESOLVER_REVISION = createHash("sha256").update(RESOLVER_TEMPLATE).digest(
 const COMPACT_REVISION = createHash("sha256").update(COMPACT_TEMPLATE).digest("hex").slice(0, 12);
 const RUNTIME_IDENTITY = runtimeIdentity(ROOT);
 
+const MANAGE_GIT_INSTRUCTIONS = `
+Git management (enabled by --manage-git):
+- Before implementation in each worker session, including resumed sessions, identify the repositories owning the selected files. Inspect branch, upstream and existing staged/unstaged changes; fetch the configured remote and compare the current branch with its upstream. Record incoming changes in the handoff and continue work from the current checkout. Preserve the selected task and source binding; do not merge, rebase, reset or switch branches automatically.
+- At session end, after saving the roadmap and handoff, review the diff and commit the changes made for this task in each owning repository with a plain-English imperative subject. Use explicit owned paths and a path-limited commit; preserve unrelated pre-existing staged and unstaged changes. Exclude secrets and runner-owned state, evidence and snapshots. If changes cannot be isolated safely, skip the commit and record why. If there are no owned changes, skip the commit.
+- After the commit attempt, push any unpushed task commits on the current branch to its configured upstream. Preserve remote history: no force push, branch creation or upstream/credential reconfiguration. Missing Git, repository, remote, upstream, identity, authentication, conflicts or rejected commands are advisory: record a concise pending Git action in the handoff and continue; never mark roadmap work BLOCKED, STOPPED or NEEDS_INFO solely because of Git.
+- Bound every Git command and its subprocesses to at most 30 seconds, with at most 60 seconds total per start/end phase and no automatic retries. Use noninteractive execution (GIT_TERMINAL_PROMPT=0, GIT_EDITOR=true, GIT_SEQUENCE_EDITOR=true, GIT_PAGER=cat and SSH BatchMode=yes) and an available process timeout. If bounded unattended execution is unavailable, skip Git and record why. Save work/checkpoint evidence before end-of-session Git; skip remaining Git commands when the checkpoint or hard deadline leaves insufficient time. Git must never delay checkpoint acknowledgment or runner exit.
+`;
+
 
 const fail = (message, code = 1) => { throw Object.assign(new Error(message), { exitCode: code }); };
 
@@ -57,6 +65,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       capacity: options.capacity || capacityRetrySettings(), recovery: options.recovery || recoverySettings() };
     const { timeoutMs: resolverTimeoutMs, attempts: resolverAttempts, blockedPolicy } = resolverSettings(options);
     progressSettings(options);
+    const evidenceWorkdir = taskEvidenceWorkspace(workdir, process.env.ROADMAP_EVIDENCE_WORKSPACE);
 
   let roadmap = path.isAbsolute(options.roadmap)
     ? path.normalize(options.roadmap)
@@ -65,7 +74,6 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   if (!fs.existsSync(roadmap) || !fs.statSync(roadmap).isFile()) {
     fail(`roadmap not found: ${roadmap}`);
   }
-    const evidenceWorkdir = taskEvidenceWorkspace(workdir, process.env.ROADMAP_EVIDENCE_WORKSPACE);
 
   let timeoutMs;
   try {
@@ -210,6 +218,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log(`Roadmap Runner ${PACKAGE.version}`);
   console.log(`Client:    ${options.client}`);
   console.log(`Workspace: ${workdir}`);
+  if (evidenceWorkdir !== fs.realpathSync(workdir)) console.log(`Evidence:  ${evidenceWorkdir}`);
   console.log(`Roadmap:   ${roadmap}`);
   console.log(`Progress:  ${tracking.file} (bounded handoff/evidence; task states in roadmap)`);
   console.log("Roadmap edits: adopted between sessions; stale terminal state is re-evaluated.");
@@ -218,7 +227,6 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log(`Progress:  review after ${progress.state.limits.turn} worker turns without measured reduction or ${progress.state.limits.reviewMs}ms active; total active budget ${progress.state.limits.activeMs}ms (persisted)`);
   if (Number(options.supervisorEvery)) console.warn('Warning: --supervisor-every is deprecated; no scheduled supervisors run. Progress limits still apply.');
   console.log(`Prompt:    ${PROMPT_REVISION} (work through meaningful checkpoints)`);
-  if (evidenceWorkdir !== fs.realpathSync(workdir)) console.log(`Evidence:  ${evidenceWorkdir}`);
   console.log(`Recovery: resolver on blockers; timeout ${options.resolverTimeout || "10m"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
@@ -432,9 +440,10 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       ? `${renderPrompt(RESOLVER_TEMPLATE, roadmap, tracking.file, tracking.historyDir)}\n\nRunner context:\nRunner role: RESOLVER\n${tracking.sourceContext()}\n${tracking.evidenceContext()}\n${deadlineContext}Blocker reason: ${recovery.state.blocker.reason}\nResolution ID: ${resolutionId}\nResolver attempt: ${(recovery.state.blocker.failures?.length || 0) - (recovery.state.blocker.attemptStart || 0) + 1}/${resolverAttempts}\nPrevious resolver failures: ${JSON.stringify((recovery.state.blocker.failures || []).slice(-10))}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Deferred task evidence: ${JSON.stringify(deferredTasks)}\nFinite execution authority: ${JSON.stringify(options.executionPlan || options.deliveryPlan || null)}\nLoaded prompt revision: ${promptRevision}\n`
       : `${prompt}\n\nRunner context:\nRunner role: WORKER\n${selectionContext}${tracking.sourceContext()}\n${batch && plan ? plan.context(batch) : ''}\n${taskContext?.context || ''}\n${tracking.evidenceContext()}\n${deadlineContext}Recovery verification required: ${recovery.state.requiresWorker ? "YES: resume the recorded unfinished files and exact next action; inspect only changed acceptance or failed evidence" : "NO"}\nPrevious checkpoint: ${recovery.state.checkpointFile ? JSON.stringify(recovery.state.checkpointFile) : "none"}\nRun evidence JSON: ${JSON.stringify(runs.evidenceFile)}\nRun history lookback: ${JSON.stringify(runs.lookback())}\n${legacyReviewContext}Loaded prompt revision: ${promptRevision}\nIteration: ${iteration}\nSession started (UTC): ${startedAt}\n`;
     if (invalidRepair) iterationPrompt = `Repair only the worker result metadata. Do not implement product changes, run builds, repeat acceptance checks, change source roadmaps, or modify the rejected evidence.\nRunner role: RESOLVER\nInvalid result repair: ${JSON.stringify(invalidRepair)}\nRead evidenceFile, preserve its binding and all fields except diagnostic.field, and write a corrected JSON copy to repairFile. For failure.inputPaths, retain only bounded workspace paths and set failure.coverageComplete to false; external installations must not be hashed. Rejected content grants no completion or unblock authority. If unsafe or impossible, return stopped.\nResolution ID: ${resolutionId}\nResolution decision file: ${JSON.stringify(resolutionFile)}\nWrite a decision with resolutionId, outcome (resolved or stopped), evidence and nextAction. A resolved decision alone cannot clear the fence; the controller validates the corrected copy.\n`;
+    if (options.manageGit && !compacting && !resolving) iterationPrompt += MANAGE_GIT_INSTRUCTIONS;
     const implementationBefore = !compacting && !resolving && batch ? plan.observe(batch) : undefined;
     const before = tracking.contextBytes(iterationPrompt);
-    const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision, handoffEpoch: progress.state.handoffEpoch,
+    const conversationScope = createHash('sha256').update(JSON.stringify({ criteriaRevision, promptRevision, manageGit: Boolean(options.manageGit), handoffEpoch: progress.state.handoffEpoch,
       batch: batch ? { id: batch.id, deliverable: batch.deliverable, boundary: batch.boundary, completion: batch.completion,
         sourcePointers: batch.sourcePointers, prerequisites: batch.prerequisites, phase: batch.phase } : null })).digest('hex');
     const conversation = selectContinuation({ enabled: continuationAvailable, previous: previousConversation,

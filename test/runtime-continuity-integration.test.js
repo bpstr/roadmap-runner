@@ -30,6 +30,7 @@ const binding = JSON.parse(prompt.match(/^Result binding: (.+)$/m)[1]);
 const resultFile = JSON.parse(prompt.match(/^Optional structured result file: (.+)$/m)[1]);
 const invocations = fs.existsSync('invocations.json') ? JSON.parse(fs.readFileSync('invocations.json', 'utf8')) : [];
 invocations.push({ args: process.argv.slice(2, -1), binding,
+  manageGit: prompt.includes('Git management (enabled by --manage-git):'),
   softDeadline: prompt.match(/^Soft checkpoint deadline \\(UTC\\): (.+)$/m)[1],
   startedAt: prompt.match(/^Session started \\(UTC\\): (.+)$/m)[1] });
 fs.writeFileSync('invocations.json', JSON.stringify(invocations));
@@ -76,6 +77,7 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   const result = await runLifecycle(f.options, { workdir: f.workdir, onEvent: event => events.push(event) });
   assert.equal(result.code, 0); assert.equal(result.reason, 'complete');
   const calls = f.invocations();
+  assert.ok(calls.every(call => call.manageGit === false));
   assert.deepEqual(calls.map(call => call.binding.taskId), ['API-01.1', 'API-01.1', 'API-01.2']);
   for (const call of calls) {
     const implementationMs = Date.parse(call.softDeadline) - Date.parse(call.startedAt);
@@ -93,6 +95,17 @@ test('lifecycle resumes productive same-task work by provider ID and starts fres
   assert.equal(events.some(event => event.role === 'resolver'), false);
   assert.equal(fs.existsSync(path.join(trackingPaths(f.roadmap, f.progress, f.workdir).stateDir, 'continuation.json')), false,
     'completed roadmap must release the saved provider conversation');
+});
+
+test('Git instructions remain present in resumed sessions and across task boundaries', async t => {
+  const f = fixture(t);
+  f.options.manageGit = true;
+  const result = await runLifecycle(f.options, { workdir: f.workdir });
+  assert.equal(result.code, 0);
+  const calls = f.invocations();
+  assert.deepEqual(calls.map(call => call.binding.taskId), ['API-01.1', 'API-01.1', 'API-01.2']);
+  assert.ok(calls[1].args.includes('resume'));
+  assert.ok(calls.every(call => call.manageGit));
 });
 test('a long productive task keeps its conversation beyond eight turns within its configured review allowance', async t => {
   const f = fixture(t, { mode: 'long-productive' }); f.options.sessionContinuation = true;

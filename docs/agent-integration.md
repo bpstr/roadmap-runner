@@ -157,6 +157,12 @@ completes successfully, using the same client settings and separate progress.
 Status includes `queue` entry states and a zero-based `queueIndex`; retain the
 same run ID throughout. Stop ends the whole run and leaves later entries pending.
 
+Set `manageGit: true` to add worker instructions to check remote changes before
+each session and commit/push owned changes at session end. It defaults off unless
+`ROADMAP_MANAGE_GIT=1` or `true` is set when the server launches; explicit `false`
+overrides that default. Git failures remain advisory and commands must use bounded,
+noninteractive execution. The setting also applies to queued roadmaps.
+
 `roadmap_start` defaults to bounded conversation reuse for the Codex adapter.
 Set `sessionContinuation: false` to start fresh provider sessions. The runner
 reuses only the explicitly recorded provider thread for the same worker

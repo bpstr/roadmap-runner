@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.14.1 — 2026-11-03
+
+- Reduce the default client session timeout from six hours to 120 minutes in CLI and managed runs, allowing 115 minutes of work and five minutes for checkpointing. Preserve validated handoffs, graceful shutdown, explicit timeout overrides and automatic roadmap continuation.
+
+- Add opt-in worker Git management through `--manage-git`, `--no-manage-git`, `ROADMAP_MANAGE_GIT`, and MCP `manageGit`. Workers check remote changes before work and commit/push owned changes at session end, including resumed sessions and queued roadmaps. Commands must be bounded and noninteractive; Git failures leave advisory handoff notes without blocking runs. Preserve unrelated changes and existing resolver/compactor permissions.
+
+- Clear stale attention when a runner stops and resolve task evidence against its owning shared workspace, preserving existing evidence validation.
+
 ## 0.13.0 — 2026-11-02
 
 - Add optional private Roadmap Monitor reporting with one shared-worker publisher, installation configuration, safe deterministic activity/result fields and bounded terminal/history replay. Add masked/stdin key setup and probe/status/flush/disable commands. Monitoring makes no extra model calls and preserves execution/exit behavior; credentials are excluded from provider, hook and verification environments.

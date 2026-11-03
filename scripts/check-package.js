@@ -41,11 +41,13 @@ try {
   assert.equal(run(['--version']).trim(), manifest.version);
   assert.match(run(['--help']), /roadmap-runner doctor/);
   assert.match(run(['--help']), /--resolver-timeout/);
+  assert.match(run(['--help']), /--timeout <duration>\s+Per-session timeout\. Default: 120m/);
   assert.match(run(['--help']), /--review-turns/);
   assert.match(run(['--help']), /--progress-review/);
   assert.match(run(['--help']), /roadmap-runner notifications request-permission/);
   assert.match(run(['--help']), /ROADMAP_MONITOR_API_KEY/);
   assert.match(run(['--help']), /monitor test\|status\|flush\|enable\|disable/);
+  assert.match(run(['--help']), /--manage-git[\s\S]*--no-manage-git[\s\S]*ROADMAP_MANAGE_GIT/);
   assert.equal(JSON.parse(run(['monitor', 'status', '--json'])).enabled, false);
   const enabled = JSON.parse(run(['monitor', 'enable', '--json']));
   assert.equal(enabled.enabled, true);

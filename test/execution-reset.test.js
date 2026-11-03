@@ -232,7 +232,8 @@ test('CLI and managed schema carry the finite authority without changing token o
   assert.equal(parseArgs(['owner1.md', '--execution-plan', 'authority.md'], {}).executionPlan, 'authority.md');
   const request = startSchema.parse({ workspace: f.dir, roadmap: 'owner1.md', executionPlan: 'authority.md' });
   assert.equal(request.executionPlan, 'authority.md');
-  assert.equal(request.timeout, '6h');
+  assert.equal(request.timeout, '120m');
+  assert.equal(startSchema.parse({ workspace: f.dir, roadmap: 'owner1.md', timeout: '90m' }).timeout, '90m');
   assert.equal(request.model, undefined);
 });
 

@@ -13,7 +13,7 @@ const base = {
 
 test('progress budgets have finite defaults and CLI values override the environment', () => {
   const defaults = parseArgs(['roadmap.md'], {});
-  assert.equal(defaults.timeout, '6h');
+  assert.equal(defaults.timeout, '120m');
   assert.equal(parseArgs(['roadmap.md'], { ROADMAP_TIMEOUT: '2h' }).timeout, '2h');
   assert.equal(parseArgs(['roadmap.md', '--timeout', '45m'], { ROADMAP_TIMEOUT: '2h' }).timeout, '45m');
   assert.deepEqual([defaults.reviewTurns, defaults.reviewAfter, defaults.maxActiveTime], ['4', '3h', '12h']);

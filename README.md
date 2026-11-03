@@ -52,6 +52,28 @@ roadmap-runner docs/roadmap.md
 
 The current `pwd` is always the workspace. It may contain multiple Git repositories.
 
+Enable Git management for a run:
+
+```sh
+roadmap-runner docs/roadmap.md --manage-git
+```
+
+Workers receive instructions to fetch and compare remote changes before each work
+session, then commit their task changes and push to the configured upstream at
+session end. This applies to resumed sessions and queued roadmaps. Workers preserve
+unrelated changes and do not automatically merge, rebase or force push.
+
+Git management defaults off. Set `ROADMAP_MANAGE_GIT=1` (or `true`) in your shell
+configuration for a persistent default, or prefix a command for a local override.
+`--no-manage-git` overrides the environment. MCP `roadmap_start` accepts
+`manageGit: true` or `false`; omission uses the MCP server's launch environment.
+
+These are best-effort worker instructions. Git commands must be noninteractive,
+limited to 30 seconds each and 60 seconds per start/end phase, and skipped when
+they cannot fit before a checkpoint. Missing configuration, authentication errors,
+conflicts and rejected pushes leave a pending action in the handoff and do not
+block roadmap work. Resolvers and compactors retain their existing permissions.
+
 ### Example agent setup prompt
 
 Managed runs and app setup require version `0.8.0` or newer. If npm's `latest`
@@ -139,6 +161,8 @@ No configured URL/key means no reporting. A saved disabled connection stays disa
 
 Configuration and outboxes live under the private user state directory (`~/Library/Application Support/roadmap-runner/monitor` on macOS), outside the package, and survive updates. Online configuration validates the key before replacement; rejected or incompatible responses preserve the previous settings, while unavailable networks save an unverified connection. Credentials are excluded from provider, hook and verification subprocess environments. Monitoring failures preserve execution and exit codes. Existing processes load new code/settings on their next launch.
 
+For a launcher directory nested inside a shared workspace, set `ROADMAP_EVIDENCE_WORKSPACE` to that containing workspace's absolute path. Task results, prerequisite snapshots and reusable receipts then use that root; the launcher's process lock and progress paths stay separate. Paths resolving outside the selected evidence root remain rejected. Without this setting, the launcher directory is the evidence root.
+
 ## Batch size
 
 Each worker works toward a meaningful checkpoint in the selected original task:
@@ -152,17 +176,15 @@ Use the configured checkpoint for prerequisite discovery. Reuse compatible evide
 session or status note does not justify repeating unchanged checks. Original
 acceptance remains open wherever required verification is deferred.
 
-The default hard timeout is 6 hours. Ordinary roadmaps use the configured
+The default hard timeout is 120 minutes. Ordinary roadmaps use the configured
 session time, reserving the smaller of five minutes or 15% for checkpointing:
-5 hours 55 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
+115 minutes of implementation by default, or 40 minutes with `--timeout 45m`.
 An explicit finite-plan budget can bring that checkpoint forward. Workers finish
 early when the selected task's current phase or explicit finite batch is complete,
 or no authorized ready work remains.
 At the soft deadline the runner archives
 the current handoff and writes a checkpoint request. Workers save a session-bound
 structured result and acknowledge the request with its exact ID and result path.
-For a launcher directory nested inside a shared workspace, set `ROADMAP_EVIDENCE_WORKSPACE` to that containing workspace's absolute path. Task results, prerequisite snapshots and reusable receipts then use that root; the launcher's process lock and progress paths stay separate. Paths resolving outside the selected evidence root remain rejected. Without this setting, the launcher directory is the evidence root.
-
 Only a fresh validated result counts as an acknowledged checkpoint; saving the
 request file alone does not. The CLI prompt requires the worker to save exact
 remaining functionality, edited files, evidence and its next command, then exit.
@@ -318,10 +340,10 @@ Status: COMPLETE
 runner exits
 ```
 
-The default execution limit is **6 hours per individual client session**:
+The default execution limit is **120 minutes per individual client session**:
 
 ```sh
-roadmap-runner roadmap.md --timeout 6h
+roadmap-runner roadmap.md --timeout 120m
 ```
 
 Examples:
@@ -331,10 +353,15 @@ roadmap-runner roadmap.md --timeout 45m
 roadmap-runner roadmap.md --timeout 3h
 ```
 
-A timed-out worker is terminated and the next iteration starts with a fresh context from the current filesystem state.
+At 115 minutes by default, the worker is asked to stop implementation, save the
+handoff and structured result, acknowledge the checkpoint, and exit. The handoff
+records edited paths, passing/failing evidence, exact remaining work and the next
+command. The runner validates structured checkpoint acknowledgments separately
+from task completion. A timed-out worker is terminated and the next iteration
+starts with a fresh context from the saved handoff and current filesystem state.
 
 On POSIX systems, timeout sends `SIGTERM` to the worker's process group, followed
-by `SIGKILL` after a two-minute shutdown grace period when needed. Ctrl-C uses a
+by `SIGKILL` after a three-second shutdown grace period when needed. Ctrl-C uses a
 three-second grace period; a second interrupt forces termination immediately.
 The runner drains output and retains pending escalation even if the CLI exits
 before its child tools. It does not start the next iteration while that
@@ -670,7 +697,7 @@ roadmap-runner <roadmap-file> [options]
 
 --client <name>        codex, claude, gemini, grok, kimi, muse
 --progress-file <path> override handoff path; live roadmap checkboxes control completion
---timeout <duration>   per-session ceiling; default: 6h
+--timeout <duration>   per-session ceiling; default: 120m
 --review-turns <n>     progress review after n worker turns without reduction; default 4
 --review-after <time>  progress review after active time without reduction; default 3h
 --max-active-time <t>  cumulative active execution budget; default 12h
@@ -692,6 +719,8 @@ roadmap-runner <roadmap-file> [options]
 --notify-on <events>   extra desktop alerts; requires --notify attention
 --prevent-sleep        prevent idle system sleep for the entire run
 --no-prevent-sleep     override ROADMAP_PREVENT_SLEEP
+--manage-git           check remotes before work; commit/push task changes at session end
+--no-manage-git        override ROADMAP_MANAGE_GIT
 --help
 --version
 ```
@@ -709,6 +738,7 @@ ROADMAP_SESSION_CONTINUATION
 ROADMAP_CLIENT_BIN
 ROADMAP_NOTIFY        attention (default) or off
 ROADMAP_PREVENT_SLEEP  set to 1 or true to prevent idle system sleep
+ROADMAP_MANAGE_GIT     set to 1 or true for best-effort worker Git management
 ```
 
 For backward compatibility, `ROADMAP_CODEX` is also accepted as the executable override.
@@ -857,7 +887,7 @@ session retains the ordinary blocker/resolver policy. Capacity recovery
 applies only to the Codex adapter.
 
 Ctrl-C stops the runner during the retry wait as well as during an active run.
-The six-hour per-session execution timeout remains separate from the retry wait.
+The 120-minute per-session execution timeout remains separate from the retry wait.
 
 Settings use integer seconds and a consecutive-failure retry count:
 
