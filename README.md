@@ -161,6 +161,8 @@ or no authorized ready work remains.
 At the soft deadline the runner archives
 the current handoff and writes a checkpoint request. Workers save a session-bound
 structured result and acknowledge the request with its exact ID and result path.
+For a launcher directory nested inside a shared workspace, set `ROADMAP_EVIDENCE_WORKSPACE` to that containing workspace's absolute path. Task results, prerequisite snapshots and reusable receipts then use that root; the launcher's process lock and progress paths stay separate. Paths resolving outside the selected evidence root remain rejected. Without this setting, the launcher directory is the evidence root.
+
 Only a fresh validated result counts as an acknowledged checkpoint; saving the
 request file alone does not. The CLI prompt requires the worker to save exact
 remaining functionality, edited files, evidence and its next command, then exit.

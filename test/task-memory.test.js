@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { TaskMemory, TASK_PACKET_BYTES, WORKER_RESULT_BYTES } from '../lib/task-memory.js';
+import { TaskMemory, TASK_PACKET_BYTES, WORKER_RESULT_BYTES, taskEvidenceWorkspace, validateWorkerResult } from '../lib/task-memory.js';
 import { recordReview } from '../lib/verification.js';
 
 function fixture(t) {
@@ -26,6 +26,19 @@ function fixture(t) {
   };
   return { workdir, tracking, memory, save };
 }
+
+test('an explicit containing evidence workspace validates shared source without allowing escapes', t => {
+  const f = fixture(t);
+  const launcher = path.join(f.workdir, 'launcher');
+  fs.mkdirSync(launcher);
+  fs.symlinkSync(path.join(f.workdir, 'source.js'), path.join(launcher, 'source.js'));
+  const { raw, expected } = f.save();
+  assert.throws(() => validateWorkerResult(raw, expected, taskEvidenceWorkspace(launcher)), /outside the workspace/);
+  const root = taskEvidenceWorkspace(launcher, f.workdir);
+  assert.equal(validateWorkerResult(raw, expected, root).outcome, 'partial');
+  assert.throws(() => validateWorkerResult({ ...raw, changedFiles: ['../outside.js'] }, expected, root), /outside the workspace/);
+  assert.throws(() => taskEvidenceWorkspace(launcher, path.join(f.workdir, '.roadmap-runner')), /must contain/);
+});
 
 test('typed continuation survives restart and preserves all existing handoff obligations', t => {
   const f = fixture(t); const handoff = fs.readFileSync(f.tracking.file, 'utf8');

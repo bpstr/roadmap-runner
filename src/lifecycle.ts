@@ -13,7 +13,7 @@ import { prepareTracking, trackingPaths, renderPrompt, TARGET_TRACKING_BYTES } f
 import { sessionMetrics } from "../lib/telemetry.js";
 import { ExecutionPlan } from "../lib/execution.js";
 import { RoadmapPlan } from "../lib/task-plan.js";
-import { TaskMemory, validateWorkerResult } from "../lib/task-memory.js";
+import { TaskMemory, validateWorkerResult, taskEvidenceWorkspace } from "../lib/task-memory.js";
 import { saveDeferral } from "../lib/task-deferral.js";
 import { checkpointDelay, readCheckpointAcknowledgment } from "../lib/checkpoint.js";
 import { selectContinuation, rememberContinuation } from "../lib/continuation.js";
@@ -65,6 +65,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   if (!fs.existsSync(roadmap) || !fs.statSync(roadmap).isFile()) {
     fail(`roadmap not found: ${roadmap}`);
   }
+    const evidenceWorkdir = taskEvidenceWorkspace(workdir, process.env.ROADMAP_EVIDENCE_WORKSPACE);
 
   let timeoutMs;
   try {
@@ -128,7 +129,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       try {
         const locations = owner === roadmap ? tracking : trackingPaths(owner, tracking.file, workdir);
         const memoryTracking = { ...locations, evidenceDir: locations.evidenceDir || path.join(locations.stateDir, 'evidence') };
-        memories.set(owner, new TaskMemory({ workdir, tracking: memoryTracking, roadmap: owner }));
+        memories.set(owner, new TaskMemory({ workdir: evidenceWorkdir, tracking: memoryTracking, roadmap: owner }));
       } catch (error) { return disableMemory(owner, error); }
     }
     const memory = memories.get(owner);
@@ -217,6 +218,7 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
   console.log(`Progress:  review after ${progress.state.limits.turn} worker turns without measured reduction or ${progress.state.limits.reviewMs}ms active; total active budget ${progress.state.limits.activeMs}ms (persisted)`);
   if (Number(options.supervisorEvery)) console.warn('Warning: --supervisor-every is deprecated; no scheduled supervisors run. Progress limits still apply.');
   console.log(`Prompt:    ${PROMPT_REVISION} (work through meaningful checkpoints)`);
+  if (evidenceWorkdir !== fs.realpathSync(workdir)) console.log(`Evidence:  ${evidenceWorkdir}`);
   console.log(`Recovery: resolver on blockers; timeout ${options.resolverTimeout || "10m"}`);
   console.log("Press Ctrl-C to stop.");
   console.log();
@@ -460,8 +462,8 @@ export const runLifecycle = async (options, { workdir = process.cwd(), signal: s
       checkpointAtMs,
       checkpointRequestId: sessionId,
       readCheckpointAck: taskContext ? request => readCheckpointAcknowledgment(checkpointAckFile, {
-        requestId: sessionId, resultFile: taskContext.resultFile, workdir, requestedAt: request.at, taskId, criteriaRevision,
-        validateResult: raw => { validateWorkerResult(raw, { sessionId, taskId, criteriaRevision }, workdir); return true; },
+        requestId: sessionId, resultFile: taskContext.resultFile, workdir: evidenceWorkdir, requestedAt: request.at, taskId, criteriaRevision,
+        validateResult: raw => { validateWorkerResult(raw, { sessionId, taskId, criteriaRevision }, evidenceWorkdir); return true; },
       }) : undefined,
       onCheckpointAck: taskContext ? async acknowledgment => {
         recovery.state.checkpointFile = checkpointAckFile; recovery.save();

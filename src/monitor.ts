@@ -70,7 +70,8 @@ const label = (value: string) => monitorText(path.basename(value));
 export function terminalOutcome(record: RunRecord) {
   if (record.reason === "complete" && record.roadmapState === "complete")
     return "completed";
-  if (record.reason === "stopped") return "cancelled";
+  if (record.reason === "stopped")
+    return record.exitCode === 130 ? "cancelled" : "needs_attention";
   if (record.reason === "deferred" || record.roadmapState === "deferred")
     return "deferred";
   if (

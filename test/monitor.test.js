@@ -114,6 +114,21 @@ test("terminal outcomes never infer completion from code zero", (t) => {
   r.roadmapState = "complete";
   assert.equal(terminalOutcome(r), "completed");
 });
+test("recovery stops need attention while interrupted runs are cancelled", (t) => {
+  const r = fixture(t);
+  r.reason = "stopped";
+  r.processState = "stopped";
+  r.roadmapState = "stopped";
+  r.exitCode = 75;
+  const report = projectMonitor(r, {}, true);
+  assert.equal(report.run.terminal_outcome, "needs_attention");
+  assert.equal(report.run.exit_code, 75);
+  assert.equal(report.run.heartbeat_expected, false);
+  r.exitCode = 130;
+  assert.equal(terminalOutcome(r), "cancelled");
+  delete r.exitCode;
+  assert.equal(terminalOutcome(r), "needs_attention");
+});
 test("task titles use the selected parsed section or parent checkbox without another scan", () => {
   const index = parseRoadmapTasks(
     "### Task API-8: Validate session expiry\n- [ ] API-8 Acceptance\nDependencies: none\n",
