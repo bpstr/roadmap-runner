@@ -1,4 +1,5 @@
 import { appendEvent } from '../dist/events.js';
+import { updateRunAttention } from '../dist/run-state.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -103,6 +104,58 @@ test("projection allowlists fields, preserves task activity time, and omits path
       .ROADMAP_MONITOR_API_KEY,
     undefined,
   );
+});
+test("native attention keeps repair issues separate from explicit input", (t) => {
+  const r = fixture(t);
+  updateRunAttention(r, { type: "runner.needs_attention", items: [
+    { status: "PROBLEM", task: "REPAIR-1", requiresAttention: true, reason: "/private/secret" },
+    { status: "NEEDS_INFO", task: "INPUT-1", requiresAttention: true },
+    { status: "SKIPPED", task: "LATER-1", requiresAttention: false },
+  ] });
+  assert.deepEqual(r.attentionTasks, ["REPAIR-1", "INPUT-1"]);
+  assert.ok(!JSON.stringify(r.attentionItems).includes("secret"));
+  const report = projectMonitor(JSON.parse(JSON.stringify(r)), { sequence: 0 });
+  assert.deepEqual(report.attention.map(a => [a.task_id, a.category, a.reason_code, a.requires_attention, a.recovering]), [
+    ["REPAIR-1", "blocker", "repair_in_progress", false, true],
+    ["INPUT-1", "input", "user_input", true, false],
+  ]);
+});
+test("repair issues require attention when work blocks, waits or exits", (t) => {
+  const r = fixture(t);
+  updateRunAttention(r, { type: "runner.needs_attention", items: [{ status: "PROBLEM", task: "REPAIR-1", requiresAttention: true }] });
+  for (const change of [
+    { roadmapState: "blocked" }, { roadmapState: "review_required" },
+    { waitReason: "quota" }, { processState: "exited" }, { role: undefined },
+  ]) {
+    const report = projectMonitor({ ...r, ...change }, { sequence: 0 });
+    assert.equal(report.attention[0].requires_attention, true);
+    assert.equal(report.attention[0].recovering, false);
+  }
+  assert.equal(projectMonitor(r, { sequence: 0 }, true).attention[0].requires_attention, true);
+});
+test("a live resolver reports recovery while retaining explicit input", (t) => {
+  const r = fixture(t);
+  r.roadmapState = "blocked"; r.role = "resolver";
+  let report = projectMonitor(r, { sequence: 0 });
+  assert.equal(report.attention[0].requires_attention, false);
+  assert.equal(report.attention[0].recovering, true);
+  updateRunAttention(r, { type: "runner.blocked", items: [{ status: "NEEDS_INFO", task: "INPUT-1", requiresAttention: true }] });
+  report = projectMonitor(r, { sequence: 0 });
+  assert.equal(report.attention[0].reason_code, "user_input");
+  assert.equal(report.attention[0].requires_attention, true);
+  assert.equal(projectMonitor(r, { sequence: 0 }, true).attention[0].requires_attention, true);
+});
+test("legacy attention stays readable and clearing removes both projections", (t) => {
+  const r = fixture(t);
+  r.attentionTasks = ["OLD-1"];
+  assert.equal(projectMonitor(r, { sequence: 0 }).attention[0].requires_attention, false);
+  updateRunAttention(r, { type: "runner.unblocked" });
+  assert.deepEqual(r.attentionTasks, []);
+  assert.deepEqual(r.attentionItems, []);
+  assert.deepEqual(projectMonitor(r, { sequence: 0 }).attention, []);
+  updateRunAttention(r, { type: "runner.needs_attention", items: [{ status: "PROBLEM", task: "NEW-1", requiresAttention: true }] });
+  updateRunAttention(r, { type: "runner.needs_attention", items: [] });
+  assert.deepEqual(projectMonitor(r, { sequence: 0 }).attention, []);
 });
 test("terminal outcomes never infer completion from code zero", (t) => {
   const r = fixture(t);

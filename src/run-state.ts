@@ -4,6 +4,7 @@ import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 
 export type QueueItem = { roadmap: string; progressFile: string; state: 'pending' | 'running' | 'complete' | 'deferred' | 'failed' | 'stopped' | 'blocked' | 'needs_next_batch' | 'awaiting_verification' | 'review_required'; deferralFile?: string };
+export type RunAttention = { task: string; status: 'BLOCKED' | 'SKIPPED' | 'NEEDS_INFO' | 'PROBLEM'; requiresAttention: boolean };
 export type RunRecord = {
   task?: string; batch?: string; id: string; token: string; workspace: string; roadmap: string; progressFile: string;
   processState: 'starting' | 'running' | 'stopping' | 'stopped' | 'exited' | 'unknown';
@@ -13,11 +14,19 @@ export type RunRecord = {
   readyAt?: string;
   socket: string; locks: string[]; idempotencyKey?: string; exitCode?: number; reason?: string;
   endedAt?: string; role?: string; iteration?: number; sourceRevision?: string;
-  resetAt?: string; deadline?: string; attentionTasks?: string[]; artifacts?: any;
+  resetAt?: string; deadline?: string; attentionTasks?: string[]; attentionItems?: RunAttention[]; artifacts?: any;
   childGroups?: number[];
   sleepInhibition?: { state: 'off' | 'active' | 'unavailable' | 'released'; backend?: string; reason?: string };
   queue?: QueueItem[]; queueIndex?: number;
 };
+export function updateRunAttention(record: RunRecord, event: { type: string; items?: RunAttention[] }) {
+  if (event.type === 'runner.unblocked') {
+    record.attentionTasks = []; record.attentionItems = [];
+  } else if (event.items) {
+    record.attentionItems = event.items.map(({ task, status, requiresAttention }) => ({ task, status, requiresAttention }));
+    record.attentionTasks = record.attentionItems.filter(item => item.requiresAttention).map(item => item.task);
+  }
+}
 export const registryRoot = () => process.env.ROADMAP_STATE_DIR || (process.platform === 'darwin'
   ? path.join(os.homedir(), 'Library', 'Application Support', 'roadmap-runner')
   : path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), '.local', 'state'), 'roadmap-runner'));

@@ -111,6 +111,8 @@ malformed records are excluded; malformed counts remain visible. Existing progre
 history and recovery journals stay compatible. Events add run IDs, sequence,
 source revision, role/iteration, severity, attention and short reason codes.
 
+Since 0.13.1, managed run state also preserves `attentionItems` (task ID, original flag status and attention boolean) alongside the compatible `attentionTasks` ID list. Recovery and queue transitions clear both. Native Monitor reports keep `NEEDS_INFO` as actionable `input` / `user_input`; live autonomous repairs use nonactionable `blocker` / `repair_in_progress`. Original task flags and scheduling remain authoritative and unchanged.
+
 ## Desktop attention
 
 Desktop alerts are on by default for CLI and MCP starts. Use `--notify off`,

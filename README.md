@@ -139,6 +139,8 @@ No configured URL/key means no reporting. A saved disabled connection stays disa
 
 Configuration and outboxes live under the private user state directory (`~/Library/Application Support/roadmap-runner/monitor` on macOS), outside the package, and survive updates. Online configuration validates the key before replacement; rejected or incompatible responses preserve the previous settings, while unavailable networks save an unverified connection. Credentials are excluded from provider, hook and verification subprocess environments. Monitoring failures preserve execution and exit codes. Existing processes load new code/settings on their next launch.
 
+Since 0.13.1, native reports distinguish active repairs from requests for a person. `PROBLEM` and blocked-task issues remain visible as recovery while a worker or resolver can continue. `NEEDS_INFO` retains an explicit `user_input` alert, including while other tasks run. Issues regain attention when work blocks, waits or exits. Saved task-ID lists from older versions remain readable. Desktop notifications and scheduling behavior are unchanged.
+
 ## Batch size
 
 Each worker works toward a meaningful checkpoint in the selected original task:

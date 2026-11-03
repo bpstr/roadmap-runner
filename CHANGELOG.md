@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.13.1 — 2026-11-03
+
+- Preserve task attention statuses in managed run state and native Monitor reports. Active repairs and resolver recovery remain visible without requesting operator attention; explicit `NEEDS_INFO` flags use the distinct `user_input` reason and remain actionable while other work continues. Blocked, waiting and terminal issues retain attention. Clear both attention projections on recovery and queue transitions, and retain compatibility with older saved task-ID lists. No additional model calls or execution-policy changes.
+
 ## 0.13.0 — 2026-11-02
 
 - Add optional private Roadmap Monitor reporting with one shared-worker publisher, installation configuration, safe deterministic activity/result fields and bounded terminal/history replay. Add masked/stdin key setup and probe/status/flush/disable commands. Monitoring makes no extra model calls and preserves execution/exit behavior; credentials are excluded from provider, hook and verification environments.

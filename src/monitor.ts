@@ -156,24 +156,32 @@ export function projectMonitor(
     batch_id: run.batch_id,
     source_revision: run.source_revision,
   };
-  const attention = (record.attentionTasks ?? [])
+  const repairing = !terminal && record.processState === "running" && !record.waitReason && (
+    (record.roadmapState === "in_progress" && ["worker", "compactor", "resolver"].includes(role ?? "")) ||
+    (record.roadmapState === "blocked" && role === "resolver")
+  );
+  const items = record.attentionItems ?? (record.attentionTasks ?? []).map(task => ({ task, status: "PROBLEM", requiresAttention: true }));
+  const attention = items.filter(item => item.requiresAttention)
     .slice(0, 100)
-    .map((id) => ({
-      task_id: reference(id),
-      source_identity: reference(record.sourceRevision) ?? "run",
-      category: "input",
-      reason_code: "requires_input",
-      requires_attention: true,
-      recovering: false,
-    }));
+    .map((item) => {
+      const input = item.status === "NEEDS_INFO";
+      return {
+        task_id: reference(item.task),
+        source_identity: reference(record.sourceRevision) ?? "run",
+        category: input ? "input" : "blocker",
+        reason_code: input ? "user_input" : repairing ? "repair_in_progress" : item.status === "PROBLEM" ? "problem" : "blocked",
+        requires_attention: input || !repairing,
+        recovering: !input && repairing,
+      };
+    });
   if (record.roadmapState === "blocked" && attention.length === 0)
     attention.push({
       task_id: null,
       source_identity: reference(state.blockIdentity) ?? "run",
       category: terminal ? "recovery_failed" : "blocker",
       reason_code: reason(state.blockReason, "blocked"),
-      requires_attention: true,
-      recovering: !terminal && role === "resolver",
+      requires_attention: !repairing,
+      recovering: repairing,
     });
   if (
     terminal &&

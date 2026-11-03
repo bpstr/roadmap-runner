@@ -8,7 +8,7 @@ import { runLifecycle } from './lifecycle.js';
 import { Notifications } from './notifications.js';
 import { SleepInhibitor } from './sleep-inhibitor.js';
 import { appendEvent } from './events.js';
-import { readRun, saveRun, runDir, appendOutput } from './run-state.js';
+import { readRun, saveRun, runDir, appendOutput, updateRunAttention } from './run-state.js';
 import { RunManager } from './run-manager.js';
 import { deferredRoadmapReady } from '../lib/task-deferral.js';
 
@@ -86,7 +86,7 @@ try {
     item.state = 'running'; record.roadmap = item.roadmap; record.progressFile = item.progressFile;
     record.roadmapState = 'in_progress'; record.waitReason = null; record.role = undefined; record.iteration = undefined;
     record.task = undefined; record.batch = undefined;
-    record.sourceRevision = undefined; record.attentionTasks = []; record.resetAt = undefined; record.deadline = undefined;
+    record.sourceRevision = undefined; record.attentionTasks = []; record.attentionItems = []; record.resetAt = undefined; record.deadline = undefined;
     persist(); monitor?.changed();
     result = await runLifecycle({ ...record.options,
       roadmap: record.queueIndex === 0 ? record.options.roadmap : item.roadmap,
@@ -119,8 +119,7 @@ try {
         if (event.type === 'runner.capacity_wait') record.waitReason = 'capacity';
         if (event.type === 'runner.recovery_wait') record.waitReason = 'recovery';
         if (['runner.turn_starting', 'runner.usage_resumed'].includes(event.type)) record.waitReason = null;
-        if (event.items) record.attentionTasks = event.items.filter(item => item.requiresAttention).map(item => item.task);
-        if (event.type === 'runner.unblocked') record.attentionTasks = [];
+        updateRunAttention(record, event);
         appendEvent(path.join(dir, 'events.jsonl'), event); persist(); notifier.enqueue(event); monitor?.event(event);
       },
     });
