@@ -150,9 +150,13 @@ test('a complete staged recipe passes exact behavior and cleanup while keeping p
 test('expired external state cannot reuse a timed-out local result', async t => {
   const f = fixture(t); f.put('build.json', { hang: true });
   const scope = { timeoutMs: 200, external: { freshUntil: '2020-01-01T00:00:00.000Z' } };
-  assert.equal((await f.run('compile', scope)).receipt.timedOut, true);
-  assert.equal((await f.run('compile', scope)).reused, false);
-  assert.equal(f.calls('compile'), 2);
+  const first = await f.run('compile', scope), second = await f.run('compile', scope);
+  assert.equal(first.receipt.timedOut, true); assert.equal(second.receipt.timedOut, true);
+  assert.equal(first.reused, false); assert.equal(second.reused, false);
+  // A slow host can time out before the child writes its dispatch counter.
+  // Distinct durable timeout receipts prove both attempts without that race.
+  assert.notEqual(first.receipt.id, second.receipt.id);
+  assert.ok(fs.existsSync(first.receiptFile)); assert.ok(fs.existsSync(second.receiptFile));
 });
 
 test('a verified prerequisite can repair a consumed generated input without a separate edit receipt', async t => {

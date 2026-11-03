@@ -34,3 +34,20 @@ Local results (2026-11-03): `npm run check:package` passed for
 `@bpstr/roadmap-runner@0.14.1`: 92 files, 225,582 packed bytes. Extracted version,
 120-minute help, Git-management help and monitor saved-state checks passed.
 `git diff --check` passed. Retained focused results above remain applicable.
+
+CI follow-up: run 41720785657 at 66bc30e passed Linux Node 20/22/24
+(461 passed, 3 skipped each) and macOS Node 24 (464 passed), including package
+checks. macOS Node 20/22 initially could not acquire hosted runners; check-run
+annotations explicitly report macOS ARM capacity constraints. Retried only these
+infrastructure failures, preserving all passing jobs and original annotations.
+
+The Node 20 retry exposed a prepared test race: a 200 ms timeout can kill the child
+before it appends its dispatch counter. Both checks are dispatched, but that counter
+is not a reliable observation. The test now requires two distinct durable timeout
+receipts with `reused: false`; runtime behavior is unchanged. Preserve the failed
+log `ci-job-126221106198.log`. Validate only this case locally. The next push still
+triggers the explicit six-job CI workflow; do not add a local full-suite run.
+All other focused results and the package check remain compatible: only this test
+and the excluded evidence document changed.
+
+Focused receipt-race result: 1 passed, 0 failed/cancelled/skipped in about one second.
