@@ -81,7 +81,7 @@ test('control rejects unauthenticated ownership and nested worker management', a
   const f = fixture(t); const r = await start(f); const record = readRun(f.registry, r.id);
   await assert.rejects(control({ ...record, token: 'wrong' }, 'stop'), /disconnected/); assert.equal((await f.manager.status(r.id)).processState, 'running');
   const previous = process.env.ROADMAP_WORKER_CONTEXT; process.env.ROADMAP_WORKER_CONTEXT = r.id;
-  try { await assert.rejects(f.manager.stop(r.id), /cannot/); await assert.rejects(start(f), /cannot/); } finally { if (previous === undefined) delete process.env.ROADMAP_WORKER_CONTEXT; else process.env.ROADMAP_WORKER_CONTEXT = previous; }
+  try { await assert.rejects(f.manager.stop(r.id), /cannot/); await assert.rejects(start(f), /cannot/); await assert.rejects(f.manager.enqueue(r.id, { roadmap: f.roadmap }), /cannot/); } finally { if (previous === undefined) delete process.env.ROADMAP_WORKER_CONTEXT; else process.env.ROADMAP_WORKER_CONTEXT = previous; }
 });
 
 test('managed quota wait can stop promptly and preserves its recovery checkpoint', async t => {
@@ -215,8 +215,8 @@ test('setup dry-run, both scopes, TOML comments, idempotency, conflicts and edit
   }
 });
 
-const mcpFixture = async (t, modern = false, existing) => {
-  const f = existing || fixture(t); const child = spawn(process.execPath, [cli, 'mcp', '--workspace', f.workspace], { cwd: f.workspace, env: { ...process.env, PATH: `${f.bin}:/usr/bin:/bin`, ROADMAP_STATE_DIR: f.registry, ROADMAP_NOTIFY: 'off' }, stdio: ['pipe','pipe','pipe'] });
+const mcpFixture = async (t, modern = false, existing, env = {}) => {
+  const f = existing || fixture(t); const child = spawn(process.execPath, [cli, 'mcp', '--workspace', f.workspace], { cwd: f.workspace, env: { ...process.env, PATH: `${f.bin}:/usr/bin:/bin`, ROADMAP_STATE_DIR: f.registry, ROADMAP_NOTIFY: 'off', ...env }, stdio: ['pipe','pipe','pipe'] });
   const messages = []; let buffer = ''; let stderr = ''; child.stdout.on('data', chunk => { buffer += chunk; while (buffer.includes('\n')) { const index = buffer.indexOf('\n'); messages.push(JSON.parse(buffer.slice(0, index))); buffer = buffer.slice(index + 1); } }); child.stderr.on('data', chunk => stderr += chunk);
   const disconnect = async () => { child.stdin.end(); await new Promise(resolve => { if (child.exitCode !== null) resolve(); else { child.once('exit', resolve); setTimeout(() => { child.kill('SIGKILL'); resolve(); }, 3000).unref(); } }); assert.equal(stderr, ''); };
   t.after(disconnect);
@@ -225,6 +225,42 @@ const mcpFixture = async (t, modern = false, existing) => {
   const notify = (method, params) => child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params: modern ? { ...params, _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28', 'io.modelcontextprotocol/clientInfo': { name: 'prepared-client', version: '1' }, 'io.modelcontextprotocol/clientCapabilities': {} } } : params }) + '\n');
   return { ...f, child, messages, request, notify, disconnect };
 };
+for (const modern of [false, true]) test(`worker ${modern ? 'modern' : 'legacy'} MCP connects with read-only tools and rejects run control`, async t => {
+  const owner = fixture(t); const run = await start(owner);
+  const f = await mcpFixture(t, modern, owner, { ROADMAP_WORKER_CONTEXT: run.id });
+  const listing = await f.request('tools/list');
+  assert.deepEqual(listing.result.tools.map(tool => tool.name), ['roadmap_status', 'roadmap_events']);
+  const read = async (name, args) => {
+    const result = await f.request('tools/call', { name, arguments: args });
+    assert.ok(!result.error && !result.result.isError, JSON.stringify(result));
+    return JSON.parse(result.result.content[0].text);
+  };
+  const status = await read('roadmap_status', { runId: run.id, outputBytes: 0 });
+  assert.equal(status.id, run.id); assert.equal(status.processState, 'running');
+  const events = await read('roadmap_events', { runId: run.id });
+  assert.ok(events.events.some(event => event.type === 'runner.started'));
+  const resources = await f.request('resources/list');
+  assert.ok(resources.result.resources.some(resource => resource.uri === `roadmap://${run.id}/state`));
+  for (const kind of ['state', 'events']) {
+    const uri = `roadmap://${run.id}/${kind}${kind === 'events' ? '?cursor=0' : ''}`;
+    const resource = await f.request('resources/read', { uri });
+    assert.ok(!resource.error, JSON.stringify(resource));
+    const value = JSON.parse(resource.result.contents[0].text);
+    assert.equal(kind === 'state' ? value.id : value.runId, run.id);
+  }
+  for (const [name, args] of [
+    ['roadmap_start', { workspace: f.workspace, roadmap: 'roadmap.md' }],
+    ['roadmap_enqueue', { runId: run.id, roadmap: 'roadmap.md' }],
+    ['roadmap_stop', { runId: run.id }],
+  ]) {
+    const denied = await f.request('tools/call', { name, arguments: args });
+    assert.ok(denied.error || denied.result?.isError, JSON.stringify(denied));
+  }
+  const unchanged = await owner.manager.status(run.id);
+  assert.equal(unchanged.processState, 'running'); assert.equal(unchanged.queue.length, 1);
+  assert.equal((await owner.manager.status()).runs.length, 1);
+});
+
 for (const modern of [false, true]) test(`prepared ${modern ? 'modern' : 'legacy'} MCP tools, restrictions, resources and subscriptions`, async t => {
   const f = await mcpFixture(t, modern); const listing = await f.request('tools/list'); assert.deepEqual(listing.result.tools.map(t => t.name), ['roadmap_start','roadmap_enqueue','roadmap_stop','roadmap_status','roadmap_events']);
   const invalid = await f.request('tools/call', { name: 'roadmap_start', arguments: { ...f.request, workspace: f.workspace, roadmap: f.roadmap, executable: f.worker } }); assert.ok(invalid.error || invalid.result.isError);

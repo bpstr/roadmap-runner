@@ -150,6 +150,13 @@ Script Editor attribution if explicitly selected.
 
 The tools are `roadmap_start`, `roadmap_enqueue`, `roadmap_stop`, and read-only
 `roadmap_status` and `roadmap_events`.
+
+When the MCP server inherits `ROADMAP_WORKER_CONTEXT`, it still initializes and
+exposes `roadmap_status`, `roadmap_events`, and workspace-scoped resources. It
+omits start, enqueue, and stop tools; direct calls to those tool names are rejected.
+The controller guards in `RunManager` remain active as a separate protection.
+Keep the worker context set when launching the server from a managed worker.
+
 Start accepts an optional ordered `queue` of `{ roadmap, progressFile? }` entries
 after the initial roadmap. Enqueue accepts `{ runId, roadmap, progressFile? }`
 and appends to an active run. Each roadmap starts only after its predecessor

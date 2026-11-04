@@ -130,7 +130,8 @@ const main = async () => {
   if (argv.includes('--help') || argv.includes('-h')) { help(); return; }
   if (argv.includes('--version') || argv.includes('-v')) { console.log(PACKAGE.version); return; }
   if (['check', 'record-review', 'update-handoff'].includes(argv[0])) return await verificationCommand(argv[0], argv.slice(1));
-  assertController();
+  // Workers may connect to MCP's read-only surface; run controls stay guarded.
+  if (argv[0] !== 'mcp') assertController();
   if (argv[0] === 'monitor') { const { monitorCommand } = await import('../dist/monitor-cli.js'); await monitorCommand(argv.slice(1)); return; }
   const commands = ['start', 'queue', 'stop', 'status', 'mcp', 'setup', 'doctor', 'notifications', 'monitor'];
   const command = commands.includes(argv[0]) ? argv.shift() : 'foreground';
