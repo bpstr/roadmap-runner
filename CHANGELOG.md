@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.14.2 — 2026-11-04
+
+- Allow managed workers to connect to the Roadmap Runner MCP server for status, events and workspace-scoped resources. Fix the initialization failure observed with Grok 1.0.70 while keeping start, enqueue and stop unavailable to workers.
+
 ## 0.14.1 — 2026-11-03
 
 - Reduce the default client session timeout from six hours to 120 minutes in CLI and managed runs, allowing 115 minutes of work and five minutes for checkpointing. Preserve validated handoffs, graceful shutdown, explicit timeout overrides and automatic roadmap continuation.
